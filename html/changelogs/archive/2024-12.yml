@@ -189,3 +189,44 @@
       it doesn't matter if there's a wall, right?)
   xPokee, waterpig:
   - code_imp: cleaned up beserk.dm
+2024-12-08:
+  CRITAWAKETS:
+  - bugfix: Fixed the starfruit BBQ platter failing to consume crafting ingredients.
+  Hatterhat:
+  - bugfix: For consistency's sake, Cybersun Industries has finally remembered to
+      update their backlog of Contractor MODsuits with baton knockdown resistance
+      and restraint assistance modules. Prospective operators are reminded that this
+      will not stop them from being shot with disablers, or being shot in general.
+  RatFromTheJungle:
+  - qol: The CIN outfit parts in the loadout can now be colored in said loadout.
+  SmArtKar:
+  - balance: Armor now decreases the chances of getting your eye blown out by a rogue
+      bullet
+2024-12-11:
+  Zergspower:
+  - rscadd: Nebulastation, new station map
+2024-12-12:
+  Hardly:
+  - balance: Railgun PKAs can no longer be fired on station
+  - code_imp: Allows restricted PKAs to be fired in Serenity exterior
+  Kocma-san:
+  - bugfix: xenomorph larva can evolve again
+  OrbisAnima:
+  - balance: Bitrunning Domains now give double points
+  - qol: Pizza Delivery for bitrunners now include the new Sausage pizza on their
+      possible sponsors!
+  - balance: Bitrunner disks are now small sized, from normal.
+  Stalkeros:
+  - rscadd: New bitrunning disk, allowing you to either install a single-use NIF,
+      or summon a Very Interesting Vending Machine.
+  - rscadd: MilSim DLC disk's Marksman was granted infinite supplies of throwing knives
+      and a sonar at the cost of invisibility.
+  - qol: You can now join as your own character in the Syndicate Assault and Island
+      Brawl domains.
+  - bugfix: Names should show up on Syndicate Assault, Pirate Cove, and Island Brawl
+      IDs once again.
+  sqnztb:
+  - map: Snowglobe - added stacking machine to disposals.
+2024-12-13:
+  sqnztb:
+  - bugfix: icemoon's interdyne food vendors are free again
