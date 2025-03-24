@@ -10,14 +10,15 @@
 
 	var/list/outfits = list("无人机")
 
-	for(var/plushie in subtypesof(/obj/item/toy/plush))
-		var/obj/item/toy/plush/copies = new plushie()
-		outfits.Add(copies)
+	//添加所有玩偶到outfits
+	outfits.Add(subtypesof(/obj/item/toy/plush))
 
+	//生成列表ui
 	var/selected_outfit = tgui_input_list(user_mob, "无人机外观", "选择外观", outfits, 0)
 	if(isnull(selected_outfit))
 		return
 
+	//找到所选选项对应的索引
 	var/index = outfits.Find(selected_outfit)
 	update_outfit(outfits[index])
 
