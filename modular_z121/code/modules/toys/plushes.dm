@@ -18,3 +18,9 @@
 	icon = 'modular_z121/icon/obj/toys/plushes.dmi'
 	icon_state = "sherri"
 	gender = FEMALE
+
+/obj/item/toy/plush/ghastling
+	name = "悠魂宝宝玩偶"
+	desc = "一个可爱的悠魂宝宝毛绒玩偶。"
+	icon = 'modular_z121/icon/obj/toys/plushes.dmi'
+	icon_state = "ghastling"
