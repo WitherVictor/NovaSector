@@ -32,3 +32,7 @@
 /datum/armament_entry/company_import/intern_project/misc/carrying_pouch
 	item_type = /obj/item/storage/pouch/carrying_pouch
 	cost = PAYCHECK_CREW * 6 * 1.5
+
+/datum/armament_entry/company_import/intern_project/misc/plush_ghastling
+	item_type = /obj/item/toy/plush/ghastling
+	cost = PAYCHECK_CREW * 4
