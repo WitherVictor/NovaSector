@@ -11,6 +11,10 @@
 	icon = 'modular_z121/icons/obj/guns/crossbow.dmi'
 	icon_state = "crossbow"
 
+	lefthand_file = 'modular_z121/icons/mob/guns/crossbow_lefthand.dmi'
+	righthand_file = 'modular_z121/icons/mob/guns/crossbow_righthand.dmi'
+	inhand_icon_state = "crossbow"
+
 	empty_indicator = FALSE
 
 	draw_time = 2 SECONDS
