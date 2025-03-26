@@ -11,6 +11,7 @@
 	category = INTERNS_PROJECT_NAME
 	company_bitflag = CARGO_COMPANY_INTERN
 
+//	小型枪械
 /datum/armament_entry/company_import/intern_project/sidearm
 	subcategory = "小型枪械"
 	cost = PAYCHECK_COMMAND * 4
@@ -18,6 +19,23 @@
 /datum/armament_entry/company_import/intern_project/sidearm/sofap
 	item_type = /obj/item/gun/ballistic/automatic/pistol/sofap
 
+//	大型枪械
+/datum/armament_entry/company_import/intern_project/primary
+	subcategory = "大型枪械"
+	cost = PAYCHECK_COMMAND * 6
+
+/datum/armament_entry/company_import/intern_project/primary/crossbow
+	item_type = /obj/item/gun/ballistic/rifle/rebarxbow/crossbow
+
+//	弹药
+/datum/armament_entry/company_import/intern_project/ammo
+	subcategory = "弹药"
+	cost = PAYCHECK_CREW
+
+/datum/armament_entry/company_import/intern_project/ammo
+	item_type = /obj/item/ammo_casing/rebar/bolt
+
+//	杂项
 /datum/armament_entry/company_import/intern_project/misc
 	subcategory = "杂项"
 	cost = PAYCHECK_CREW * 6

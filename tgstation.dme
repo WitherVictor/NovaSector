@@ -8982,6 +8982,8 @@
 #include "modular_z121\code\modules\circuit\drone.dm"
 #include "modular_z121\code\modules\Company_imports\interns_project_emporium.dm"
 #include "modular_z121\code\modules\consultantmod\mod_item.dm"
+#include "modular_z121\code\modules\crossbow\bolt.dm"
+#include "modular_z121\code\modules\crossbow\crossbow.dm"
 #include "modular_z121\code\modules\food_and_drinks\FoodandDrinks.dm"
 #include "modular_z121\code\modules\mob\lanhongqiu.dm"
 #include "modular_z121\code\modules\modsuit\bluespacemini.dm"
