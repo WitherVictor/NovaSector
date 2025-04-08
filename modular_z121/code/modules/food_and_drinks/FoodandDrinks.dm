@@ -42,11 +42,11 @@
 	w_class = WEIGHT_CLASS_SMALL
 	crafting_complexity = FOOD_COMPLEXITY_3
 
-/obj/item/food/dumpling
+/obj/item/food/dumpling_boiled
 	name = "饺子"
-	desc = "在面皮中塞入内馅制成，既是主食也是点心，同时还有传言称能吃到幸运金币的人会获得一年的好运。"
+	desc = "煮熟的饺子表皮光滑半透明，边缘捏合处因吸水略微膨胀，隐约可见内馅的色泽。汤汁浸润面皮，散发简单扎实的面食香气。"
 	icon = 'modular_z121/icons/obj/food/food.dmi'
-	icon_state = "dumpling"
+	icon_state = "dumpling_boiled"
 	food_reagents = list(
 		/datum/reagent/consumable/nutriment = 6,
 		/datum/reagent/consumable/nutriment/vitamin = 2,
@@ -57,6 +57,57 @@
 	w_class = WEIGHT_CLASS_SMALL
 	crafting_complexity = FOOD_COMPLEXITY_3
 
+/obj/item/food/dumpling_boiled/make_grillable()
+	AddComponent(/datum/component/grillable, /obj/item/food/dumpling_grilled, rand(10 SECONDS, 20 SECONDS), TRUE, TRUE)
+
+/obj/item/food/dumpling_grilled
+	name = "煎饺"
+	desc = "煎至底部金黄酥脆的饺子，表皮微带油光，顶部撒有零星葱花。内馅饱满，咬开时能尝到焦香外壳与湿润肉汁的混合滋味。"
+	icon = 'modular_z121/icons/obj/food/food.dmi'
+	icon_state = "dumpling_grilled"
+	food_reagents = list(
+		/datum/reagent/consumable/nutriment = 6,
+		/datum/reagent/consumable/nutriment/vitamin = 2,
+		/datum/reagent/consumable/nutriment/protein = 2,
+	)
+	tastes = list("玉米粒" = 1, "肉馅" = 1, "面皮" = 1)
+	foodtypes = GRAIN | MEAT | VEGETABLES
+	w_class = WEIGHT_CLASS_SMALL
+	crafting_complexity = FOOD_COMPLEXITY_3
+
+/obj/item/food/dumpling_raw
+	name = "生饺子"
+	desc = "未经煮制的半月形面食，面皮边缘捏合紧密，表面微粉，隐约透出内馅的深色轮廓。生面质地偏硬，需烹饪后食用。"
+	icon = 'modular_z121/icons/obj/food/food.dmi'
+	icon_state = "dumpling_raw"
+	food_reagents = list(
+		/datum/reagent/consumable/nutriment = 3,
+		/datum/reagent/consumable/nutriment/vitamin = 1,
+		/datum/reagent/consumable/nutriment/protein = 1,
+	)
+	tastes = list("玉米粒" = 1, "生肉" = 1, "生面皮" = 1)
+	foodtypes = GRAIN | MEAT | VEGETABLES
+	w_class = WEIGHT_CLASS_SMALL
+	crafting_complexity = FOOD_COMPLEXITY_0
+
+//  煮点饺子吃
+/datum/chemical_reaction/food/soup/boil_dumpling
+	required_reagents = list(
+		/datum/reagent/water = 5,
+	)
+
+	required_ingredients = list(
+		/obj/item/food/dumpling_raw = 1,
+	)
+
+	results = list(
+		/obj/item/food/dumpling_boiled = 1,
+	)
+
+	resulting_food_path = /obj/item/food/dumpling_boiled
+
+	//  你肯定不想吃煮漏了的饺子
+	ingredient_reagent_multiplier = 0
 
 /obj/item/food/mooncake
 	name = "月饼"
@@ -220,10 +271,10 @@ category = CAT_CHINESE
     name = "饺子"
     reqs = list(
         /obj/item/food/doughslice = 1,
-        /obj/item/food/meatball = 1,
+        /obj/item/food/raw_meatball = 1,
         /obj/item/food/grown/corn = 1
     )
-    result = /obj/item/food/dumpling
+    result = /obj/item/food/dumpling_raw
     category = CAT_MARTIAN
 
 /datum/crafting_recipe/food/mooncake
