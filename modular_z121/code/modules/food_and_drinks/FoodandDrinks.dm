@@ -72,11 +72,11 @@
 	w_class = WEIGHT_CLASS_SMALL
 	crafting_complexity = FOOD_COMPLEXITY_3
 
-/obj/item/food/baozi
+/obj/item/food/baozi_steamed
 	name = "包子"
-	desc = "面团裹着肉馅蒸制而成，你的早餐好伴侣。"
+	desc = "一个蒸制完成的白胖包子，表皮蓬松柔软，半透明的面皮下隐约透出深色馅料的轮廓。顶部褶皱处因蒸汽浸润微微发亮，散发着淡淡的面香与肉香。"
 	icon = 'modular_z121/icons/obj/food/food.dmi'
-	icon_state = "baozi"
+	icon_state = "baozi_steamed"
 	food_reagents = list(
 		/datum/reagent/consumable/nutriment = 4,
 		/datum/reagent/consumable/nutriment/protein = 3,
@@ -85,6 +85,42 @@
 	foodtypes = GRAIN | MEAT | BREAKFAST
 	w_class = WEIGHT_CLASS_SMALL
 	crafting_complexity = FOOD_COMPLEXITY_3
+
+/obj/item/food/baozi_grilled
+	name = "生煎包"
+	desc = "一个刚煎好的圆形面点，底部焦黄酥脆。面皮包裹着温热的肉馅，咬开时会有少许汤汁流出，散发着简单却扎实的食物香气。"
+	icon = 'modular_z121/icons/obj/food/food.dmi'
+	icon_state = "baozi_grilled"
+	food_reagents = list(
+		/datum/reagent/consumable/nutriment = 4,
+		/datum/reagent/consumable/nutriment/protein = 3,
+	)
+	tastes = list("肉馅" = 1, "酥脆面皮" = 1)
+	foodtypes = GRAIN | MEAT | BREAKFAST
+	w_class = WEIGHT_CLASS_SMALL
+	crafting_complexity = FOOD_COMPLEXITY_3
+
+/obj/item/food/baozi_raw
+	name = "生包子"
+	desc = "一个未经蒸制的白面团，表面略带干粉，褶皱收口处捏合整齐，隐约能看见内部裹着的一小团深色肉馅。生面质地紧实，需蒸熟或煎熟后才能食用。"
+	icon = 'modular_z121/icons/obj/food/food.dmi'
+	icon_state = "baozi_raw"
+	food_reagents = list(
+		/datum/reagent/consumable/nutriment = 2,
+		/datum/reagent/consumable/nutriment/protein = 1,
+	)
+	tastes = list("生肉" = 1, "面皮" = 1)
+	foodtypes = GRAIN | MEAT
+	w_class = WEIGHT_CLASS_SMALL
+	crafting_complexity = FOOD_COMPLEXITY_0
+
+//  谁家好人用烘焙箱蒸包子
+/obj/item/food/baozi_raw/make_bakeable()
+	AddComponent(/datum/component/bakeable, /obj/item/food/baozi_steamed, rand(10 SECONDS, 20 SECONDS), TRUE, TRUE)
+
+//  用烤来做生煎包听起来有点怪
+/obj/item/food/baozi_raw/make_grillable()
+	AddComponent(/datum/component/grillable, /obj/item/food/baozi_grilled, rand(10 SECONDS, 20 SECONDS), TRUE, TRUE)
 
 /obj/item/food/roujiamo
 	name = "肉夹馍"
@@ -200,13 +236,13 @@ category = CAT_CHINESE
 	result = /obj/item/food/mooncake
 	category = CAT_MARTIAN
 
-/datum/crafting_recipe/food/baozi
+/datum/crafting_recipe/food/baozi_raw
 	name = "包子"
 	reqs = list(
 		/obj/item/food/doughslice = 1,
-		/obj/item/food/meatball = 1
+		/obj/item/food/raw_meatball = 1
 	)
-	result = /obj/item/food/baozi
+	result = /obj/item/food/baozi_raw
 	category = CAT_MARTIAN
 
 /datum/crafting_recipe/food/roujiamo
