@@ -160,7 +160,7 @@
 		/datum/reagent/consumable/nutriment = 2,
 		/datum/reagent/consumable/nutriment/protein = 1,
 	)
-	tastes = list("生肉" = 1, "面皮" = 1)
+	tastes = list("生肉" = 1, "生面皮" = 1)
 	foodtypes = GRAIN | MEAT
 	w_class = WEIGHT_CLASS_SMALL
 	crafting_complexity = FOOD_COMPLEXITY_0
