@@ -1,7 +1,7 @@
 //FOOD ITEM
 /obj/item/food/zongzi
-	name = "ôÕ×Ó"
-	desc = "ÓÉÃ×ÍÅ¡¢ÏÌµ°»ÆºÍÈâ¿é×é³ÉµÄÆæ¹ÖÈı½Ç×¶Ìå£¬ºÜÉÙÔÚ¿Õ¼äÕ¾¿´¼ûÓĞÈË³ÔÕâ¸ö£¬±Ï¾¹Ã»ÈË¼û¹ıÕâ¸ö¹ÅÀÏµÄÊ³ÎïÁË¡£"
+	name = "ç²½å­"
+	desc = "ç”±ç±³å›¢ã€å’¸è›‹é»„å’Œè‚‰å—ç»„æˆçš„å¥‡æ€ªä¸‰è§’é”¥ä½“ï¼Œå¾ˆå°‘åœ¨ç©ºé—´ç«™çœ‹è§æœ‰äººåƒè¿™ä¸ªï¼Œæ¯•ç«Ÿæ²¡äººè§è¿‡è¿™ä¸ªå¤è€çš„é£Ÿç‰©äº†ã€‚"
 	icon = 'modular_z121/icons/obj/food/food.dmi'
 	icon_state = "zongzi"
 	food_reagents = list(
@@ -9,86 +9,173 @@
 		/datum/reagent/consumable/nutriment/vitamin = 2,
 		/datum/reagent/consumable/nutriment/protein = 4,
 	)
-	tastes = list("Å´Ã×" = 1, "ÏÌµ°»Æ" = 1, "Èâ¿é" = 1)
+	tastes = list("ç³¯ç±³" = 1, "å’¸è›‹é»„" = 1, "è‚‰å—" = 1)
 	foodtypes = GRAIN | MEAT
 	w_class = WEIGHT_CLASS_SMALL
 	crafting_complexity = FOOD_COMPLEXITY_4
 
 /obj/item/food/tangyuan
-	name = "ÌÀÔ²"
-	desc = "Ò»¿Ú´óĞ¡µÄÅ´Ã×ÍÅ×Ó£¬°ü¹ü×Å²»Í¬¿ÚÎ¶µÄÏÚĞÄ£¬³£ÔÚ¼Ñ½ÚÍÅÔ²Ê±·ÖÏí¡£"
+	name = "æ±¤åœ†"
+	desc = "ä¸€å£å¤§å°çš„ç³¯ç±³å›¢å­ï¼ŒåŒ…è£¹ç€ä¸åŒå£å‘³çš„é¦…å¿ƒï¼Œå¸¸åœ¨ä½³èŠ‚å›¢åœ†æ—¶åˆ†äº«ã€‚"
 	icon = 'modular_z121/icons/obj/food/food.dmi'
 	icon_state = "tangyuan"
 	food_reagents = list(
 		/datum/reagent/consumable/nutriment = 3,
 		/datum/reagent/consumable/nutriment/vitamin = 2,
 	)
-	tastes = list("Å´Ã×" = 1, "»¨Éú" = 1)
+	tastes = list("ç³¯ç±³" = 1, "èŠ±ç”Ÿ" = 1)
 	foodtypes = GRAIN | NUTS | SUGAR
 	w_class = WEIGHT_CLASS_SMALL
 	crafting_complexity = FOOD_COMPLEXITY_3
 
 /obj/item/food/qingtuan
-	name = "ÇàÍÅ"
-	desc = "ÒÔÇ°ÓÃÀ´¼ÀìëµÄ¹©Æ·¡£Ê¹ÓÃ°¬²İÖ­»ìºÏÅ´Ã×£¬ÔÙ¹üÉÏºì¶¹É³ÖÆ³É£¬ÓĞ¹Éµ­µ­µÄ²İÒ©ÏãÆø¡£"
+	name = "é’å›¢"
+	desc = "ä»¥å‰ç”¨æ¥ç¥­ç¥€çš„ä¾›å“ã€‚ä½¿ç”¨è‰¾è‰æ±æ··åˆç³¯ç±³ï¼Œå†è£¹ä¸Šçº¢è±†æ²™åˆ¶æˆï¼Œæœ‰è‚¡æ·¡æ·¡çš„è‰è¯é¦™æ°”ã€‚"
 	icon = 'modular_z121/icons/obj/food/food.dmi'
 	icon_state = "qingtuan"
 	food_reagents = list(
 		/datum/reagent/consumable/nutriment = 3,
 		/datum/reagent/consumable/nutriment/vitamin = 2,
 	)
-	tastes = list("Å´Ã×Æ¤" = 1, "ºì¶¹É³" = 1, "²İÒ©Î¶" = 1)
+	tastes = list("ç³¯ç±³çš®" = 1, "çº¢è±†æ²™" = 1, "è‰è¯å‘³" = 1)
 	foodtypes = GRAIN | SUGAR
 	w_class = WEIGHT_CLASS_SMALL
 	crafting_complexity = FOOD_COMPLEXITY_3
 
-/obj/item/food/dumpling
-	name = "½È×Ó"
-	desc = "ÔÚÃæÆ¤ÖĞÈûÈëÄÚÏÚÖÆ³É£¬¼ÈÊÇÖ÷Ê³Ò²ÊÇµãĞÄ£¬Í¬Ê±»¹ÓĞ´«ÑÔ³ÆÄÜ³Ôµ½ĞÒÔË½ğ±ÒµÄÈË»á»ñµÃÒ»ÄêµÄºÃÔË¡£"
+/obj/item/food/dumpling_boiled
+	name = "é¥ºå­"
+	desc = "ç…®ç†Ÿçš„é¥ºå­è¡¨çš®å…‰æ»‘åŠé€æ˜ï¼Œè¾¹ç¼˜æåˆå¤„å› å¸æ°´ç•¥å¾®è†¨èƒ€ï¼Œéšçº¦å¯è§å†…é¦…çš„è‰²æ³½ã€‚æ±¤æ±æµ¸æ¶¦é¢çš®ï¼Œæ•£å‘ç®€å•æ‰å®çš„é¢é£Ÿé¦™æ°”ã€‚"
 	icon = 'modular_z121/icons/obj/food/food.dmi'
-	icon_state = "dumpling"
+	icon_state = "dumpling_boiled"
 	food_reagents = list(
 		/datum/reagent/consumable/nutriment = 6,
 		/datum/reagent/consumable/nutriment/vitamin = 2,
 		/datum/reagent/consumable/nutriment/protein = 2,
 	)
-	tastes = list("ÓñÃ×Á£" = 1, "ÈâÏÚ" = 1, "ÃæÆ¤" = 1)
+	tastes = list("ç‰ç±³ç²’" = 1, "è‚‰é¦…" = 1, "é¢çš®" = 1)
 	foodtypes = GRAIN | MEAT | VEGETABLES
 	w_class = WEIGHT_CLASS_SMALL
 	crafting_complexity = FOOD_COMPLEXITY_3
 
+/obj/item/food/dumpling_boiled/make_grillable()
+	AddComponent(/datum/component/grillable, /obj/item/food/dumpling_grilled, rand(10 SECONDS, 20 SECONDS), TRUE, TRUE)
+
+/obj/item/food/dumpling_grilled
+	name = "ç…é¥º"
+	desc = "ç…è‡³åº•éƒ¨é‡‘é»„é…¥è„†çš„é¥ºå­ï¼Œè¡¨çš®å¾®å¸¦æ²¹å…‰ï¼Œé¡¶éƒ¨æ’’æœ‰é›¶æ˜Ÿè‘±èŠ±ã€‚å†…é¦…é¥±æ»¡ï¼Œå’¬å¼€æ—¶èƒ½å°åˆ°ç„¦é¦™å¤–å£³ä¸æ¹¿æ¶¦è‚‰æ±çš„æ··åˆæ»‹å‘³ã€‚"
+	icon = 'modular_z121/icons/obj/food/food.dmi'
+	icon_state = "dumpling_grilled"
+	food_reagents = list(
+		/datum/reagent/consumable/nutriment = 6,
+		/datum/reagent/consumable/nutriment/vitamin = 2,
+		/datum/reagent/consumable/nutriment/protein = 2,
+	)
+	tastes = list("ç‰ç±³ç²’" = 1, "è‚‰é¦…" = 1, "é¢çš®" = 1)
+	foodtypes = GRAIN | MEAT | VEGETABLES
+	w_class = WEIGHT_CLASS_SMALL
+	crafting_complexity = FOOD_COMPLEXITY_3
+
+/obj/item/food/dumpling_raw
+	name = "ç”Ÿé¥ºå­"
+	desc = "æœªç»ç…®åˆ¶çš„åŠæœˆå½¢é¢é£Ÿï¼Œé¢çš®è¾¹ç¼˜æåˆç´§å¯†ï¼Œè¡¨é¢å¾®ç²‰ï¼Œéšçº¦é€å‡ºå†…é¦…çš„æ·±è‰²è½®å»“ã€‚ç”Ÿé¢è´¨åœ°åç¡¬ï¼Œéœ€çƒ¹é¥ªåé£Ÿç”¨ã€‚"
+	icon = 'modular_z121/icons/obj/food/food.dmi'
+	icon_state = "dumpling_raw"
+	food_reagents = list(
+		/datum/reagent/consumable/nutriment = 3,
+		/datum/reagent/consumable/nutriment/vitamin = 1,
+		/datum/reagent/consumable/nutriment/protein = 1,
+	)
+	tastes = list("ç‰ç±³ç²’" = 1, "ç”Ÿè‚‰" = 1, "ç”Ÿé¢çš®" = 1)
+	foodtypes = GRAIN | MEAT | VEGETABLES
+	w_class = WEIGHT_CLASS_SMALL
+	crafting_complexity = FOOD_COMPLEXITY_0
+
+//  ç…®ç‚¹é¥ºå­åƒ
+/datum/chemical_reaction/food/soup/boil_dumpling
+	required_reagents = list(
+		/datum/reagent/water = 5,
+	)
+
+	required_ingredients = list(
+		/obj/item/food/dumpling_raw = 1,
+	)
+
+	results = list(
+		/obj/item/food/dumpling_boiled = 1,
+	)
+
+	resulting_food_path = /obj/item/food/dumpling_boiled
+
+	//  ä½ è‚¯å®šä¸æƒ³åƒç…®æ¼äº†çš„é¥ºå­
+	ingredient_reagent_multiplier = 0
 
 /obj/item/food/mooncake
-	name = "ÔÂ±ı"
-	desc = "ºæ¿¾ÖÆ³ÉµÄÔ²ĞÎ¸âµã£¬·¢Õ¹µ½ÏÖÔÚÒÑ¾­ÓĞÁË¸÷Ê½¿ÚÎ¶¡£"
+	name = "æœˆé¥¼"
+	desc = "çƒ˜çƒ¤åˆ¶æˆçš„åœ†å½¢ç³•ç‚¹ï¼Œå‘å±•åˆ°ç°åœ¨å·²ç»æœ‰äº†å„å¼å£å‘³ã€‚"
 	icon = 'modular_z121/icons/obj/food/food.dmi'
 	icon_state = "mooncake"
 	food_reagents = list(
 		/datum/reagent/consumable/nutriment = 4,
 		/datum/reagent/consumable/nutriment/protein = 2,
 	)
-	tastes = list("Á«ÈØ" = 1, "ÏÌµ°»Æ" = 1, "ÃæÆ¤" = 1)
+	tastes = list("è²è“‰" = 1, "å’¸è›‹é»„" = 1, "é¢çš®" = 1)
 	foodtypes = GRAIN | SUGAR
 	w_class = WEIGHT_CLASS_SMALL
 	crafting_complexity = FOOD_COMPLEXITY_3
 
-/obj/item/food/baozi
-	name = "°ü×Ó"
-	desc = "ÃæÍÅ¹ü×ÅÈâÏÚÕôÖÆ¶ø³É£¬ÄãµÄÔç²ÍºÃ°éÂÂ¡£"
+/obj/item/food/baozi_steamed
+	name = "åŒ…å­"
+	desc = "ä¸€ä¸ªè’¸åˆ¶å®Œæˆçš„ç™½èƒ–åŒ…å­ï¼Œè¡¨çš®è“¬æ¾æŸ”è½¯ï¼ŒåŠé€æ˜çš„é¢çš®ä¸‹éšçº¦é€å‡ºæ·±è‰²é¦…æ–™çš„è½®å»“ã€‚é¡¶éƒ¨è¤¶çš±å¤„å› è’¸æ±½æµ¸æ¶¦å¾®å¾®å‘äº®ï¼Œæ•£å‘ç€æ·¡æ·¡çš„é¢é¦™ä¸è‚‰é¦™ã€‚"
 	icon = 'modular_z121/icons/obj/food/food.dmi'
-	icon_state = "baozi"
+	icon_state = "baozi_steamed"
 	food_reagents = list(
 		/datum/reagent/consumable/nutriment = 4,
 		/datum/reagent/consumable/nutriment/protein = 3,
 	)
-	tastes = list("ÈâÏÚ" = 1, "ÃæÆ¤" = 1)
+	tastes = list("è‚‰é¦…" = 1, "é¢çš®" = 1)
 	foodtypes = GRAIN | MEAT | BREAKFAST
 	w_class = WEIGHT_CLASS_SMALL
 	crafting_complexity = FOOD_COMPLEXITY_3
 
+/obj/item/food/baozi_grilled
+	name = "ç”Ÿç…åŒ…"
+	desc = "ä¸€ä¸ªåˆšç…å¥½çš„åœ†å½¢é¢ç‚¹ï¼Œåº•éƒ¨ç„¦é»„é…¥è„†ã€‚é¢çš®åŒ…è£¹ç€æ¸©çƒ­çš„è‚‰é¦…ï¼Œå’¬å¼€æ—¶ä¼šæœ‰å°‘è®¸æ±¤æ±æµå‡ºï¼Œæ•£å‘ç€ç®€å•å´æ‰å®çš„é£Ÿç‰©é¦™æ°”ã€‚"
+	icon = 'modular_z121/icons/obj/food/food.dmi'
+	icon_state = "baozi_grilled"
+	food_reagents = list(
+		/datum/reagent/consumable/nutriment = 4,
+		/datum/reagent/consumable/nutriment/protein = 3,
+	)
+	tastes = list("è‚‰é¦…" = 1, "é…¥è„†é¢çš®" = 1)
+	foodtypes = GRAIN | MEAT | BREAKFAST
+	w_class = WEIGHT_CLASS_SMALL
+	crafting_complexity = FOOD_COMPLEXITY_3
+
+/obj/item/food/baozi_raw
+	name = "ç”ŸåŒ…å­"
+	desc = "ä¸€ä¸ªæœªç»è’¸åˆ¶çš„ç™½é¢å›¢ï¼Œè¡¨é¢ç•¥å¸¦å¹²ç²‰ï¼Œè¤¶çš±æ”¶å£å¤„æåˆæ•´é½ï¼Œéšçº¦èƒ½çœ‹è§å†…éƒ¨è£¹ç€çš„ä¸€å°å›¢æ·±è‰²è‚‰é¦…ã€‚ç”Ÿé¢è´¨åœ°ç´§å®ï¼Œéœ€è’¸ç†Ÿæˆ–ç…ç†Ÿåæ‰èƒ½é£Ÿç”¨ã€‚"
+	icon = 'modular_z121/icons/obj/food/food.dmi'
+	icon_state = "baozi_raw"
+	food_reagents = list(
+		/datum/reagent/consumable/nutriment = 2,
+		/datum/reagent/consumable/nutriment/protein = 1,
+	)
+	tastes = list("ç”Ÿè‚‰" = 1, "ç”Ÿé¢çš®" = 1)
+	foodtypes = GRAIN | MEAT
+	w_class = WEIGHT_CLASS_SMALL
+	crafting_complexity = FOOD_COMPLEXITY_0
+
+//  è°å®¶å¥½äººç”¨çƒ˜ç„™ç®±è’¸åŒ…å­
+/obj/item/food/baozi_raw/make_bakeable()
+	AddComponent(/datum/component/bakeable, /obj/item/food/baozi_steamed, rand(10 SECONDS, 20 SECONDS), TRUE, TRUE)
+
+//  ç”¨çƒ¤æ¥åšç”Ÿç…åŒ…å¬èµ·æ¥æœ‰ç‚¹æ€ª
+/obj/item/food/baozi_raw/make_grillable()
+	AddComponent(/datum/component/grillable, /obj/item/food/baozi_grilled, rand(10 SECONDS, 20 SECONDS), TRUE, TRUE)
+
 /obj/item/food/roujiamo
-	name = "Èâ¼ĞâÉ"
-	desc = "¿¾Ãæ±ı¼Ğ×ÅËéÈâ£¬âÉÆ¤ËÖ´à£¬ÈâÏÚ¶àÖ­¡£"
+	name = "è‚‰å¤¹é¦"
+	desc = "çƒ¤é¢é¥¼å¤¹ç€ç¢è‚‰ï¼Œé¦çš®é…¥è„†ï¼Œè‚‰é¦…å¤šæ±ã€‚"
 	icon = 'modular_z121/icons/obj/food/food.dmi'
 	icon_state = "roujiamo"
 	food_reagents = list(
@@ -96,14 +183,14 @@
 		/datum/reagent/consumable/nutriment/protein = 4,
 		/datum/reagent/consumable/nutriment/vitamin = 2,
 	)
-	tastes = list("ÈâÏÚ" = 1, "ÈâÖ­" = 1, "ÃæÆ¤" = 1)
+	tastes = list("è‚‰é¦…" = 1, "è‚‰æ±" = 1, "é¢çš®" = 1)
 	foodtypes = GRAIN | MEAT | VEGETABLES
 	w_class = WEIGHT_CLASS_SMALL
 	crafting_complexity = FOOD_COMPLEXITY_3
 
 /obj/item/food/wolf_tooth_potato
-	name = "ÀÇÑÀÍÁ¶¹"
-	desc = "½«²¨ÀËĞÎµÄ´ÖáîÍÁ¶¹ÌõÕ¨ÖÁ½ğ»Æ¿É¿Ú£¬ÔÙÈöÉÏÀ±½·ÃæÓë×ÎÈ»£¬ÏãÀ±ËÖ´à¡£"
+	name = "ç‹¼ç‰™åœŸè±†"
+	desc = "å°†æ³¢æµªå½¢çš„ç²—çŠ·åœŸè±†æ¡ç‚¸è‡³é‡‘é»„å¯å£ï¼Œå†æ’’ä¸Šè¾£æ¤’é¢ä¸å­œç„¶ï¼Œé¦™è¾£é…¥è„†ã€‚"
 	icon = 'modular_z121/icons/obj/food/food.dmi'
 	icon_state = "wolf_tooth_potato"
 	food_reagents = list(
@@ -111,27 +198,27 @@
 		/datum/reagent/consumable/nutriment/vitamin = 2,
 		/datum/reagent/consumable/capsaicin = 3,
 	)
-	tastes = list("ÍÁ¶¹" = 1, "À±Î¶" = 1)
+	tastes = list("åœŸè±†" = 1, "è¾£å‘³" = 1)
 	foodtypes = GRAIN
 	w_class = WEIGHT_CLASS_SMALL
 	crafting_complexity = FOOD_COMPLEXITY_3
 
 /obj/item/food/youtiao
-	name = "ÓÍÌõ"
-	desc = "½ğ»ÆËÖ´àµÄÖĞÊ½¡®·¨¹÷¡¯£¬½¨Òé´îÅä¶¹½¬Ê³ÓÃ¡£"
+	name = "æ²¹æ¡"
+	desc = "é‡‘é»„é…¥è„†çš„ä¸­å¼â€˜æ³•æ£â€™ï¼Œå»ºè®®æ­é…è±†æµ†é£Ÿç”¨ã€‚"
 	icon = 'modular_z121/icons/obj/food/food.dmi'
 	icon_state = "youtiao"
 	food_reagents = list(
 		/datum/reagent/consumable/nutriment = 4,
 	)
-	tastes = list("ÃæÆ¤" = 1)
+	tastes = list("é¢çš®" = 1)
 	foodtypes = GRAIN | BREAKFAST
 	w_class = WEIGHT_CLASS_SMALL
 	crafting_complexity = FOOD_COMPLEXITY_2
 
 /obj/item/food/stinky_tofu
-	name = "³ô¶¹¸¯´®"
-	desc = "ÍâËÖÄÚÈíµÄÕ¨¶¹¸¯¿é£¬µ«´ËĞ¡³ÔÔÚ¿Õ¼äÕ¾°ı±á²»Ò»£¬Ê±³£Òı·¢¿ÚË®´óÕ½."
+	name = "è‡­è±†è…ä¸²"
+	desc = "å¤–é…¥å†…è½¯çš„ç‚¸è±†è…å—ï¼Œä½†æ­¤å°åƒåœ¨ç©ºé—´ç«™è¤’è´¬ä¸ä¸€ï¼Œæ—¶å¸¸å¼•å‘å£æ°´å¤§æˆ˜."
 	icon = 'modular_z121/icons/obj/food/food.dmi'
 	icon_state = "stinky_tofu"
 	food_reagents = list(
@@ -139,7 +226,7 @@
 		/datum/reagent/consumable/nutriment/protein = 2,
 		/datum/reagent/consumable/capsaicin = 2,
 	)
-	tastes = list("¶¹¸¯" = 1, "³ôÎ¶" = 1)
+	tastes = list("è±†è…" = 1, "è‡­å‘³" = 1)
 	foodtypes = GRAIN | GROSS
 	w_class = WEIGHT_CLASS_SMALL
 	crafting_complexity = FOOD_COMPLEXITY_3
@@ -149,7 +236,7 @@
 ////////////////////////////////////////////////CHINESE FOOD RECIPE////////////////////////////////////////////////
 
 /datum/crafting_recipe/food/zongzi
-	name = "ôÕ×Ó"
+	name = "ç²½å­"
 	reqs = list(
 		/obj/item/food/boiledrice = 1,
 		/datum/reagent/consumable/eggyolk = 2,
@@ -160,7 +247,7 @@
 	category = CAT_MARTIAN
 
 /datum/crafting_recipe/food/tangyuan
-	name = "ÌÀÔ²"
+	name = "æ±¤åœ†"
 	reqs = list(
 		/obj/item/food/bait/doughball = 5,
 		/obj/item/food/grown/peanut = 1,
@@ -171,27 +258,27 @@
 	category = CAT_MARTIAN
 /*
 /datum/crafting_recipe/food/qingtuan
-name = "ÇàÍÅ"
+name = "é’å›¢"
 reqs = list(
 	/obj/item/food/grown/herbs = 1,
 	/obj/item/food/boiledrice = 1,
-	/obj/item/food/grown/redbean = 1 //ºì¶¹Ã»Ğ´
+	/obj/item/food/grown/redbean = 1 //çº¢è±†æ²¡å†™
 )
 result = /obj/item/food/qingtuan
 category = CAT_CHINESE
 */
 /datum/crafting_recipe/food/dumpling
-    name = "½È×Ó"
+    name = "é¥ºå­"
     reqs = list(
         /obj/item/food/doughslice = 1,
-        /obj/item/food/meatball = 1,
+        /obj/item/food/raw_meatball = 1,
         /obj/item/food/grown/corn = 1
     )
-    result = /obj/item/food/dumpling
+    result = /obj/item/food/dumpling_raw
     category = CAT_MARTIAN
 
 /datum/crafting_recipe/food/mooncake
-	name = "ÔÂ±ı"
+	name = "æœˆé¥¼"
 	reqs = list(
 		/obj/item/food/pastrybase = 1,
 		/datum/reagent/consumable/eggyolk = 2,
@@ -200,17 +287,17 @@ category = CAT_CHINESE
 	result = /obj/item/food/mooncake
 	category = CAT_MARTIAN
 
-/datum/crafting_recipe/food/baozi
-	name = "°ü×Ó"
+/datum/crafting_recipe/food/baozi_raw
+	name = "åŒ…å­"
 	reqs = list(
 		/obj/item/food/doughslice = 1,
-		/obj/item/food/meatball = 1
+		/obj/item/food/raw_meatball = 1
 	)
-	result = /obj/item/food/baozi
+	result = /obj/item/food/baozi_raw
 	category = CAT_MARTIAN
 
 /datum/crafting_recipe/food/roujiamo
-	name = "Èâ¼ĞâÉ"
+	name = "è‚‰å¤¹é¦"
 	reqs = list(
 		/obj/item/food/flatdough = 1,
 		/obj/item/food/patty/plain = 1
@@ -219,7 +306,7 @@ category = CAT_CHINESE
 	category = CAT_MARTIAN
 
 /datum/crafting_recipe/food/wolf_tooth_potato
-	name = "ÀÇÑÀÍÁ¶¹"
+	name = "ç‹¼ç‰™åœŸè±†"
 	reqs = list(
 		/obj/item/food/fries = 1,
 		/obj/item/food/grown/chili = 1
@@ -228,7 +315,7 @@ category = CAT_CHINESE
 	category = CAT_MARTIAN
 
 /datum/crafting_recipe/food/youtiao
-	name = "ÓÍÌõ"
+	name = "æ²¹æ¡"
 	reqs = list(
 		/obj/item/food/doughslice = 1
 	)
@@ -236,7 +323,7 @@ category = CAT_CHINESE
 	category = CAT_MARTIAN
 
 /datum/crafting_recipe/food/stinky_tofu
-	name = "³ô¶¹¸¯´®"
+	name = "è‡­è±†è…ä¸²"
 	reqs = list(
 		/obj/item/food/tofu = 1,
 		/obj/item/food/grown/chili = 1
@@ -245,17 +332,17 @@ category = CAT_CHINESE
 	category = CAT_MARTIAN
 
 /datum/reagent/consumable/milktea
-	name = "ÄÌ²è"
-	description = "ÎŞÈÎºÎÌí¼ÓµÄÆÕÍ¨ÄÌ²è£¬ÒÔºì²è»ìºÏÏÊÄÌµ÷ÖÆ¶ø³É£¬ÒÀÈ»·Ç³£ÃÀÎ¶¡£"
+	name = "å¥¶èŒ¶"
+	description = "æ— ä»»ä½•æ·»åŠ çš„æ™®é€šå¥¶èŒ¶ï¼Œä»¥çº¢èŒ¶æ··åˆé²œå¥¶è°ƒåˆ¶è€Œæˆï¼Œä¾ç„¶éå¸¸ç¾å‘³ã€‚"
 	color = "#ca885c"
-	taste_description = "Å¨ÓôµÄÄÌ²è"
+	taste_description = "æµ“éƒçš„å¥¶èŒ¶"
 	chemical_flags = REAGENT_CAN_BE_SYNTHESIZED
 
 /datum/reagent/consumable/hot_soymilk
-	name = "¶¹½¬"
-	description = "ÈÈÌÚÌÚµÄ¶¹½¬£¬½¨Òé´îÅäÓÍÌõÊ³ÓÃ¡£"
+	name = "è±†æµ†"
+	description = "çƒ­è…¾è…¾çš„è±†æµ†ï¼Œå»ºè®®æ­é…æ²¹æ¡é£Ÿç”¨ã€‚"
 	color = "#f5e6c6"
-	taste_description = "ÈÈ¶¹½¬"
+	taste_description = "çƒ­è±†æµ†"
 	chemical_flags = REAGENT_CAN_BE_SYNTHESIZED
 
 /datum/chemical_reaction/hot_soymilk
@@ -271,15 +358,15 @@ category = CAT_CHINESE
 
 /datum/glass_style/has_foodtype/drinking_glass/hot_soymilk
 	required_drink_type = /datum/reagent/consumable/hot_soymilk
-	name = "¶¹½¬"
-	desc = "ÈÈÌÚÌÚµÄ¶¹½¬£¬½¨Òé´îÅäÓÍÌõÊ³ÓÃ¡£"
+	name = "è±†æµ†"
+	desc = "çƒ­è…¾è…¾çš„è±†æµ†ï¼Œå»ºè®®æ­é…æ²¹æ¡é£Ÿç”¨ã€‚"
 	icon = 'modular_z121/icons/obj/drinks/drinks.dmi'
 	icon_state = "hot_soymilk"
 	drink_type = BREAKFAST
 
 /datum/glass_style/drinking_glass/milktea
 	required_drink_type = /datum/reagent/consumable/milktea
-	name = "ÄÌ²è"
-	desc = "ÎŞÈÎºÎÌí¼ÓµÄÆÕÍ¨ÄÌ²è£¬ÒÔºì²è»ìºÏÏÊÄÌµ÷ÖÆ¶ø³É£¬ÒÀÈ»·Ç³£ÃÀÎ¶¡£"
+	name = "å¥¶èŒ¶"
+	desc = "æ— ä»»ä½•æ·»åŠ çš„æ™®é€šå¥¶èŒ¶ï¼Œä»¥çº¢èŒ¶æ··åˆé²œå¥¶è°ƒåˆ¶è€Œæˆï¼Œä¾ç„¶éå¸¸ç¾å‘³ã€‚"
 	icon = 'modular_z121/icons/obj/drinks/drinks.dmi'
 	icon_state = "milktea"
