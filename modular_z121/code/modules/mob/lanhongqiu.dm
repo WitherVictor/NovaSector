@@ -1,21 +1,21 @@
 /datum/loadout_item/inhand/pet/lanhongqiu
-	name = "À¶ºìÇò"
+	name = "è“çº¢çƒ"
 	item_path = /obj/item/clothing/head/mob_holder/pet/donator/lanhongqiu
 	//ckeywhitelist = list("lanhongqiu")
 
 /obj/item/lanhongqiucore
-	name = "À¶ºìÇòµÄºËĞÄ"
-	desc = "ÄãÔõÃ´¸ÒµÄ£¡Õâ¿É²»ÊÇÔÚÉ±Ê·À³Ä·£¬ÄãÉ±ËÀÁËÒ»¸öºÍÄãÒ»ÑùÓĞË¼Ïë¸ĞÇéµÄÉúÎï£¡"
+	name = "è“çº¢çƒçš„æ ¸å¿ƒ"
+	desc = "ä½ æ€ä¹ˆæ•¢çš„ï¼è¿™å¯ä¸æ˜¯åœ¨æ€å²è±å§†ï¼Œä½ æ€æ­»äº†ä¸€ä¸ªå’Œä½ ä¸€æ ·æœ‰æ€æƒ³æ„Ÿæƒ…çš„ç”Ÿç‰©ï¼"
 	icon = 'modular_z121/icons/mob/pets.dmi'
 	icon_state = "lanhongqiu_core"
 
 /mob/living/basic/pet/lanhongqiu
-	name = "À¶ºìÇò"
-	desc = "¿ËÂŞÍĞÉúÎï£¬Ò²Ğí±ğÈË»áÈÏÎªÊÇÊ·À³Ä·µÄ±äÖÖ£¬Êµ¼ÊÊÇËûÃÇÒÑ¾­ÔÚµ±µØ½¨Á¢ÁËÒ»¸öÅÓ´óµÄÊÀ½ç¹ú¼Ò¡£±ğÈÇËû£¡ÕâÊÇÊÀ½ç¹²ºÍ¹úµÄ¹«Ãñ£¡"
+	name = "è“çº¢çƒ"
+	desc = "å…‹ç½—æ‰˜ç”Ÿç‰©ï¼Œä¹Ÿè®¸åˆ«äººä¼šè®¤ä¸ºæ˜¯å²è±å§†çš„å˜ç§ï¼Œå®é™…æ˜¯ä»–ä»¬å·²ç»åœ¨å½“åœ°å»ºç«‹äº†ä¸€ä¸ªåºå¤§çš„ä¸–ç•Œå›½å®¶ã€‚åˆ«æƒ¹ä»–ï¼è¿™æ˜¯ä¸–ç•Œå…±å’Œå›½çš„å…¬æ°‘ï¼"
 	gender = MALE
 	icon = 'modular_z121/icons/mob/pets.dmi'
-	//held_lh = 'modular_z121/icons/mob/pets_held_lh.dmi'
-	//held_rh = 'modular_z121/icons/mob/pets_held_rh.dmi'
+	held_lh = 'modular_z121/icons/mob/pets_held_lh.dmi'
+	held_rh = 'modular_z121/icons/mob/pets_held_rh.dmi'
 	icon_state = "lanhongqiu"
 	icon_living = "lanhongqiu"
 	icon_dead = "lanhongqiu_dead"
@@ -32,8 +32,8 @@
 	obj_damage = 0
 
 /obj/item/clothing/head/mob_holder/pet/donator/lanhongqiu
-	name = "À¶ºìÇò"
-	desc = "¿ËÂŞÍĞÉúÎï£¬Ò²Ğí±ğÈË»áÈÏÎªÊÇÊ·À³Ä·µÄ±äÖÖ£¬Êµ¼ÊÊÇËûÃÇÒÑ¾­ÔÚµ±µØ½¨Á¢ÁËÒ»¸öÅÓ´óµÄÊÀ½ç¹ú¼Ò¡£±ğÈÇËû£¡ÕâÊÇÊÀ½ç¹²ºÍ¹úµÄ¹«Ãñ£¡"
+	name = "è“çº¢çƒ"
+	desc = "å…‹ç½—æ‰˜ç”Ÿç‰©ï¼Œä¹Ÿè®¸åˆ«äººä¼šè®¤ä¸ºæ˜¯å²è±å§†çš„å˜ç§ï¼Œå®é™…æ˜¯ä»–ä»¬å·²ç»åœ¨å½“åœ°å»ºç«‹äº†ä¸€ä¸ªåºå¤§çš„ä¸–ç•Œå›½å®¶ã€‚åˆ«æƒ¹ä»–ï¼è¿™æ˜¯ä¸–ç•Œå…±å’Œå›½çš„å…¬æ°‘ï¼"
 	icon = 'modular_z121/icons/mob/pets.dmi'
 	icon_state = "lanhongqiu"
 
