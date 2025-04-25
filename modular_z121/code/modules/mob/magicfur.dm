@@ -1,6 +1,6 @@
 /mob/living/basic/pet/magicfur
-	name = "Ä§·¨ÊŞ"
-	desc = "Ò»Ö»³äÂúÄ§·¨µÄÃ«È×È×Ğ¡¼Ò»ï£¬ÓµÓĞÊ¹ÓÃÄ§·¨ÖÎÁÆÆäËüÉúÎïµÄÄÜÁ¦"
+	name = "é­”æ³•å…½"
+	desc = "ä¸€åªå……æ»¡é­”æ³•çš„æ¯›èŒ¸èŒ¸å°å®¶ä¼™ï¼Œæ‹¥æœ‰ä½¿ç”¨é­”æ³•æ²»ç–—å…¶å®ƒç”Ÿç‰©çš„èƒ½åŠ›"
 	gender = NEUTER
 	icon = 'modular_z121/icons/mob/pets.dmi'
 	icon_state = "magic_fur_fox"
@@ -13,8 +13,8 @@
 	mob_biotypes = MOB_ORGANIC|MOB_BEAST
 	minimum_survivable_temperature = NPC_DEFAULT_MIN_TEMP
 	maximum_survivable_temperature = NPC_DEFAULT_MAX_TEMP
-	maxHealth = 20
-	health = 20
+	maxHealth = 50
+	health = 50
 	melee_damage_lower = 5
 	melee_damage_upper = 5
 	melee_attack_cooldown = 5 SECONDS
@@ -50,19 +50,19 @@
 		)
 
 /mob/living/basic/pet/magicfur/white
-	name = "°×Ä§·¨ÊŞ"
+	name = "ç™½é­”æ³•å…½"
 	icon_state = "magic_fur_white"
 	icon_living = "magic_fur_white"
 	icon_dead = "magic_fur_white_dead"
 
 /mob/living/basic/pet/magicfur/black
-	name = "ºÚÄ§·¨ÊŞ"
+	name = "é»‘é­”æ³•å…½"
 	icon_state = "magic_fur_black"
 	icon_living = "magic_fur_black"
 	icon_dead = "magic_fur_black_dead"
 
 /mob/living/basic/pet/magicfur/pink
-	name = "·ÛÄ§·¨ÊŞ"
+	name = "ç²‰é­”æ³•å…½"
 	icon_state = "magic_fur_pink"
 	icon_living = "magic_fur_pink"
 	icon_dead = "magic_fur_pink_dead"
