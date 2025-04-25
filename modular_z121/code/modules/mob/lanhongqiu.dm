@@ -26,6 +26,8 @@
 	mob_biotypes = MOB_ORGANIC|MOB_BEAST
 	minimum_survivable_temperature = NPC_DEFAULT_MIN_TEMP
 	maximum_survivable_temperature = NPC_DEFAULT_MAX_TEMP
+	maxHealth = 100
+	health = 100
 	butcher_results = list(/obj/item/lanhongqiucore = 1)
 	unsuitable_atmos_damage = 0.5
 	mobility_flags = MOBILITY_FLAGS_REST_CAPABLE_DEFAULT
