@@ -23,6 +23,9 @@
 	semi_auto = TRUE
 	bolt_type = BOLT_TYPE_NO_BOLT
 
+/obj/item/gun/ballistic/shotgun/single/give_gun_safeties()
+	return
+
 /obj/item/ammo_box/magazine/internal/double_barrel
 	name = "双管步枪内置弹匣"
 
@@ -52,6 +55,9 @@
 	accepted_magazine_type = /obj/item/ammo_box/magazine/internal/double_barrel
 
 	var/obj/item/gun/ballistic/shotgun/single/underbarrel
+
+/obj/item/gun/ballistic/three_barrel/give_gun_safeties()
+	return
 
 /obj/item/gun/ballistic/three_barrel/Initialize()
 	. = ..()
