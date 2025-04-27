@@ -74,10 +74,32 @@
 	else
 		return ..()
 
-/obj/item/gun/ballistic/three_barrel/attackby(obj/item/A, mob/user)
+/obj/item/gun/ballistic/three_barrel/item_interaction(mob/living/user, obj/item/tool, list/modifiers)
 	// 传递霰弹装填请求到子模块
-	if (istype(A, /obj/item/ammo_casing/shotgun))
-		underbarrel.rack()
-		return underbarrel.attackby(A, user)
+	if (istype(tool, /obj/item/ammo_casing/shotgun))
+		testing("Item is shotgun shell.")
+
+		underbarrel.attack_self(user)
+
+		var/obj/item/ammo_casing/shotgun/shell = tool
+		underbarrel.magazine.give_round(shell)
+		underbarrel.chambered = shell
+
+		return ITEM_INTERACT_BLOCKING
+	else if (istype(tool, /obj/item/ammo_box/advanced/s12gauge))
+		testing("Item is a shotgun shell box.")
+
+		underbarrel.attack_self(user)
+
+		var/obj/item/ammo_box/advanced/s12gauge/shell_box = tool
+		var/obj/item/ammo_casing/shell = shell_box.get_round()
+		if (!shell)
+			return
+
+		underbarrel.magazine.give_round(shell)
+		underbarrel.chambered = shell
+
+		return ITEM_INTERACT_BLOCKING
 	else
+		testing("Item is none of these condition, type is [tool.type].")
 		return ..()
