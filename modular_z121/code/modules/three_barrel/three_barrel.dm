@@ -46,6 +46,8 @@
 
 	slot_flags = ITEM_SLOT_BACK
 
+	bolt_type = BOLT_TYPE_NO_BOLT
+
 	internal_magazine = TRUE
 	accepted_magazine_type = /obj/item/ammo_box/magazine/internal/double_barrel
 
