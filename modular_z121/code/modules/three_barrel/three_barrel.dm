@@ -1,7 +1,7 @@
-/obj/item/ammo_box/magazine/internal/single_shotgun
+/obj/item/ammo_box/magazine/internal/shot/single
 	name = "单发内置霰弹枪弹匣"
 
-	ammo_type = /obj/item/ammo_casing/shotgun
+	ammo_type = /obj/item/ammo_casing/shotgun/buckshot
 	caliber = CALIBER_SHOTGUN
 
 	max_ammo = 1
@@ -11,7 +11,7 @@
 	desc = "一把中折式单发霰弹枪，每次发射之后都要重新装填。"
 
 	internal_magazine = TRUE
-	accepted_magazine_type = /obj/item/ammo_box/magazine/internal/single_shotgun
+	accepted_magazine_type = /obj/item/ammo_box/magazine/internal/shot/single
 
 	fire_sound = 'sound/items/weapons/gun/shotgun/shot.ogg'
 
