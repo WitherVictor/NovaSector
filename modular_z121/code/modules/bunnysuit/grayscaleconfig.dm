@@ -41,7 +41,7 @@
 	icon_file = 'modular_z121/icons/mob/clothing/bunny/suits/jacket.dmi'
 	json_config = 'modular_z121/code/modules/bunnysuit/greyscaleconfig/tailcoat_bar_worn.json'
 
-datum/greyscale_config/tailcoat_bar_worn/digi
+/datum/greyscale_config/tailcoat_bar_worn/digi
 	name = "Worn Bartender's Tailcoat"
 	icon_file = 'modular_z121/icons/mob/clothing/bunny/suits/jacket_digi.dmi'
 	json_config = 'modular_z121/code/modules/bunnysuit/greyscaleconfig/tailcoat_bar_worn.json'
