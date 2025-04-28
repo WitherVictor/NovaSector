@@ -44,8 +44,8 @@
 	desc = "整合式三管战斗平台，包含双联步枪系统与下挂霰弹模块。"
 	desc_controls = "左键: 发射步枪弹 | 右键: 发射霰弹"
 
-	icon = 'icons/obj/weapons/guns/ballistic.dmi'
-	icon_state = "dshotgun"
+	icon = 'modular_z121/icons/obj/guns/three_barrel.dmi'
+	icon_state = "three_barrel"
 
 	fire_sound = 'modular_nova/modules/modular_weapons/sounds/rifle_heavy.ogg'
 
