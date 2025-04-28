@@ -41,7 +41,7 @@
 //  三管枪
 /obj/item/gun/ballistic/three_barrel
 	name = "STS-30 三管战术步枪"
-	desc = "整合式三管战斗平台，包含双联步枪系统与下挂霰弹模块。"
+	desc = "整合式三管战斗平台，包含 .40 Long Sol 口径的双联步枪系统与下挂霰弹模块。"
 	desc_controls = "左键: 发射步枪弹 | 右键: 发射霰弹"
 
 	icon = 'modular_z121/icons/obj/guns/three_barrel.dmi'
