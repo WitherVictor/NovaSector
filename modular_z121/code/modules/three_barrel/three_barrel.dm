@@ -77,10 +77,38 @@
 /obj/item/gun/ballistic/three_barrel/item_interaction(mob/living/user, obj/item/tool, list/modifiers)
 	// 传递霰弹装填请求到子模块
 	if (istype(tool, /obj/item/ammo_casing/shotgun) || istype(tool, /obj/item/ammo_box/advanced/s12gauge))
-		testing("Item is shotgun shell or shell box.")
+		testing("Item is a shotgun shell or shell box.")
 
 		underbarrel.attack_self(user)
 		underbarrel.item_interaction(user, tool, modifiers)
+
+		return ITEM_INTERACT_BLOCKING
+	else if (istype(tool, /obj/item/ammo_box/magazine/ammo_stack/c40_sol))
+		testing("Item is an ammo stack of .40 Long sol casings.")
+
+		var/obj/item/ammo_box/magazine/ammo_stack/c40_sol/stack = tool
+		var/obj/item/ammo_casing/c40sol/bullet = stack.get_round()
+		if (!bullet)
+			return
+
+		playsound(src, 'sound/items/weapons/gun/general/magazine_insert_full.ogg')
+		magazine.give_round(bullet)
+
+		if (!chambered)
+			chambered = bullet
+
+		return ITEM_INTERACT_BLOCKING
+	else if (istype(tool, /obj/item/ammo_box/magazine/ammo_stack/s12gauge))
+		testing("Item is an ammo stack of shotgun shells.")
+
+		var/obj/item/ammo_box/magazine/ammo_stack/s12gauge/stack = tool
+		var/obj/item/ammo_casing/shotgun/shell = stack.get_round()
+		if (!shell)
+			return
+
+		playsound(src, 'sound/items/weapons/gun/shotgun/insert_shell.ogg')
+		underbarrel.magazine.give_round(shell)
+		underbarrel.chambered = shell
 
 		return ITEM_INTERACT_BLOCKING
 	else
