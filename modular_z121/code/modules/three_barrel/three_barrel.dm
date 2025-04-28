@@ -77,6 +77,19 @@
 	QDEL_NULL(underbarrel)
 	return ..()
 
+//  检视提示下挂霰弹是否可击发以及弹药类型
+/obj/item/gun/ballistic/three_barrel/examine(mob/user)
+	. = ..()
+
+	if (underbarrel.magazine.ammo_count())
+		if (underbarrel.magazine.ammo_count(FALSE))
+			var/obj/item/ammo_casing/shotgun/shell = underbarrel.magazine.get_round()
+			. += "下挂霰弹枪内有一发 [shell.name]。"
+		else
+			. += "下挂霰弹枪内有一发击发过的霰弹。"
+	else
+		. += "下挂霰弹枪内没有子弹。"
+
 //  右键发射下挂霰弹枪
 /obj/item/gun/ballistic/three_barrel/try_fire_gun(atom/target, mob/living/user, params)
 	if (LAZYACCESS(params2list(params), RIGHT_CLICK))
