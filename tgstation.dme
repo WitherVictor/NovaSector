@@ -9077,4 +9077,5 @@
 #include "modular_z121\code\modules\sofappistol\sofap.dm"
 #include "modular_z121\code\modules\sprite_accessory\hair.dm"
 #include "modular_z121\code\modules\toys\plushes.dm"
+#include "modular_z121\code\modules\three_barrel\three_barrel.dm"
 // END_INCLUDE
