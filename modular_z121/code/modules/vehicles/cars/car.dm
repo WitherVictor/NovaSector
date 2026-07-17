@@ -41,17 +41,32 @@
 	fire = 80
 	acid = 80
 
-/obj/vehicle/sealed/car/sedan/Bump(atom/bumped_atom)
-	. = ..()
-	if(!isliving(bumped_atom))
+/obj/vehicle/sealed/car/sedan/welder_act(mob/living/user, obj/item/W)
+	if(user.combat_mode)
 		return
-	var/mob/living/mob = bumped_atom
-	mob.throw_at(get_edge_target_turf(mob, dir), 2, 3, bumped_atom, gentle = TRUE)	// 轻轻一撞，而不是往死里撞
-	mob.visible_message(
-		span_danger("[src]轻轻的撞飞了[mob]！"),
-		span_danger("[src]轻轻的撞飞了你！"),
-	)
-	playsound(src, 'sound/items/weapons/genhit.ogg', 25, TRUE)
+	. = TRUE
+	if(DOING_INTERACTION(user, src))
+		balloon_alert(user, "你已经在修它了！")
+		return
+	if(atom_integrity >= max_integrity)
+		balloon_alert(user, "它没坏！")
+		return
+	if(!W.tool_start_check(user, amount=1, heat_required = HIGH_TEMPERATURE_REQUIRED))
+		return
+	user.balloon_alert_to_viewers("开始焊接[src]", "开始修理[src]")
+	audible_message(span_hear("你听到焊接声。"))
+	var/did_the_thing
+	while(atom_integrity < max_integrity)
+		if(W.use_tool(src, user, 2.5 SECONDS, volume=50))
+			did_the_thing = TRUE
+			atom_integrity += min(10, (max_integrity - atom_integrity))
+			audible_message(span_hear("你听到焊接声。"))
+		else
+			break
+	if(did_the_thing)
+		user.balloon_alert_to_viewers("[(atom_integrity >= max_integrity) ? "完全" : "部分"]修复[src]")
+	else
+		user.balloon_alert_to_viewers("停止焊接[src]", "中断修复！")
 
 /obj/vehicle/sealed/car/sedan/attack_hand(mob/living/user, list/modifiers)
 	. = ..()
