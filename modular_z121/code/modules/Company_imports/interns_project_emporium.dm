@@ -96,7 +96,7 @@
 
 /datum/supply_pack/companies/mags_and_ammo/intern_project/europa_mag
 	contains = list(/obj/item/ammo_box/magazine/europa/starts_empty)
-	cost = PAYCHECK_CREW
+	cost = PAYCHECK_CREW * 2
 
 /datum/supply_pack/companies/mags_and_ammo/intern_project/dex4_mag
 	contains = list(/obj/item/ammo_box/magazine/dex4/starts_empty)
@@ -151,7 +151,7 @@
 /datum/supply_pack/service/sedan
 	name = "轿车套件"
 	desc = "一辆属于你自己的汽车，驶向太空！驶向新生活！"
-	cost = CARGO_CRATE_VALUE * 5
+	cost = CARGO_CRATE_VALUE * 10
 	contains = list(
 		/obj/vehicle/sealed/car/sedan = 1,
 		/obj/item/key/car = 1,
