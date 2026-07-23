@@ -2691,7 +2691,7 @@ GLOBAL_LIST_EMPTY(fire_appearances)
 
 /mob/living/perform_hand_swap(held_index)
 	//safeguard for one-handed mobs lol
-	if(num_hands == 1)
+	if(length(held_items) == 1)
 		held_index = 1
 
 	return ..()
@@ -3108,7 +3108,7 @@ GLOBAL_LIST_EMPTY(fire_appearances)
 	var/comparative_fitness = their_fitness_level ? our_fitness_level / their_fitness_level : 1
 
 	if (comparative_fitness > 2)
-		scouter.set_jitter_if_lower(comparative_fitness SECONDS)
+		//scouter.set_jitter_if_lower(comparative_fitness SECONDS) // NOVA EDIT REMOVAL
 		return "[span_notice("You'd estimate [p_their()] fitness level at about...")] [span_boldwarning("What?!? [our_fitness_level]???")]"
 
 	return span_notice("You'd estimate [p_their()] fitness level at about [our_fitness_level]. [comparative_fitness <= 0.33 ? "Pathetic." : ""]")
