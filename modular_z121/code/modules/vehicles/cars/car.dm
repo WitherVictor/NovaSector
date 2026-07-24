@@ -18,7 +18,7 @@
 	enter_sound = 'sound/vehicles/clown_car/door_close.ogg'
 	exit_sound = 'sound/vehicles/clown_car/door_open.ogg'
 
-/obj/vehicle/examine(mob/user)
+/obj/vehicle/sealed/car/sedan/examine(mob/user)
 	. = ..()
 	var/examine_text = ""
 	var/integrity = occupant_amount()
