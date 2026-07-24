@@ -9911,4 +9911,6 @@
 #include "modular_z121\code\modules\junkcannon\junkcannon_recipe.dm"
 #include "modular_z121\code\modules\signal_gun\signal_gun.dm"
 #include "modular_z121\code\modules\signal_gun\signal_gun_recipe.dm"
+#include "modular_z121\code\modules\waterbucket\waterbucket.dm"
+#include "modular_z121\code\modules\waterbucket\waterbucket_recipe.dm"
 // END_INCLUDE
