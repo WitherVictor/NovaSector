@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 /* Library Machines
  *
  * Contains:
@@ -114,20 +113,20 @@ GLOBAL_VAR_INIT(library_table_modified, 0)
 			return TRUE
 		if("search")
 			if(!prevent_db_spam())
-				say(LANG("obj.0d9e5574", null))
+				say("Database cables refreshing. Please wait a moment.")
 				return
 			INVOKE_ASYNC(src, PROC_REF(update_db_info))
 			return TRUE
 		if("switch_page")
 			if(!prevent_db_spam())
-				say(LANG("obj.0d9e5574", null))
+				say("Database cables refreshing. Please wait a moment.")
 				return
 			search_page = sanitize_page_input(params["page"], search_page, page_count)
 			INVOKE_ASYNC(src, PROC_REF(update_db_info))
 			return TRUE
 		if("clear_data") //The cap just walked in on your browsing, quick! delete it!
 			if(!prevent_db_spam())
-				say(LANG("obj.0d9e5574", null))
+				say("Database cables refreshing. Please wait a moment.")
 				return
 			title = initial(title)
 			author = initial(author)
@@ -499,7 +498,7 @@ GLOBAL_VAR_INIT(library_table_modified, 0)
 			return TRUE
 		if("upload")
 			if(!prevent_db_spam())
-				say(LANG("obj.0d9e5574", null))
+				say("Database cables refreshing. Please wait a moment.")
 				return
 			var/upload_category = params["category"]
 			if(!(upload_category in SSlibrary.upload_categories)) //Nice try
@@ -510,20 +509,20 @@ GLOBAL_VAR_INIT(library_table_modified, 0)
 		if("news_post")
 			// We grey out the button UI-side, but let's just be safe to guard against spammy spammers.
 			if(!COOLDOWN_FINISHED(src, newscaster_cooldown))
-				say(LANG("obj.8b8371f4", null))
+				say("Not enough time has passed since the last news post. Please wait.")
 				return
 			if(!GLOB.news_network)
-				say(LANG("obj.95ec6c6e", null))
+				say("No news network found on station. Aborting.")
 			var/datum/feed_channel/library_channel = GLOB.news_network.network_channels_by_name[LIBRARY_NEWSFEED]
 			if(isnull(library_channel))
 				GLOB.news_network.create_feed_channel(LIBRARY_NEWSFEED, "Library", "The official station book club!", null)
 
 			var/obj/machinery/libraryscanner/scan = get_scanner()
 			if(!scan)
-				say(LANG("obj.1c542547", null))
+				say("No nearby scanner detected. Aborting.")
 				return
 			GLOB.news_network.submit_article(scan.cache.content, "[scan.cache.author]: [scan.cache.title]", LIBRARY_NEWSFEED, null)
-			say(LANG("obj.16d801e8", null))
+			say("Upload complete. Your uploaded title is now available on station newscasters.")
 			COOLDOWN_START(src, newscaster_cooldown, NEWSCASTER_COOLDOWN)
 			return TRUE
 		if("print_book")
@@ -548,22 +547,25 @@ GLOBAL_VAR_INIT(library_table_modified, 0)
 			set_screen_state(MIN_LIBRARY)
 			return TRUE
 
-/obj/machinery/computer/libraryconsole/bookmanagement/attackby(obj/item/weapon, mob/user, list/modifiers, list/attack_modifiers)
-	if(!istype(weapon, /obj/item/barcodescanner))
-		return ..()
-	var/obj/item/barcodescanner/scanner = weapon
+/obj/machinery/computer/libraryconsole/bookmanagement/item_interaction(mob/living/user, obj/item/tool, list/modifiers)
+	if(!istype(tool, /obj/item/barcodescanner))
+		return NONE
+
+	var/obj/item/barcodescanner/scanner = tool
 	if(scanner.computer_ref?.resolve() == src)
-		balloon_alert(user, LANG("obj.7bf47bb9", null))
-		return
+		balloon_alert(user, "already connected!")
+		return ITEM_INTERACT_BLOCKING
+
 	scanner.computer_ref = WEAKREF(src)
-	balloon_alert(user, LANG("obj.05b26abe", null))
-	audible_message(span_hear(LANG("obj.4b0186e9", list(src))))
+	balloon_alert(user, "scanner connected")
+	audible_message(span_hear("[src] lets out a low, short blip."))
+	return ITEM_INTERACT_SUCCESS
 
 /obj/machinery/computer/libraryconsole/bookmanagement/emag_act(mob/user, obj/item/card/emag/emag_card)
 	if(!density || obj_flags & EMAGGED)
 		return FALSE
 	obj_flags |= EMAGGED
-	balloon_alert(user, LANG("obj.544a7fad", null))
+	balloon_alert(user, "forbidden knowledge unlocked")
 	return TRUE
 
 /obj/machinery/computer/libraryconsole/bookmanagement/proc/set_screen_state(new_state)
@@ -580,36 +582,36 @@ GLOBAL_VAR_INIT(library_table_modified, 0)
 /obj/machinery/computer/libraryconsole/bookmanagement/proc/print_forbidden_lore(mob/user)
 	can_spawn_lore = FALSE
 	new /obj/item/melee/cultblade/dagger(get_turf(src))
-	to_chat(user, span_warning(LANG("obj.d23917cd", null)))
-	user.visible_message(span_warning(LANG("obj.34409348", list(user, user.p_their(), user.p_they(), user.p_s(), user.p_they(), user.p_s()))), vision_distance = 2)
+	to_chat(user, span_warning("Your sanity barely endures the seconds spent in the vault's browsing window. The only thing to remind you of this when you stop browsing is a sinister dagger sitting on the desk. You don't even remember where it came from..."))
+	user.visible_message(span_warning("[user] stares at the blank screen for a few moments, [user.p_their()] expression frozen in fear. When [user.p_they()] finally awaken[user.p_s()] from it, [user.p_they()] look[user.p_s()] a lot older."), vision_distance = 2)
 	if(ishuman(user))
 		var/mob/living/carbon/human/fool = user
 		fool.age = clamp(fool.age + 10, AGE_MIN, AGE_MAX) //Fuck you
 
 /obj/machinery/computer/libraryconsole/bookmanagement/proc/shun_the_corp(mob/user)
 	can_spawn_lore = FALSE
-	to_chat(user, span_warning(LANG("obj.30599ec9", null)))
+	to_chat(user, span_warning("You click off the page in a rush, and the machine hums back to normal, the tab gone..."))
 
 /obj/machinery/computer/libraryconsole/bookmanagement/proc/upload_from_scanner(upload_category)
 	var/obj/machinery/libraryscanner/scan = get_scanner()
 	if(!scan)
-		say(LANG("obj.16d40f2e", null))
+		say("No nearby scanner detected.")
 		return
 	if(!scan.cache)
-		say(LANG("obj.b645a84d", null))
+		say("No cached book found. Aborting upload.")
 		return
 	if (!SSdbcore.Connect())
-		say(LANG("obj.b5711164", null))
+		say("Connection to Archive has been severed. Aborting.")
 		return
 	var/datum/book_info/book = scan.cache
 	if(!book.title)
-		say(LANG("obj.70657d4b", null))
+		say("No title detected. Aborting")
 		return
 	if(!book.author)
-		say(LANG("obj.396aafe8", null))
+		say("No author detected. Aborting")
 		return
 	if(!book.content)
-		say(LANG("obj.6da4173f", null))
+		say("No content detected. Aborting")
 		return
 	var/msg = "has uploaded the book titled [book.title], [length(book.content)] signs"
 	var/datum/db_query/query_library_upload = SSdbcore.NewQuery({"
@@ -618,19 +620,19 @@ GLOBAL_VAR_INIT(library_table_modified, 0)
 	"}, list("title" = book.title, "author" = book.author, "content" = book.content, "category" = upload_category, "ckey" = usr.ckey, "round_id" = GLOB.round_id))
 	if(!query_library_upload.Execute())
 		qdel(query_library_upload)
-		say(LANG("obj.3a377796", null))
+		say("Database error encountered uploading to Archive")
 		return
 	usr.log_message(msg, LOG_GAME)
 	qdel(query_library_upload)
 	library_updated()
-	say(LANG("obj.3845563a", null))
+	say("Upload Complete. Uploaded title will be available for printing in a moment")
 	update_db_info()
 
 /// Call this proc to attempt a print. It will return false if the print failed, true otherwise, longside some ux
 /// Accepts a callback to call when the print "finishes"
 /obj/machinery/computer/libraryconsole/bookmanagement/proc/attempt_print(datum/callback/call_after)
 	if(!COOLDOWN_FINISHED(src, printer_cooldown))
-		say(LANG("obj.feadc081", null))
+		say("Printer currently unavailable, please wait a moment.")
 		return FALSE
 	COOLDOWN_START(src, printer_cooldown, PRINTER_COOLDOWN)
 	playsound(src, 'sound/machines/printer.ogg', 50)
@@ -654,7 +656,7 @@ GLOBAL_VAR_INIT(library_table_modified, 0)
 
 /obj/machinery/computer/libraryconsole/bookmanagement/proc/print_book(id)
 	if (!SSdbcore.Connect())
-		say(LANG("obj.b5711164", null))
+		say("Connection to Archive has been severed. Aborting.")
 		can_connect = FALSE
 		return
 
@@ -664,7 +666,7 @@ GLOBAL_VAR_INIT(library_table_modified, 0)
 	)
 	if(!query_library_print.Execute())
 		qdel(query_library_print)
-		say(LANG("obj.eca8810b", null))
+		say("PRINTER ERROR! Failed to print document (0x0000000F)")
 		return
 
 	while(query_library_print.NextRow())
@@ -680,7 +682,7 @@ GLOBAL_VAR_INIT(library_table_modified, 0)
 			fill.set_author(author, trusted = TRUE)
 			fill.set_content(content, trusted = TRUE)
 			printed_book.gen_random_icon_state()
-			visible_message(span_notice(LANG("obj.9dcdbbf0", list(src))))
+			visible_message(span_notice("[src]'s printer hums as it produces a completely bound book. How did it do that?"))
 			log_paper("[key_name(usr)] has printed \"[title]\" (id: [id]) by [author] from a book management console.")
 		break
 	qdel(query_library_print)
@@ -715,15 +717,16 @@ GLOBAL_VAR_INIT(library_table_modified, 0)
 	cache = null
 	return ..()
 
-/obj/machinery/libraryscanner/attackby(obj/hitby, mob/user, list/modifiers, list/attack_modifiers)
-	if(istype(hitby, /obj/item/book))
-		user.transferItemToLoc(hitby, src)
-		if(held_book)
-			user.put_in_hands(held_book)
-		held_book = hitby
-		playsound(src, 'sound/machines/eject.ogg', 70)
-		return TRUE
-	return ..()
+/obj/machinery/libraryscanner/item_interaction(mob/living/user, obj/item/tool, list/modifiers)
+	if(!istype(tool, /obj/item/book))
+		return NONE
+
+	user.transferItemToLoc(tool, src)
+	if(held_book)
+		user.put_in_hands(held_book)
+	held_book = tool
+	playsound(src, 'sound/machines/eject.ogg', 70)
+	return ITEM_INTERACT_SUCCESS
 
 /obj/machinery/libraryscanner/Exited(atom/movable/gone, direction)
 	. = ..()
@@ -755,7 +758,7 @@ GLOBAL_VAR_INIT(library_table_modified, 0)
 	switch(action)
 		if("scan")
 			if(cache?.compare(held_book.book_data))
-				say(LANG("obj.7e289cca", null))
+				say("This book is already in my internal cache")
 				return
 			cache = held_book.book_data.return_copy()
 			flick("bigscanner1", src)
@@ -797,37 +800,37 @@ GLOBAL_VAR_INIT(library_table_modified, 0)
 	. = ..()
 	icon_state = panel_open ? "[base_icon_state]2" : base_icon_state
 
-/obj/machinery/bookbinder/attackby(obj/hitby, mob/user, list/modifiers, list/attack_modifiers)
-	if(istype(hitby, /obj/item/paper))
-		prebind_book(user, hitby)
-		return TRUE
+/obj/machinery/bookbinder/item_interaction(mob/living/user, obj/item/tool, list/modifiers)
+	if(istype(tool, /obj/item/paper))
+		prebind_book(user, tool)
+		return ITEM_INTERACT_SUCCESS
 
-	if(isidcard(hitby))
-		var/obj/item/card/id/idcard = hitby
+	if(isidcard(tool))
+		var/obj/item/card/id/idcard = tool
 		scanned_name = idcard.registered_name
-		balloon_alert(user, LANG("obj.98f57ecb", null))
-		return TRUE
+		balloon_alert(user, "scanned")
+		return ITEM_INTERACT_SUCCESS
 
-	return ..()
+	return NONE
 
 /obj/machinery/bookbinder/proc/prebind_book(mob/user, obj/item/paper/draw_from)
 	if(machine_stat)
 		return
 
 	if(busy)
-		to_chat(user, span_warning(LANG("obj.4203cd0d", null)))
+		to_chat(user, span_warning("The book binder is busy. Please wait for completion of previous operation."))
 		return
 
 	if(!scanned_name)
 		scanned_name = "unknown author"
-		say(LANG("obj.0a0ae235", null))
+		say("No ID detected. Please scan your ID if you would like to be credited for this book. Otherwise please enter your paper again.")
 		return
 
 	if(!user.transferItemToLoc(draw_from, src))
 		return
 
-	user.visible_message(span_notice(LANG("obj.ed52d749", list(user, src))), span_notice(LANG("obj.d1a9c5cc", list(src))))
-	audible_message(span_hear(LANG("obj.126f54a1", list(src))))
+	user.visible_message(span_notice("[user] loads some paper into [src]."), span_notice("You load some paper into [src]."))
+	audible_message(span_hear("[src] begins to hum as it warms up its printing drums."))
 	busy = TRUE
 	playsound(src, 'sound/machines/printer.ogg', 50)
 	flick("binder1", src)
@@ -842,7 +845,7 @@ GLOBAL_VAR_INIT(library_table_modified, 0)
 		draw_from.forceMove(drop_location())
 		return
 
-	visible_message(span_notice(LANG("obj.af0b9ec6", list(src))))
+	visible_message(span_notice("[src] whirs as it prints and binds a new book."))
 	var/obj/item/book/bound_book = new(loc)
 	bound_book.book_data.set_content_using_paper(draw_from)
 	bound_book.book_data.set_author(scanned_name, trusted = FALSE)

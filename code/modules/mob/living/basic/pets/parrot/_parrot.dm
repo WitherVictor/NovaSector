@@ -184,7 +184,7 @@ GLOBAL_LIST_INIT(strippable_parrot_items, create_strippable_list(list(
 /// Proc that handles sending the signal and returning a valid phrase to say. Will not do anything if we don't have a stat or if we're cliented.
 /// Will return either a string or null.
 /mob/living/basic/parrot/proc/get_phrase()
-	if(!isnull(client) || stat != CONSCIOUS)
+	if(!isnull(client) || IS_UNCONSCIOUS_OR_CRIT(src))
 		return null
 
 	if(!COOLDOWN_FINISHED(src, forced_speech_cooldown))
@@ -349,7 +349,7 @@ GLOBAL_LIST_INIT(strippable_parrot_items, create_strippable_list(list(
 /// Handles special behavior whenever we are injured.
 /mob/living/basic/parrot/proc/on_injured(mob/living/basic/source, mob/living/attacker, attack_flags)
 	SIGNAL_HANDLER
-	if(!isnull(client) || stat == CONSCIOUS)
+	if(!isnull(client) || !IS_UNCONSCIOUS_OR_CRIT(src))
 		return
 
 	drop_held_item(gently = FALSE)
@@ -366,7 +366,7 @@ GLOBAL_LIST_INIT(strippable_parrot_items, create_strippable_list(list(
 		balloon_alert(src, LANG("mob.1913f2a6", null))
 		return
 
-	if(stat != CONSCIOUS) // don't gotta do shit
+	if(IS_UNCONSCIOUS_OR_CRIT(src)) // don't gotta do shit
 		return
 
 	if(!gently && isgrenade(get_active_held_item()))

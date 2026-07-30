@@ -1,9 +1,8 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 // Ye old forbidden book, the Codex Cicatrix.
 /obj/item/codex_cicatrix
 	name = "Codex Cicatrix"
 	desc = "This heavy tome is full of cryptic scribbles and impossible diagrams. \
-	According to legend, it can be deciphered to reveal the secrets of the veil between worlds."
+		According to legend, it can be deciphered to reveal the secrets of the veil between worlds."
 	icon = 'icons/obj/antags/eldritch.dmi'
 	base_icon_state = "book"
 	icon_state = "book"
@@ -12,9 +11,10 @@
 	/// Helps determine the icon state of this item when it's used on self.
 	var/book_open = FALSE
 	/// How fast we can drain influences
-	var/drain_speed = 5 SECONDS
+	var/drain_speed = 7.5 SECONDS
 	/// How fast we can draw runes
-	var/draw_speed = 8 SECONDS
+	var/draw_speed = 15 SECONDS
+
 
 /obj/item/codex_cicatrix/Initialize(mapload)
 	. = ..()
@@ -33,23 +33,25 @@
 	if(!IS_HERETIC(user))
 		return
 
-	. += span_notice(LANG("obj.1e85c620", null))
-	. += span_notice(LANG("obj.62905648", null))
-	. += span_notice(LANG("obj.b5d7d011", null))
+	. += span_notice("Can be used to tap influences for additional knowledge points.")
+	. += span_notice("Can also be used to draw or remove transmutation runes with ease.")
 
 /obj/item/codex_cicatrix/attack_self(mob/user, modifiers)
 	. = ..()
 	if(.)
 		return
 
-	if(book_open)
-		close_animation()
-		RemoveElement(/datum/element/heretic_focus)
-		update_weight_class(WEIGHT_CLASS_SMALL)
-	else
-		open_animation()
-		AddElement(/datum/element/heretic_focus)
-		update_weight_class(WEIGHT_CLASS_NORMAL)
+	open_animation()
+	update_weight_class(WEIGHT_CLASS_NORMAL)
+	addtimer(CALLBACK(src, PROC_REF(close_book)), 30 SECONDS)
+
+	var/datum/antagonist/heretic/heretic_datum = GET_HERETIC(user)
+	var/datum/heretic_knowledge/spell/basic/grasp_knowledge = heretic_datum.get_knowledge(__IMPLIED_TYPE__)
+	grasp_knowledge?.add_charges(ceil(grasp_knowledge.max_charges * 0.5))
+
+/obj/item/codex_cicatrix/proc/close_book()
+	close_animation()
+	update_weight_class(WEIGHT_CLASS_SMALL)
 
 /obj/item/codex_cicatrix/interact_with_atom(atom/interacting_with, mob/living/user, list/modifiers)
 	var/datum/antagonist/heretic/heretic_datum = GET_HERETIC(user)
@@ -80,21 +82,21 @@
 	desc = "A hideous, ragged book covered in separately-blinking eyes, all of them staring at you. You have no idea how to hold this thing, and to be honest you're not sure if you want to."
 	base_icon_state = "book_morbus"
 	icon_state = "book_morbus"
-	drain_speed = 2.5 SECONDS
-	draw_speed = 5 SECONDS
+	drain_speed = 5 SECONDS
+	draw_speed = 10 SECONDS
 	/// List of mobs we've cursed with transmutation. When the codex is destroyed all those curses become undone
 	var/list/transmuted_victims = list()
 
 /obj/item/codex_cicatrix/morbus/examine(mob/user)
 	. = ..()
 	if(IS_HERETIC(user))
-		. += span_info(LANG("obj.21c83dc5", null))
+		. += span_info("Can be used to cast a curse with blood in your offhand by right clicking a rune.")
 		return
-	. += span_danger(LANG("obj.47094429", null))
+	. += span_danger("The eyes stop blinking. They stare at you. Their gaze burns...")
 	if(!ishuman(user))
 		return
 	var/mob/living/carbon/human/human_user = user
-	to_chat(human_user, span_userdanger(LANG("obj.db48b667", null)))
+	to_chat(human_user, span_userdanger("Your mind burns as you stare at the pages!"))
 	human_user.adjust_organ_loss(ORGAN_SLOT_BRAIN, 10, 190)
 	human_user.add_mood_event("gates_of_mansus", /datum/mood_event/gates_of_mansus)
 
@@ -108,7 +110,7 @@
 	var/list/curse_list = list()
 	for(var/datum/heretic_knowledge/curse/curses as anything in subtypesof(/datum/heretic_knowledge/curse))
 		curse_list[curses.name] = curses
-	var/selected_curse = tgui_input_list(user, LANG("obj.dea5e403", null), LANG("obj.fb34bebc", null), curse_list, timeout = 0)
+	var/selected_curse = tgui_input_list(user, "Cast any curse", "Select a curse!", curse_list, timeout = 0)
 	if(!selected_curse)
 		return NONE
 
@@ -117,7 +119,7 @@
 
 	var/atom/held_offhand = user.get_inactive_held_item()
 	if(!held_offhand)
-		user.balloon_alert(user, LANG("obj.33fc357e", null))
+		user.balloon_alert(user, "no catalyst!")
 		return
 	var/blood_samples = list()
 	for(var/blood in GET_ATOM_BLOOD_DNA(held_offhand))
@@ -127,7 +129,7 @@
 			continue
 		blood_samples += usable_reagent.data["blood_DNA"]
 	if(isnull(blood_samples))
-		user.balloon_alert(user, LANG("obj.ce2814af", null))
+		user.balloon_alert(user, "no blood!")
 		return ITEM_INTERACT_BLOCKING
 
 	var/curse_type = curse_list[selected_curse]

@@ -1,23 +1,19 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 // IF you have linked your account, this will trigger a verify of the user
-/client/verb/verify_in_discord()
-	set category = "OOC"
-	set name = "验证 Discord 账号"
-	set desc = "Verify your discord account with your BYOND account"
+GAME_VERB_DESC(/client, verify_in_discord, "Verify Discord Account", "Verify your discord account with your BYOND account", "OOC")
 
 	// Safety checks
 	if(!CONFIG_GET(flag/sql_enabled))
-		to_chat(src, span_warning(LANG("client.8256b159", null)))
+		to_chat(src, span_warning("This feature requires the SQL backend to be running."))
 		return
 
 	// Why this would ever be unset, who knows
 	var/prefix = CONFIG_GET(string/discordbotcommandprefix)
 	if(!prefix)
-		to_chat(src, span_warning(LANG("client.882f982c", null)))
+		to_chat(src, span_warning("This feature is disabled."))
 		return
 
 	if(!SSdiscord || !SSdiscord.reverify_cache)
-		to_chat(src, span_warning(LANG("client.40be9573", null)))
+		to_chat(src, span_warning("Wait for the Discord subsystem to finish initialising"))
 		return
 	var/message = ""
 	// Simple sanity check to prevent a user doing this too often

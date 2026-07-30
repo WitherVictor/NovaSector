@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 /*!
  * Contains all the curses a heretic can cast using their upgraded codex
  */
@@ -47,18 +46,18 @@
 			continue
 		potential_targets["[human_to_check.real_name]"] = human_to_check
 
-	var/chosen_mob = tgui_input_list(user, LANG("datum.0f16b371", null), name, sort_list(potential_targets, GLOBAL_PROC_REF(cmp_text_asc)))
+	var/chosen_mob = tgui_input_list(user, "Select the victim you wish to curse.", name, sort_list(potential_targets, GLOBAL_PROC_REF(cmp_text_asc)))
 	if(isnull(chosen_mob))
 		return FALSE
 
 	var/mob/living/carbon/human/to_curse = potential_targets[chosen_mob]
 	if(QDELETED(to_curse))
-		loc.balloon_alert(user, LANG("datum.c24e891b", null))
+		loc.balloon_alert(user, "ritual failed, invalid choice!")
 		return FALSE
 
 	// Yes, you COULD curse yourself, not sure why but you could
 	if(to_curse == user)
-		var/are_you_sure = tgui_alert(user, LANG("datum.09f4d8cf", null), name, list("Yes", "No"))
+		var/are_you_sure = tgui_alert(user, "Are you sure you want to curse yourself?", name, list("Yes", "No"))
 		if(are_you_sure != "Yes")
 			return FALSE
 
@@ -67,21 +66,21 @@
 
 	var/turf/curse_turf = get_turf(to_curse)
 	if(!is_valid_z_level(curse_turf, loc) || get_dist(curse_turf, loc) > max_range * 1.5) // Give a bit of leeway on max range for people moving around
-		loc.balloon_alert(user, LANG("datum.bcd15e0f", null))
+		loc.balloon_alert(user, "ritual failed, too far!")
 		return FALSE
 
 	if(IS_HERETIC(to_curse) && to_curse != user)
-		to_chat(user, span_warning(LANG("datum.e29ffd22", list(to_curse.p_their(), to_curse))))
+		to_chat(user, span_warning("[to_curse.p_their()] ties to the Mansus are too strong. You are unable to curse [to_curse]."))
 		return TRUE
 
 	if(to_curse.can_block_magic(MAGIC_RESISTANCE|MAGIC_RESISTANCE_HOLY, charge_cost = 0))
-		to_chat(to_curse, span_warning(LANG("datum.117d2177", null)))
+		to_chat(to_curse, span_warning("A ghastly chill envelops you for a moment, but then it passes."))
 		return TRUE
 
 	log_combat(user, to_curse, "cursed via heretic ritual", addition = "([name])")
 	var/obj/item/codex_cicatrix/morbus/cursed_book = locate() in selected_atoms
 	curse(to_curse, cursed_book)
-	to_chat(user, span_hierophant(LANG("datum.52792f4a", list(name, to_curse.real_name))))
+	to_chat(user, span_mansus("You cast a [name] upon [to_curse.real_name]."))
 
 	fingerprints = null
 	blood_samples = null
@@ -137,9 +136,10 @@
 /datum/heretic_knowledge/curse/paralysis
 	abstract_type = /datum/heretic_knowledge/curse/paralysis
 	name = "Curse of Paralysis"
-	desc = "Allows you to transmute a hatchet and both a left and right leg to cast a curse of immobility on a crew member. \
+	desc = "Casts a curse of immobility on a crew member.<br>\
 		While cursed, the victim will be unable to walk. You can additionally supply an item that a victim has touched \
 		or is covered in the victim's blood to make the curse last longer."
+	transmute_text = "Transmute a hatchet, and both a left and right leg."
 	gain_text = "The flesh of humanity is weak. Make them bleed. Show them their fragility."
 
 	duration = 5 MINUTES
@@ -151,10 +151,10 @@
 
 /datum/heretic_knowledge/curse/paralysis/curse(mob/living/carbon/human/chosen_mob)
 	if(chosen_mob.usable_legs <= 0) // What're you gonna do, curse someone who already can't walk?
-		to_chat(chosen_mob, span_notice(LANG("datum.b08e7511", null)))
+		to_chat(chosen_mob, span_notice("You feel a slight pain for a moment, but it passes shortly. Odd."))
 		return
 
-	to_chat(chosen_mob, span_danger(LANG("datum.1dddd5d3", list(chosen_mob.usable_legs == 1 ? "":"s"))))
+	to_chat(chosen_mob, span_danger("You suddenly lose feeling in your leg[chosen_mob.usable_legs == 1 ? "":"s"]!"))
 	chosen_mob.add_traits(list(TRAIT_PARALYSIS_L_LEG, TRAIT_PARALYSIS_R_LEG), type)
 	return ..()
 
@@ -164,7 +164,7 @@
 
 	chosen_mob.remove_traits(list(TRAIT_PARALYSIS_L_LEG, TRAIT_PARALYSIS_R_LEG), type)
 	if(chosen_mob.usable_legs > 1)
-		to_chat(chosen_mob, span_green(LANG("datum.7d77bab6", list(chosen_mob.usable_legs == 1 ? "":"s"))))
+		to_chat(chosen_mob, span_green("You regain feeling in your leg[chosen_mob.usable_legs == 1 ? "":"s"]!"))
 	return ..()
 
 //---- Curse of Corrosion
@@ -172,9 +172,10 @@
 /datum/heretic_knowledge/curse/corrosion
 	abstract_type = /datum/heretic_knowledge/curse/corrosion
 	name = "Curse of Corrosion"
-	desc = "Allows you to transmute wirecutters, a pool of vomit, and a heart to cast a curse of sickness on a crew member. \
+	desc = "Cast a curse of sickness on a crew member.<br>\
 		While cursed, the victim will repeatedly vomit while their organs will take constant damage. You can additionally supply an item \
 		that a victim has touched or is covered in the victim's blood to make the curse last longer."
+	transmute_text = "Transmute a pair of wirecutters, a pool of vomit, and a heart."
 	gain_text = "The body of humanity is temporary. Their weaknesses cannot be stopped, like iron falling to rust. Show them all."
 
 	duration = 3 MINUTES
@@ -184,7 +185,7 @@
 	research_tree_icon_state = "curse_corrosion"
 
 /datum/heretic_knowledge/curse/corrosion/curse(mob/living/carbon/human/chosen_mob)
-	to_chat(chosen_mob, span_danger(LANG("datum.156c31c7", null)))
+	to_chat(chosen_mob, span_danger("You feel very ill..."))
 	chosen_mob.apply_status_effect(/datum/status_effect/corrosion_curse)
 	return ..()
 
@@ -193,7 +194,7 @@
 		return
 
 	chosen_mob.remove_status_effect(/datum/status_effect/corrosion_curse)
-	to_chat(chosen_mob, span_green(LANG("datum.079139a3", null)))
+	to_chat(chosen_mob, span_green("You start to feel better."))
 	return ..()
 
 //---- Curse of Transmutation
@@ -212,7 +213,7 @@
 		if(initial(species_type.changesource_flags) & RACE_SWAP)
 			chooseable_races[species_type.name] = species_type
 
-	var/species_name = tgui_input_list(user, LANG("datum.6e03ad2e", null), LANG("datum.765f27f3", null), chooseable_races)
+	var/species_name = tgui_input_list(user, "Choose a race", "Choose a race to turn your victim into", chooseable_races)
 	if(!species_name)
 		return FALSE
 	chosen_species = chooseable_races[species_name]
@@ -220,11 +221,11 @@
 
 /datum/heretic_knowledge/curse/transmutation/curse(mob/living/carbon/human/chosen_mob, obj/item/codex_cicatrix/morbus/cursing_book)
 	if(chosen_mob.dna.species == chosen_species)
-		to_chat(chosen_mob, span_warning(LANG("datum.897ec64d", null)))
+		to_chat(chosen_mob, span_warning("You feel your body morph into... itself?"))
 		return
 	chosen_mob.apply_status_effect(/datum/status_effect/race_swap, chosen_species)
 	cursing_book.transmuted_victims += WEAKREF(chosen_mob)
-	to_chat(chosen_mob, span_danger(LANG("datum.303b3a63", null)))
+	to_chat(chosen_mob, span_danger("You feel your body morph into a new shape"))
 	return ..()
 
 /datum/heretic_knowledge/curse/transmutation/uncurse(mob/living/carbon/human/chosen_mob)

@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 /mob/living/basic/mining_drone
 	name = "\improper Nanotrasen minebot"
 	desc = "The instructions printed on the side read: This is a small robot used to support miners, can be set to search and collect loose ore, or to help fend off wildlife."
@@ -94,52 +93,56 @@
 /mob/living/basic/mining_drone/set_combat_mode(new_mode, silent = TRUE)
 	. = ..()
 	icon_state = combat_mode ? "mining_drone_offense" : "mining_drone"
-	balloon_alert(src, LANG("mob.f35c4f6c", list(combat_mode ? "attacking" : "collecting")))
+	balloon_alert(src, "now [combat_mode ? "attacking" : "collecting"]")
 
 /mob/living/basic/mining_drone/examine(mob/user)
 	. = ..()
 	if(health < maxHealth)
 		if(health >= maxHealth * 0.5)
-			. += span_warning(LANG("mob.000c1e88", list(p_They())))
+			. += span_warning("[p_They()] look slightly dented.")
 		else
-			. += span_boldwarning(LANG("mob.91ce775e", list(p_They())))
+			. += span_boldwarning("[p_They()] look severely dented!")
 
 	if(isnull(stored_gun) || !stored_gun.max_mod_capacity)
 		return
 
-	. += LANG("mob.15082120", list(stored_gun.get_remaining_mod_capacity()))
+	. += "<b>[stored_gun.get_remaining_mod_capacity()]%</b> mod capacity remaining."
 
 	for(var/obj/item/borg/upgrade/modkit/modkit as anything in stored_gun.modkits)
 		. += span_notice("There is \a [modkit] installed, using <b>[modkit.cost]%</b> capacity.")
-	if(ai_controller && ai_controller.ai_status == AI_STATUS_IDLE)
-		. += LANG("mob.bb32306b", list(src))
+	if(ai_controller && ai_controller.ai_status == AI_STATUS_OFF && ai_controller.get_expected_ai_status() == AI_STATUS_ON)
+		. += "The [src] appears to be in <b>sleep mode</b>. You can restore normal functions by <b>tapping</b> it."
 
 
 /mob/living/basic/mining_drone/welder_act(mob/living/user, obj/item/welder)
 	if(user.combat_mode)
 		return FALSE
 	if(combat_mode)
-		user.balloon_alert(user, LANG("mob.5e4e3882", null))
+		user.balloon_alert(user, "can't repair in attack mode!")
 		return TRUE
 	if(maxHealth == health)
-		user.balloon_alert(user, LANG("mob.0656418a", null))
+		user.balloon_alert(user, "at full integrity!")
 		return TRUE
 	if(welder.use_tool(src, user, 0, volume=40))
 		adjust_brute_loss(-15)
-		user.balloon_alert(user, LANG("mob.7c1135f9", null))
+		user.balloon_alert(user, "successfully repaired!")
 	return TRUE
 
-/mob/living/basic/mining_drone/attackby(obj/item/item_used, mob/user, list/modifiers, list/attack_modifiers)
-	if(item_used.tool_behaviour == TOOL_CROWBAR || istype(item_used, /obj/item/borg/upgrade/modkit))
-		item_used.melee_attack_chain(user, stored_gun, modifiers)
-		return
+/mob/living/basic/mining_drone/item_interaction(mob/living/user, obj/item/tool, list/modifiers)
+	if(!istype(tool, /obj/item/borg/upgrade/modkit))
+		return ..()
 
-	return ..()
+	tool.melee_attack_chain(user, stored_gun, modifiers)
+	return ITEM_INTERACT_SUCCESS
+
+/mob/living/basic/mining_drone/crowbar_act(mob/living/user, obj/item/tool)
+	tool.melee_attack_chain(user, stored_gun)
+	return ITEM_INTERACT_SUCCESS
 
 /mob/living/basic/mining_drone/attack_hand(mob/living/carbon/human/user, list/modifiers)
 	if(!user.combat_mode)
-		if(ai_controller && ai_controller.ai_status == AI_STATUS_IDLE)
-			ai_controller.set_ai_status(AI_STATUS_ON)
+		if(ai_controller && ai_controller.ai_status == AI_STATUS_OFF)
+			ai_controller.reset_ai_status() //wakes a performance-slept bot, no-op if it is off for a real reason
 		if(LAZYACCESS(modifiers, LEFT_CLICK)) //Lets Right Click be specifically for re-enabling their AI (and avoiding the UI popup), while Left Click simply does both.
 			ui_interact(user)
 		return
@@ -216,7 +219,7 @@
 	if(user.combat_mode)
 		return CLICK_ACTION_BLOCKING
 	set_combat_mode(!combat_mode)
-	balloon_alert(user, LANG("mob.f35c4f6c", list(combat_mode ? "attacking wildlife" : "collecting loose ore")))
+	balloon_alert(user, "now [combat_mode ? "attacking wildlife" : "collecting loose ore"]")
 	return CLICK_ACTION_SUCCESS
 
 /mob/living/basic/mining_drone/RangedAttack(atom/target, list/modifiers)
@@ -235,7 +238,7 @@
 		target_ore.forceMove(src)
 
 /mob/living/basic/mining_drone/proc/drop_ore()
-	to_chat(src, span_notice(LANG("mob.6a207d0a", null)))
+	to_chat(src, span_notice("You dump your stored ore."))
 	for(var/obj/item/stack/ore/dropped_item in contents)
 		dropped_item.forceMove(get_turf(src))
 

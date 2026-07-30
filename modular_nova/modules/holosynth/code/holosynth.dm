@@ -92,16 +92,16 @@
 			species_holder.cut_overlay(chest.glow)
 		chest.glow = makeHologramHolosynth(species_holder)
 	var/datum/action/innate/holosynth_toggle_phase/phase_toggle = new(species_holder)
+	var/datum/action/innate/holosynth_toggle_passtable/table_toggle = new(species_holder)
 	phase_toggle.Grant(species_holder)
+	table_toggle.Grant(species_holder)
 	if(!isdummy(species_holder))
 		RegisterSignal(species_holder, COMSIG_HUMAN_CHARACTER_SETUP_FINISHED, PROC_REF(attach_scanline), override = TRUE)
 	RegisterSignal(species_holder, COMSIG_MOB_APPLY_DAMAGE, PROC_REF(on_mob_disrupted))
 	RegisterSignal(species_holder, COMSIG_LIVING_SET_BODY_POSITION, PROC_REF(on_mob_disrupted))
 	RegisterSignal(species_holder, COMSIG_LIVING_ELECTROCUTE_ACT, PROC_REF(on_mob_disrupted))
-	add_verb(species_holder, list(
-		/mob/living/carbon/human/proc/holosynth_adjust_transparency,
-		/mob/living/carbon/human/proc/holosynth_toggle_scanline,
-	))
+	ASSIGN_GAME_VERB(species_holder, /mob/living/carbon/human, holosynth_adjust_transparency)
+	ASSIGN_GAME_VERB(species_holder, /mob/living/carbon/human, holosynth_toggle_scanline)
 
 	if(!isdummy(species_holder))
 		var/obj/item/holosynth_pen/owner_projector = new /obj/item/holosynth_pen(get_turf(species_holder), species_holder)
@@ -124,10 +124,10 @@
 		chest.glow = null
 	for(var/datum/action/innate/holosynth_toggle_phase/phase_toggle in species_holder.actions)
 		qdel(phase_toggle)
-	remove_verb(species_holder, list(
-		/mob/living/carbon/human/proc/holosynth_adjust_transparency,
-		/mob/living/carbon/human/proc/holosynth_toggle_scanline,
-	))
+	for(var/datum/action/innate/holosynth_toggle_passtable/phase_toggle in species_holder.actions)
+		qdel(phase_toggle)
+	UNASSIGN_GAME_VERB(species_holder, /mob/living/carbon/human, holosynth_adjust_transparency)
+	UNASSIGN_GAME_VERB(species_holder, /mob/living/carbon/human, holosynth_toggle_scanline)
 
 	var/comps_to_delete = list(
 		species_holder.GetComponent(/datum/component/glass_passer/holosynth),
@@ -157,14 +157,16 @@
 	perks += list(list(
 		SPECIES_PERK_TYPE = SPECIES_POSITIVE_PERK,
 		SPECIES_PERK_ICON = FA_ICON_SHIELD_ALT,
-		SPECIES_PERK_NAME = LANG("datum.995ce0a7", null),
-		SPECIES_PERK_DESC = LANG("datum.86238fd4", null),
+		SPECIES_PERK_NAME = "Android Aptitude",
+		SPECIES_PERK_DESC = "As a synthetic lifeform, they are immune to many forms of damage humans are susceptible to. \
+			Fire, cold, heat, pressure, radiation, and toxins are all ineffective against them. \
+			They also can't overdose on drugs, don't need to breathe or eat, can't catch on fire, and are immune to being pierced.",
 	))
 	perks += list(list(
 		SPECIES_PERK_TYPE = SPECIES_NEGATIVE_PERK,
 		SPECIES_PERK_ICON = FA_ICON_DNA,
-		SPECIES_PERK_NAME = LANG("datum.0b61862b", null),
-		SPECIES_PERK_DESC = LANG("datum.d8f03424", null),
+		SPECIES_PERK_NAME = "Not Human After All",
+		SPECIES_PERK_DESC = "There is no humanity behind the eyes of the synthetic, and as such, they have no DNA to genetically alter.",
 	))
 	return perks
 
@@ -173,26 +175,27 @@
 	perks += list(list(
 		SPECIES_PERK_TYPE = SPECIES_NEUTRAL_PERK,
 		SPECIES_PERK_ICON = FA_ICON_SHIELD_HEART,
-		SPECIES_PERK_NAME = LANG("datum.69ebc08c", null),
-		SPECIES_PERK_DESC = LANG("datum.5b4cde53", null),
+		SPECIES_PERK_NAME = "Some Components Optional",
+		SPECIES_PERK_DESC = "Synthetics have very few internal organs. While they can survive without many of them, \
+			they don't have any benefits from them either.",
 	))
 	perks += list(list(
 		SPECIES_PERK_TYPE = SPECIES_NEGATIVE_PERK,
 		SPECIES_PERK_ICON = FA_ICON_ROBOT,
-		SPECIES_PERK_NAME = LANG("datum.a7e78ae8", null),
-		SPECIES_PERK_DESC = LANG("datum.348ae7c2", null),
+		SPECIES_PERK_NAME = "Synthetic",
+		SPECIES_PERK_DESC = "Being synthetic, they are vulnernable to EMPs.",
 	))
 	perks += list(list(
 		SPECIES_PERK_TYPE = SPECIES_POSITIVE_PERK,
 		SPECIES_PERK_ICON = FA_ICON_MAGNIFYING_GLASS,
-		SPECIES_PERK_NAME = LANG("datum.04ca8b6b", null),
-		SPECIES_PERK_DESC = LANG("datum.a2ce5c04", null),
+		SPECIES_PERK_NAME = "Translucency",
+		SPECIES_PERK_DESC = "Holosynths can pass through glass, though you'll leave any physical items behind.",
 	))
 	perks += list(list(
 		SPECIES_PERK_TYPE = SPECIES_POSITIVE_PERK,
 		SPECIES_PERK_ICON = FA_ICON_NOTES_MEDICAL,
-		SPECIES_PERK_NAME = LANG("datum.a911d5ba", null),
-		SPECIES_PERK_DESC = LANG("datum.01044cc5", null),
+		SPECIES_PERK_NAME = "Regenerator",
+		SPECIES_PERK_DESC = "Being made of light, your projector and controller will mend tears in your form.",
 	))
 	return perks
 
@@ -337,32 +340,24 @@ GLOBAL_DATUM_INIT(holo_scanline, /obj/effect/abstract/holo_scanline, new)
 // -- Runtime verbs -------------------------------------------------------
 // Added on species gain, removed on species loss. Both update the dna feature and ask the species to refresh.
 
-/mob/living/carbon/human/proc/holosynth_adjust_transparency()
-	set name = "调节全息透明度"
-	set category = "IC"
-	set src = usr
-
+GAME_VERB_PROC(/mob/living/carbon/human, holosynth_adjust_transparency, "Adjust Hologram Transparency", "IC")
 	var/datum/species/synthetic/holosynth/species = dna?.species
 	if(!istype(species))
 		return
-	var/new_value = tgui_input_number(src, LANG("mob.68b04713", null), LANG("mob.5d8aa259", null), (dna?.features["holo_transparency"] || 60), 100, 60)
+	var/new_value = tgui_input_number(src, "Set transparency. 60 = most see-through, 100 = fully solid.", "Hologram Transparency", (dna?.features["holo_transparency"] || 60), 100, 60)
 	if(!new_value)
 		return
 	dna?.features["holo_transparency"] = new_value
 	species.refresh_opacity(src)
 
-/mob/living/carbon/human/proc/holosynth_toggle_scanline()
-	set name = "切换全息闪烁"
-	set category = "IC"
-	set src = usr
-
+GAME_VERB_PROC(/mob/living/carbon/human, holosynth_toggle_scanline, "Toggle Hologram Flicker", "IC")
 	var/datum/species/synthetic/holosynth/species = dna?.species
 	if(!istype(species))
 		return
 	var/new_state = !species.read_scanline(src)
 	dna?.features["holo_scanline"] = new_state
 	species.refresh_scanline(src)
-	to_chat(src, span_notice(LANG("mob.78b8ff22", list(new_state ? "enable" : "disable"))))
+	to_chat(src, span_notice("You [new_state ? "enable" : "disable"] your hologram flicker."))
 
 /// Drops everything the holosynth has equipped except items in the slots they get to keep
 /// (ID + pockets).

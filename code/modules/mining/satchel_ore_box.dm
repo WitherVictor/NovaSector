@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 
 /**********************Ore box**************************/
 
@@ -45,28 +44,29 @@
 /obj/structure/ore_box/examine(mob/living/user)
 	. = ..()
 	if(in_range(src, user) || isobserver(user))
-		. += span_notice(LANG("obj.069a5701", list(EXAMINE_HINT("pried"))))
+		. += span_notice("Can be [EXAMINE_HINT("pried")] apart.")
 		ui_interact(user)
 
 /obj/structure/ore_box/crowbar_act(mob/living/user, obj/item/I)
 	. = ITEM_INTERACT_BLOCKING
 	if(I.use_tool(src, user, 50, volume = 50))
-		user.visible_message(span_notice(LANG("obj.bb43d2f3", list(user, src))),
-			span_notice(LANG("obj.309c6090", list(src))),
-			span_hear(LANG("obj.5fcb16ad", null)))
+		user.visible_message(span_notice("[user] pries \the [src] apart."),
+			span_notice("You pry apart \the [src]."),
+			span_hear("You hear splitting wood."))
 		deconstruct(TRUE)
 		return ITEM_INTERACT_SUCCESS
 
-/obj/structure/ore_box/attackby(obj/item/weapon, mob/user, list/modifiers, list/attack_modifiers)
-	if(istype(weapon, /obj/item/stack/ore) || istype(weapon, /obj/item/boulder))
-		user.transferItemToLoc(weapon, src)
-		return TRUE
-	else if(weapon.atom_storage)
-		weapon.atom_storage.remove_type(/obj/item/stack/ore, src, INFINITY, TRUE, FALSE, user, null)
-		to_chat(user, span_notice(LANG("obj.e933838f", list(weapon, src))))
-		return TRUE
-	else
-		return ..()
+/obj/structure/ore_box/item_interaction(mob/living/user, obj/item/tool, list/modifiers)
+	if(istype(tool, /obj/item/stack/ore) || istype(tool, /obj/item/boulder))
+		user.transferItemToLoc(tool, src)
+		return ITEM_INTERACT_SUCCESS
+
+	if(tool.atom_storage)
+		tool.atom_storage.remove_type(/obj/item/stack/ore, src, INFINITY, TRUE, FALSE, user, null)
+		to_chat(user, span_notice("You empty the ore in [tool] into \the [src]."))
+		return ITEM_INTERACT_SUCCESS
+
+	return NONE
 
 /obj/structure/ore_box/Entered(atom/movable/arrived, atom/old_loc, list/atom/old_locs)
 	. = ..()

@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 /datum/action/cooldown/spell/shadow_cloak
 	name = "Cloak of Shadow"
 	desc = "Completely conceals your identity, but does not make you invisible.  Can be activated early to disable it. \
@@ -31,6 +30,9 @@
 /datum/action/cooldown/spell/shadow_cloak/is_valid_target(atom/cast_on)
 	return isliving(cast_on) && !HAS_TRAIT(cast_on, TRAIT_HULK) // Hulks are not stealthy. Need not apply
 
+/datum/action/cooldown/spell/shadow_cloak/is_action_active(atom/movable/screen/movable/action_button/current_button)
+	return !!active_cloak
+
 /datum/action/cooldown/spell/shadow_cloak/before_cast(mob/living/cast_on)
 	. = ..()
 	sound = pick(
@@ -47,7 +49,7 @@
 /datum/action/cooldown/spell/shadow_cloak/cast(mob/living/cast_on)
 	. = ..()
 	if(active_cloak)
-		var/new_cd = max((uncloak_time - timeleft(uncloak_timer)) / 3, cooldown_time)
+		var/new_cd = max((uncloak_time - timeleft(uncloak_timer)), cooldown_time)
 		uncloak_mob(cast_on)
 		StartCooldown(new_cd)
 
@@ -61,18 +63,17 @@
 		return
 
 	uncloak_mob(cast_on)
-	StartCooldown(uncloak_timer / 3)
+	StartCooldown(uncloak_timer)
 
 /datum/action/cooldown/spell/shadow_cloak/proc/cloak_mob(mob/living/cast_on)
 	playsound(cast_on, 'sound/effects/chemistry/ahaha.ogg', 50, TRUE, -1, extrarange = SILENCED_SOUND_EXTRARANGE, frequency = 0.5)
 	cast_on.visible_message(
-		span_warning(LANG("datum.563549b0", list(cast_on))),
-		span_notice(LANG("datum.440f154d", null)),
+		span_warning("[cast_on] disappears into the shadows!"),
+		span_notice("You disappear into the shadows, becoming unidentifiable."),
 	)
 
 	active_cloak = cast_on.apply_status_effect(/datum/status_effect/shadow_cloak)
 	RegisterSignal(active_cloak, COMSIG_QDELETING, PROC_REF(on_early_cloak_loss))
-	RegisterSignal(cast_on, SIGNAL_REMOVETRAIT(TRAIT_ALLOW_HERETIC_CASTING), PROC_REF(on_focus_lost))
 
 /datum/action/cooldown/spell/shadow_cloak/proc/uncloak_mob(mob/living/cast_on, show_message = TRUE)
 	if(!QDELETED(active_cloak))
@@ -80,12 +81,11 @@
 		qdel(active_cloak)
 	active_cloak = null
 
-	UnregisterSignal(cast_on, SIGNAL_REMOVETRAIT(TRAIT_ALLOW_HERETIC_CASTING))
 	playsound(cast_on, 'sound/effects/curse/curseattack.ogg', 50)
 	if(show_message)
 		cast_on.visible_message(
-			span_warning(LANG("datum.a7445197", list(cast_on))),
-			span_notice(LANG("datum.c485d7c0", null)),
+			span_warning("[cast_on] appears from the shadows!"),
+			span_notice("You appear from the shadows, identifiable once more."),
 		)
 
 	// Clear up the timer
@@ -99,25 +99,14 @@
 	var/mob/living/removed = source.owner
 	uncloak_mob(removed, show_message = FALSE)
 	removed.visible_message(
-		span_warning(LANG("datum.c6906ed3", list(removed))),
-		span_userdanger(LANG("datum.5b04c41a", null)),
+		span_warning("[removed] is pulled from the shadows!"),
+		span_userdanger("You are pulled out of the shadows!"),
 	)
 
 	removed.Knockdown(0.5 SECONDS)
 	removed.add_movespeed_modifier(/datum/movespeed_modifier/shadow_cloak/early_remove)
 	addtimer(CALLBACK(removed, TYPE_PROC_REF(/mob, remove_movespeed_modifier), /datum/movespeed_modifier/shadow_cloak/early_remove), 2 MINUTES, TIMER_UNIQUE|TIMER_OVERRIDE)
-	StartCooldown(uncloak_time * 2/3)
-
-/// Signal proc for [SIGNAL_REMOVETRAIT] via [TRAIT_ALLOW_HERETIC_CASTING], losing our focus midcast will throw us out.
-/datum/action/cooldown/spell/shadow_cloak/proc/on_focus_lost(mob/living/source)
-	SIGNAL_HANDLER
-
-	uncloak_mob(source, show_message = FALSE)
-	source.visible_message(
-		span_warning(LANG("datum.8313ec9c", list(source))),
-		span_userdanger(LANG("datum.1faf45a8", null)),
-	)
-	StartCooldown(uncloak_time / 3)
+	StartCooldown(uncloak_time)
 
 /// Shadow cloak effect. Conceals the owner in a cloud of purple smoke, making them unidentifiable.
 /// Also comes with some other buffs and debuffs - faster movespeed, slower actionspeed, etc.
@@ -145,7 +134,7 @@
 	// Register signals to cause effects
 	RegisterSignal(owner, COMSIG_ATOM_DIR_CHANGE, PROC_REF(on_dir_change))
 	RegisterSignal(owner, COMSIG_LIVING_SET_BODY_POSITION, PROC_REF(on_body_position_change))
-	RegisterSignal(owner, COMSIG_MOB_STATCHANGE, PROC_REF(on_stat_change))
+	RegisterSignal(owner, SIGNAL_ADDTRAIT(TRAIT_KNOCKEDOUT), PROC_REF(on_stat_change))
 	RegisterSignal(owner, COMSIG_MOB_APPLY_DAMAGE, PROC_REF(on_damaged))
 	RegisterSignal(owner, COMSIG_MOVABLE_MOVED, PROC_REF(on_move))
 	return TRUE
@@ -162,7 +151,7 @@
 	UnregisterSignal(owner, list(
 		COMSIG_ATOM_DIR_CHANGE,
 		COMSIG_LIVING_SET_BODY_POSITION,
-		COMSIG_MOB_STATCHANGE,
+		SIGNAL_ADDTRAIT(TRAIT_KNOCKEDOUT),
 		COMSIG_MOB_APPLY_DAMAGE,
 		COMSIG_MOVABLE_MOVED,
 	))
@@ -182,13 +171,12 @@
 	else
 		cloak_image.transform = turn(cloak_image.transform, -90)
 
-/// Signal proc for [COMSIG_MOB_STATCHANGE], going past soft crit will stop the effect
+/// Signal proc for [SIGNAL_ADDTRAIT(TRAIT_KNOCKEDOUT], falling unconscious (from hard crit or otherwise) will stop the effect
 /datum/status_effect/shadow_cloak/proc/on_stat_change(datum/source, new_stat, old_stat)
 	SIGNAL_HANDLER
 
 	// Going above unconscious will self-delete
-	if(new_stat >= UNCONSCIOUS)
-		qdel(src)
+	qdel(src)
 
 /// Signal proc for [COMSIG_MOB_APPLY_DAMAGE], being damaged past a threshold will roll a chance to stop the effect
 /datum/status_effect/shadow_cloak/proc/on_damaged(datum/source, damage, damagetype, ...)

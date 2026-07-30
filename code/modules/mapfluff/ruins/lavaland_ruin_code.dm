@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 //If you're looking for spawners like ash walker eggs, check ghost_role_spawners.dm
 
 ///Wizard tower item
@@ -42,38 +41,42 @@
 	/// Type of shell to create
 	var/shell_type = /obj/effect/mob_spawn/ghost_role/human/golem
 
-/obj/item/golem_shell/attackby(obj/item/potential_food, mob/user, list/modifiers, list/attack_modifiers)
-	. = ..()
-	if(!isstack(potential_food))
-		balloon_alert(user, LANG("obj.d4977c6c", null))
-		return
-	var/obj/item/stack/stack_food = potential_food
+/obj/item/golem_shell/item_interaction(mob/living/user, obj/item/tool, list/modifiers)
+	if(!isstack(tool))
+		return NONE
+
+	var/obj/item/stack/stack_food = tool
 	var/stack_type = stack_food.merge_type
 	if (!is_path_in_list(stack_type, GLOB.golem_stack_food_directory))
-		balloon_alert(user, LANG("obj.7dd03480", null))
-		return
+		balloon_alert(user, "incompatible mineral!")
+		return ITEM_INTERACT_BLOCKING
+
 	if(stack_food.amount < required_stacks)
-		balloon_alert(user, LANG("obj.2a12f334", null))
-		return
+		balloon_alert(user, "not enough minerals!")
+		return ITEM_INTERACT_BLOCKING
+
 	if(!do_after(user, delay = 4 SECONDS, target = src))
-		return
+		return ITEM_INTERACT_BLOCKING
+
 	if(!stack_food.use(required_stacks))
-		balloon_alert(user, LANG("obj.2a12f334", null))
-		return
+		balloon_alert(user, "not enough minerals!")
+		return ITEM_INTERACT_BLOCKING
+
 	new shell_type(get_turf(src), /* creator = */ user, /* made_of = */ stack_type)
 	qdel(src)
+	return ITEM_INTERACT_SUCCESS
 
 /obj/item/golem_shell/crowbar_act(mob/living/user, obj/item/tool)
 	. = ..()
 
-	to_chat(user, span_notice(LANG("obj.3deec6dd", null)))
+	to_chat(user, span_notice("You begin dislodging structurally integral chunks."))
 	playsound(src, 'sound/items/tools/crowbar.ogg',  70)
 	if(!do_after(user, delay = 1 SECONDS, target = src))
 		return
 	if(QDELETED(src))
 		return
 	new /obj/item/stack/sheet/mineral/adamantine(get_turf(src), 1) //Return less than was used to construct the shell
-	to_chat(user, span_notice(LANG("obj.4896d1fe", null)))
+	to_chat(user, span_notice("The shell collapses in on itself!"))
 	playsound(src, 'sound/effects/rock/rock_break.ogg', 40)
 	qdel(src)
 	return

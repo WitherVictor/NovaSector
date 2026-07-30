@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 /// Slow moving mob which attempts to immobilise its target
 /mob/living/basic/mining/goliath
 	name = "goliath"
@@ -93,7 +92,7 @@
 /mob/living/basic/mining/goliath/examine(mob/user)
 	. = ..()
 	if (saddled)
-		. += span_info(LANG("mob.5688319e", null))
+		. += span_info("Someone appears to have attached a saddle to this one.")
 
 // Goliaths can summon tentacles more frequently as they take damage, scary.
 /mob/living/basic/mining/goliath/apply_damage(damage, damagetype, def_zone, blocked, forced, spread_damage, wound_bonus, exposed_wound_bonus, sharpness, attack_direction, attacking_item, wound_clothing)
@@ -103,24 +102,30 @@
 	if (tentacles.cooldown_time > 1 SECONDS)
 		tentacles.cooldown_time -= 1 SECONDS
 
-/mob/living/basic/mining/goliath/attackby(obj/item/attacking_item, mob/living/user, list/modifiers, list/attack_modifiers)
-	if (!istype(attacking_item, /obj/item/goliath_saddle))
+/mob/living/basic/mining/goliath/item_interaction(mob/living/user, obj/item/tool, list/modifiers)
+	if (!istype(tool, /obj/item/goliath_saddle))
 		return ..()
+
 	if (!tameable)
-		balloon_alert(user, LANG("mob.7f1af016", null))
-		return
+		balloon_alert(user, "doesn't fit!")
+		return ITEM_INTERACT_BLOCKING
+
 	if (saddled)
-		balloon_alert(user, LANG("mob.264c9319", null))
-		return
+		balloon_alert(user, "already saddled!")
+		return ITEM_INTERACT_BLOCKING
+
 	if (!HAS_TRAIT(src, TRAIT_TAMED))
-		balloon_alert(user, LANG("mob.59d44c49", null))
-		return
-	balloon_alert(user, LANG("mob.2a19bc39", null))
+		balloon_alert(user, "too rowdy!")
+		return ITEM_INTERACT_BLOCKING
+
+	balloon_alert(user, "affixing saddle...")
 	if (!do_after(user, delay = 5.5 SECONDS, target = src))
-		return
-	balloon_alert(user, LANG("mob.6c3e5e51", null))
-	qdel(attacking_item)
+		return ITEM_INTERACT_BLOCKING
+
+	balloon_alert(user, "ready to ride")
+	qdel(tool)
 	make_rideable()
+	return ITEM_INTERACT_SUCCESS
 
 /mob/living/basic/mining/goliath/proc/make_rideable()
 	saddled = TRUE

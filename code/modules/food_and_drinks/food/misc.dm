@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 
 ////////////////////////////////////////////OTHER////////////////////////////////////////////
 /obj/item/food/watermelonslice
@@ -393,22 +392,24 @@
 /obj/item/food/butter/examine(mob/user)
 	. = ..()
 	if (can_stick)
-		. += span_notice(LANG("obj.9387c5d1", null))
+		. += span_notice("If you had a rod you could make <b>butter on a stick</b>.")
 
-/obj/item/food/butter/attackby(obj/item/item, mob/user, list/modifiers, list/attack_modifiers)
-	if(!istype(item, /obj/item/stack/rods) || !can_stick)
-		return ..()
-	var/obj/item/stack/rods/rods = item
+/obj/item/food/butter/item_interaction(mob/living/user, obj/item/tool, list/modifiers)
+	if(!istype(tool, /obj/item/stack/rods) || !can_stick)
+		return NONE
+
+	var/obj/item/stack/rods/rods = tool
 	if(!rods.use(1))//borgs can still fail this if they have no metal
-		to_chat(user, span_warning(LANG("obj.02ef851f", list(src))))
-		return ..()
-	to_chat(user, span_notice(LANG("obj.f9dc8b09", null)))
+		to_chat(user, span_warning("You do not have enough iron to put [src] on a stick!"))
+		return ITEM_INTERACT_BLOCKING
+
+	to_chat(user, span_notice("You stick the rod into the stick of butter."))
 	user.temporarilyRemoveItemFromInventory(src)
 	var/obj/item/food/butter/on_a_stick/new_item = new(drop_location())
 	if (new_item.IsReachableBy(user))
 		user.put_in_hands(new_item)
 	qdel(src)
-	return TRUE
+	return ITEM_INTERACT_SUCCESS
 
 /obj/item/food/butter/on_a_stick //there's something so special about putting it on a stick.
 	name = "butter on a stick"
@@ -870,5 +871,5 @@
 	if(can_splat_on)
 		victim.adjust_temp_blindness_up_to(2.5 SECONDS, 3 SECONDS)
 		victim.adjust_confusion_up_to(2.5 SECONDS, 3 SECONDS)
-	victim.visible_message(span_warning(LANG("obj.435f3e65", list(victim, src))), span_userdanger(LANG("obj.3659c69f", list(src))))
+	victim.visible_message(span_warning("[victim] is inked by [src]!"), span_userdanger("You've been inked by [src]!"))
 	playsound(victim, SFX_DESECRATION, 50, TRUE)

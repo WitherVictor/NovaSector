@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 GLOBAL_DATUM_INIT(closet_teleport_controller, /datum/closet_teleport_controller, new)
 
 ///A singleton used to teleport people to a linked web of itterative entries. If one entry is deleted, the 2 around it will forge a link instead.
@@ -36,7 +35,7 @@ GLOBAL_DATUM_INIT(closet_teleport_controller, /datum/closet_teleport_controller,
 	var/atom/visible_atom = targets[1] //The object that'll handle the messages
 	if(length(targets) == 1)
 		if(!subtle)
-			visible_atom.visible_message(LANG("datum.c768b056", list(targets[1])))
+			visible_atom.visible_message("[targets[1]] fizzes, there's nothing it can link to!")
 		return FALSE
 
 	var/subtle_keyword = subtle ? "subtle" : ""
@@ -54,7 +53,8 @@ GLOBAL_DATUM_INIT(closet_teleport_controller, /datum/closet_teleport_controller,
 			target.alpha = 200
 			do_sparks(3, FALSE, target)
 
-	visible_atom.visible_message(LANG("datum.430c6bd3", null))
+	if(!subtle)
+		visible_atom.visible_message("The items shimmer and fizzle, turning a shade of violet blue.")
 	id_counter++
 	return TRUE
 
@@ -91,6 +91,9 @@ GLOBAL_DATUM_INIT(closet_teleport_controller, /datum/closet_teleport_controller,
 /datum/closet_teleport_controller/proc/use_eigenlinked_atom(atom/object_sent_from, atom/movable/thing_to_send)
 	SIGNAL_HANDLER
 
+	var/tp_flags = SEND_SIGNAL(object_sent_from, COMSIG_CLOSET_TELEPORTER_PRE_SENDING, thing_to_send)
+	if(tp_flags & CLOSET_TELEPORT_BLOCKED)
+		return FALSE
 	var/id = eigen_id[object_sent_from]
 	if(!id)
 		stack_trace("[object_sent_from] attempted to eigenlink to something that didn't have a valid id!")
@@ -107,11 +110,11 @@ GLOBAL_DATUM_INIT(closet_teleport_controller, /datum/closet_teleport_controller,
 	if(!eigen_target)
 		stack_trace("No eigen target set for the eigenstate component!")
 		return FALSE
-	if(check_teleport_valid(thing_to_send, eigen_target, TELEPORT_CHANNEL_QUANTUM))
+	if((tp_flags & CLOSET_TELEPORT_FORCED) || check_teleport_valid(thing_to_send, eigen_target, TELEPORT_CHANNEL_QUANTUM))
 		thing_to_send.forceMove(eigen_target)
 	else
 		if(!subtle)
-			object_sent_from.balloon_alert(thing_to_send, LANG("datum.bccffc95", null))
+			object_sent_from.balloon_alert(thing_to_send, "nothing happens!")
 		return FALSE
 	//Create ONE set of sparks for ALL times in iteration
 	if(!subtle && spark_time != world.time)
@@ -123,7 +126,7 @@ GLOBAL_DATUM_INIT(closet_teleport_controller, /datum/closet_teleport_controller,
 ///Prevents tool use on the item
 /datum/closet_teleport_controller/proc/tool_interact(atom/source, mob/user, obj/item/item)
 	SIGNAL_HANDLER
-	to_chat(user, span_notice(LANG("datum.90bfc273", list(source, item, source.p_them()))))
+	to_chat(user, span_notice("The unstable nature of [source] makes it impossible to use [item] on [source.p_them()]!"))
 	return ITEM_INTERACT_BLOCKING
 
 // For testing purposes, primarily

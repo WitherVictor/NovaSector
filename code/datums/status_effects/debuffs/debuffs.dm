@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 /// The damage healed per tick while sleeping without any modifiers
 #define HEALING_SLEEP_DEFAULT 0.2
 /// The sleep healing multiplier for organ passive healing (since organs heal slowly)
@@ -134,7 +133,6 @@
 //UNCONSCIOUS
 /datum/status_effect/incapacitating/unconscious
 	id = "unconscious"
-	needs_update_stat = TRUE
 	force_say_chance = 100
 
 /datum/status_effect/incapacitating/unconscious/on_apply()
@@ -147,10 +145,60 @@
 	REMOVE_TRAIT(owner, TRAIT_KNOCKEDOUT, TRAIT_STATUS_EFFECT(id))
 	return ..()
 
-/datum/status_effect/incapacitating/unconscious/tick(seconds_between_ticks)
-	if(owner.get_stamina_loss())
-		owner.adjust_stamina_loss(-0.3) //reduce stamina loss by 0.3 per tick, 6 per 2 seconds
+/// Handles the effects of being knocked out - don't apply directly, all you should be doing is using [TRAIT_KNOCKEDOUT]
+/datum/status_effect/knocked_out
+	id = "is_knocked_out"
+	alert_type = null
 
+/datum/status_effect/knocked_out/on_apply()
+	owner.become_blind(TRAIT_STATUS_EFFECT(id))
+	owner.apply_status_effect(/datum/status_effect/grouped/see_no_names, TRAIT_STATUS_EFFECT(id))
+	owner.add_traits(list(TRAIT_HANDS_BLOCKED, TRAIT_IMMOBILIZED, TRAIT_BLOCK_SECHUD, TRAIT_BLOCK_MEDHUD, TRAIT_INCAPACITATED, TRAIT_FLOORED), TRAIT_STATUS_EFFECT(id))
+	owner.update_eyes() // updates eyelids
+	RegisterSignal(owner, COMSIG_MOB_STATCHANGE, PROC_REF(on_mob_statchange))
+	RegisterSignal(owner, COMSIG_MOB_CLIENT_LOGIN, PROC_REF(show_unconscious_hud))
+	if(GET_CLIENT(owner)) // let's not waste time giving the hud to non-player characters
+		show_unconscious_hud(owner)
+	return TRUE
+
+/datum/status_effect/knocked_out/on_creation(mob/living/new_owner, ...)
+	. = ..()
+	if(!.)
+		return
+	if(owner.stat == DEAD)
+		stop_ticking()
+
+/datum/status_effect/knocked_out/on_remove()
+	owner.cure_blind(TRAIT_STATUS_EFFECT(id))
+	owner.remove_status_effect(/datum/status_effect/grouped/see_no_names, TRAIT_STATUS_EFFECT(id))
+	owner.remove_traits(list(TRAIT_HANDS_BLOCKED, TRAIT_IMMOBILIZED, TRAIT_BLOCK_SECHUD, TRAIT_BLOCK_MEDHUD, TRAIT_INCAPACITATED, TRAIT_FLOORED), TRAIT_STATUS_EFFECT(id))
+	owner.update_eyes() // updates eyelids
+	UnregisterSignal(owner, list(COMSIG_MOB_CLIENT_LOGIN, COMSIG_MOB_STATCHANGE))
+	if(GET_CLIENT(owner))
+		hide_unconscious_hud(owner)
+
+/datum/status_effect/knocked_out/tick(seconds_between_ticks)
+	owner.adjust_stamina_loss(-3 * seconds_between_ticks)
+
+/// Global list of images that correspond to a mob's unconscious appearance
+GLOBAL_LIST_EMPTY(unconscious_appearances)
+
+/datum/status_effect/knocked_out/proc/show_unconscious_hud(mob/living/source)
+	SIGNAL_HANDLER
+
+	source.client?.images += (GLOB.unconscious_appearances - source.unconscious_appearance)
+
+/datum/status_effect/knocked_out/proc/hide_unconscious_hud(mob/living/source)
+	SIGNAL_HANDLER
+
+	source.client?.images -= GLOB.unconscious_appearances
+
+/datum/status_effect/knocked_out/proc/on_mob_statchange(mob/living/source, ...)
+	SIGNAL_HANDLER
+	if(owner.stat == DEAD)
+		stop_ticking()
+	else
+		start_ticking()
 
 //SLEEPING
 /datum/status_effect/incapacitating/sleeping
@@ -165,18 +213,21 @@
 	. = ..()
 	if(!.)
 		return
-	if(HAS_TRAIT(owner, TRAIT_SLEEPIMMUNE))
-		tick_interval = STATUS_EFFECT_NO_TICK
-	else
+	if(!HAS_TRAIT(owner, TRAIT_SLEEPIMMUNE))
 		ADD_TRAIT(owner, TRAIT_KNOCKEDOUT, TRAIT_STATUS_EFFECT(id))
 	RegisterSignal(owner, SIGNAL_ADDTRAIT(TRAIT_SLEEPIMMUNE), PROC_REF(on_owner_insomniac))
 	RegisterSignal(owner, SIGNAL_REMOVETRAIT(TRAIT_SLEEPIMMUNE), PROC_REF(on_owner_sleepy))
 
+/datum/status_effect/incapacitating/sleeping/on_creation(mob/living/new_owner, set_duration)
+	. = ..()
+	if(!.)
+		return
+	if(HAS_TRAIT(owner, TRAIT_SLEEPIMMUNE))
+		stop_ticking()
+
 /datum/status_effect/incapacitating/sleeping/on_remove()
 	UnregisterSignal(owner, list(SIGNAL_ADDTRAIT(TRAIT_SLEEPIMMUNE), SIGNAL_REMOVETRAIT(TRAIT_SLEEPIMMUNE)))
-	if(!HAS_TRAIT(owner, TRAIT_SLEEPIMMUNE))
-		REMOVE_TRAIT(owner, TRAIT_KNOCKEDOUT, TRAIT_STATUS_EFFECT(id))
-		tick_interval = initial(tick_interval)
+	REMOVE_TRAIT(owner, TRAIT_KNOCKEDOUT, TRAIT_STATUS_EFFECT(id))
 	return ..()
 
 /datum/status_effect/incapacitating/sleeping/try_force_say()
@@ -187,13 +238,13 @@
 /datum/status_effect/incapacitating/sleeping/proc/on_owner_insomniac(mob/living/source)
 	SIGNAL_HANDLER
 	REMOVE_TRAIT(owner, TRAIT_KNOCKEDOUT, TRAIT_STATUS_EFFECT(id))
-	tick_interval = STATUS_EFFECT_NO_TICK
+	stop_ticking()
 
 ///If the mob has the TRAIT_SLEEPIMMUNE but somehow looses it we make him sleep and restart the tick()
 /datum/status_effect/incapacitating/sleeping/proc/on_owner_sleepy(mob/living/source)
 	SIGNAL_HANDLER
 	ADD_TRAIT(owner, TRAIT_KNOCKEDOUT, TRAIT_STATUS_EFFECT(id))
-	tick_interval = initial(tick_interval)
+	start_ticking()
 
 /datum/status_effect/incapacitating/sleeping/tick(seconds_between_ticks)
 	if(owner.maxHealth)
@@ -260,7 +311,7 @@
 					carbon_owner.mind.adjust_experience(/datum/skill/athletics, seconds_between_ticks * sleep_quality * SLEEP_QUALITY_WORKOUT_MULTIPLER)
 					carbon_owner.adjust_timed_status_effect(-1 * seconds_between_ticks * sleep_quality * SLEEP_QUALITY_WORKOUT_MULTIPLER, /datum/status_effect/exercised)
 					if(prob(2))
-						to_chat(carbon_owner, span_notice(LANG("datum.44987336", null)))
+						to_chat(carbon_owner, span_notice("You feel your fitness improving!"))
 
 			if(health_ratio > 0.8) // only heals minor physical damage
 				need_mob_update += owner.adjust_brute_loss(-0.4 * sleep_quality * seconds_between_ticks, updating_health = FALSE, required_bodytype = BODYTYPE_ORGANIC)
@@ -324,7 +375,7 @@
 /datum/status_effect/grouped/stasis/tick(seconds_between_ticks)
 	update_time_of_death()
 	// NOVA EDIT ADDITION START - STASIS KEEPS SLEEP GOING
-	if(owner.stat >= UNCONSCIOUS)
+	if(IS_UNCONSCIOUS(owner))
 		owner.Sleeping(15 SECONDS)
 	//NOVA EDIT ADDITION END
 
@@ -628,7 +679,7 @@
 	. = ..()
 	owner.add_traits(list(TRAIT_PACIFISM, TRAIT_MUTE), REF(src))
 	owner.add_mood_event(REF(src), /datum/mood_event/gondola)
-	to_chat(owner, span_notice(LANG("datum.71e829fc", null)))
+	to_chat(owner, span_notice("You suddenly feel at peace and feel no need to make any sudden or rash actions..."))
 
 /datum/status_effect/gonbola_pacify/on_remove()
 	owner.remove_traits(list(TRAIT_PACIFISM, TRAIT_MUTE), REF(src))
@@ -674,7 +725,7 @@
 	REMOVE_TRAIT(owner, TRAIT_MUTE, TRAIT_STATUS_EFFECT(id))
 	owner.remove_status_effect(/datum/status_effect/dizziness)
 	owner.remove_client_colour(REF(src))
-	to_chat(owner, span_warning(LANG("datum.45edac63", null)))
+	to_chat(owner, span_warning("You snap out of your trance!"))
 
 /datum/status_effect/trance/get_examine_text()
 	return span_warning("[owner.p_They()] seem[owner.p_s()] slow and unfocused.")
@@ -701,20 +752,20 @@
 	alert_type = null
 
 /datum/status_effect/spasms/tick(seconds_between_ticks)
-	if(owner.stat >= UNCONSCIOUS || owner.incapacitated || HAS_TRAIT(owner, TRAIT_HANDS_BLOCKED) || HAS_TRAIT(owner, TRAIT_IMMOBILIZED))
+	if(owner.incapacitated || IS_UNCONSCIOUS(owner) || HAS_TRAIT(owner, TRAIT_HANDS_BLOCKED) || HAS_TRAIT(owner, TRAIT_IMMOBILIZED))
 		return
 	if(!prob(15))
 		return
 	switch(rand(1,5))
 		if(1)
 			if((owner.mobility_flags & MOBILITY_MOVE) && isturf(owner.loc))
-				to_chat(owner, span_warning(LANG("datum.31a2b028", null)))
+				to_chat(owner, span_warning("Your leg spasms!"))
 				step(owner, pick(GLOB.cardinals))
 		if(2)
 			var/obj/item/held_item = owner.get_active_held_item()
 			if(!held_item)
 				return
-			to_chat(owner, span_warning(LANG("datum.c460dc69", null)))
+			to_chat(owner, span_warning("Your fingers spasm!"))
 			owner.log_message("used [held_item] due to a Muscle Spasm", LOG_ATTACK)
 			held_item.attack_self(owner)
 		if(3)
@@ -728,13 +779,13 @@
 			for(var/mob/living/nearby_mobs in oview(owner, range))
 				targets += nearby_mobs
 			if(LAZYLEN(targets))
-				to_chat(owner, span_warning(LANG("datum.1a12789c", null)))
+				to_chat(owner, span_warning("Your arm spasms!"))
 				owner.log_message(" attacked someone due to a Muscle Spasm", LOG_ATTACK) //the following attack will log itself
 				owner.ClickOn(pick(targets))
 			owner.set_combat_mode(FALSE)
 		if(4)
 			owner.set_combat_mode(TRUE)
-			to_chat(owner, span_warning(LANG("datum.1a12789c", null)))
+			to_chat(owner, span_warning("Your arm spasms!"))
 			owner.log_message("attacked [owner.p_them()]self to a Muscle Spasm", LOG_ATTACK)
 			owner.ClickOn(owner)
 			owner.set_combat_mode(FALSE)
@@ -744,7 +795,7 @@
 			for(var/turf/nearby_turfs in oview(owner, 3))
 				targets += nearby_turfs
 			if(LAZYLEN(targets) && held_item)
-				to_chat(owner, span_warning(LANG("datum.1a12789c", null)))
+				to_chat(owner, span_warning("Your arm spasms!"))
 				owner.log_message("threw [held_item] due to a Muscle Spasm", LOG_ATTACK)
 				owner.throw_item(pick(targets))
 
@@ -757,7 +808,7 @@
 
 /datum/status_effect/convulsing/on_creation(mob/living/zappy_boy)
 	. = ..()
-	to_chat(zappy_boy, span_boldwarning(LANG("datum.72bf2cd3", null)))
+	to_chat(zappy_boy, span_boldwarning("You feel a shock moving through your body! Your hands start shaking!"))
 
 /datum/status_effect/convulsing/tick(seconds_between_ticks)
 	var/mob/living/carbon/H = owner
@@ -765,8 +816,8 @@
 		var/obj/item/I = H.get_active_held_item()
 		if(I && H.dropItemToGround(I))
 			H.visible_message(
-				span_notice(LANG("datum.98cb0284", list(H, I.name))),
-				span_userdanger(LANG("datum.d4cd2f78", null)),
+				span_notice("[H]'s hand convulses, and they drop their [I.name]!"),
+				span_userdanger("Your hand convulses violently, and you drop what you were holding!"),
 			)
 			H.adjust_jitter(10 SECONDS)
 
@@ -785,7 +836,7 @@
 
 /datum/status_effect/dna_melt/on_creation(mob/living/new_owner, set_duration)
 	. = ..()
-	to_chat(new_owner, span_boldwarning(LANG("datum.7de430da", null)))
+	to_chat(new_owner, span_boldwarning("My body can't handle the mutations! I need to get my mutations removed fast!"))
 
 /datum/status_effect/dna_melt/on_remove()
 	if(!ishuman(owner))
@@ -867,7 +918,7 @@
 /datum/status_effect/fake_virus/on_apply()
 	if(HAS_TRAIT(owner, TRAIT_VIRUSIMMUNE))
 		return FALSE
-	if(owner.stat != CONSCIOUS)
+	if(IS_UNCONSCIOUS_OR_CRIT(owner))
 		return FALSE
 	return TRUE
 
@@ -935,8 +986,8 @@
 
 /datum/status_effect/ants/on_creation(mob/living/new_owner, amount_left)
 	if(isnum(amount_left) && new_owner.stat < HARD_CRIT)
-		if(new_owner.stat < UNCONSCIOUS) // Unconscious people won't get messages
-			to_chat(new_owner, span_userdanger(LANG("datum.0c157ca2", null)))
+		if(!IS_UNCONSCIOUS(new_owner)) // Unconscious people won't get messages
+			to_chat(new_owner, span_userdanger("You're covered in ants!"))
 		ants_remaining += amount_left
 		RegisterSignal(new_owner, COMSIG_COMPONENT_CLEAN_ACT, PROC_REF(ants_washed))
 	. = ..()
@@ -944,17 +995,17 @@
 /datum/status_effect/ants/refresh(effect, amount_left)
 	var/mob/living/carbon/human/victim = owner
 	if(isnum(amount_left) && ants_remaining >= 1 && victim.stat < HARD_CRIT)
-		if(victim.stat < UNCONSCIOUS) // Unconscious people won't get messages
-			if(!prob(1)) // 99%
-				to_chat(victim, span_userdanger(LANG("datum.13ea6e8f", null)))
-			else // 1%
+		if(!IS_UNCONSCIOUS(victim)) // Unconscious people won't get messages
+			if(prob(99))
+				to_chat(victim, span_userdanger("You're covered in MORE ants!"))
+			else
 				INVOKE_ASYNC(victim, TYPE_PROC_REF(/atom/movable, say), "AAHH! THIS SITUATION HAS ONLY BEEN MADE WORSE WITH THE ADDITION OF YET MORE ANTS!!", forced = /datum/status_effect/ants)
 		ants_remaining += amount_left
 	. = ..()
 
 /datum/status_effect/ants/on_remove()
 	ants_remaining = 0
-	to_chat(owner, span_notice(LANG("datum.af4898f0", null)))
+	to_chat(owner, span_notice("All of the ants are off of your body!"))
 	UnregisterSignal(owner, COMSIG_COMPONENT_CLEAN_ACT)
 	. = ..()
 
@@ -972,7 +1023,7 @@
 /datum/status_effect/ants/tick(seconds_between_ticks)
 	var/mob/living/carbon/human/victim = owner
 	victim.apply_damage(max(0.1, round((ants_remaining * damage_per_ant), 0.1)) * seconds_between_ticks, BRUTE, spread_damage = TRUE) //Scales with # of ants (lowers with time). Roughly 10 brute over 50 seconds.
-	if(victim.stat <= SOFT_CRIT) //Makes sure people don't scratch at themselves while they're in a critical condition
+	if(!IS_UNCONSCIOUS_OR_CRIT(victim)) //Makes sure people don't scratch at themselves while they're in a critical condition
 		if(prob(15))
 			switch(rand(1,2))
 				if(1)
@@ -982,16 +1033,16 @@
 		if(prob(50)) // Most of the damage is done through random chance. When tested yielded an average 100 brute with 200u ants.
 			switch(rand(1,50))
 				if (1 to 8) //16% Chance
-					to_chat(victim, span_danger(LANG("datum.aee70297", null)))
+					to_chat(victim, span_danger("You scratch at the ants on your scalp!."))
 					owner.apply_damage(0.4 * seconds_between_ticks, BRUTE, BODY_ZONE_HEAD)
 				if (9 to 29) //40% chance
-					to_chat(victim, span_danger(LANG("datum.efe7e4f9", null)))
+					to_chat(victim, span_danger("You scratch at the ants on your arms!"))
 					owner.apply_damage(1.2 * seconds_between_ticks, BRUTE, pick(GLOB.arm_zones))
 				if (30 to 49) //38% chance
-					to_chat(victim, span_danger(LANG("datum.7b0fa781", null)))
+					to_chat(victim, span_danger("You scratch at the ants on your leg!"))
 					owner.apply_damage(1.2 * seconds_between_ticks, BRUTE, pick(GLOB.leg_zones))
 				if(50) // 2% chance
-					to_chat(victim, span_danger(LANG("datum.ef7630bb", null)))
+					to_chat(victim, span_danger("You rub some ants away from your eyes!"))
 					victim.set_eye_blur_if_lower(6 SECONDS)
 					ants_remaining -= 5 // To balance out the blindness, it'll be a little shorter.
 	ants_remaining--
@@ -1012,7 +1063,7 @@
 	var/mob/living/living = owner
 	if(!istype(living) || !living.can_resist() || living != owner)
 		return
-	to_chat(living, span_notice(LANG("atom.65df0df0", null)))
+	to_chat(living, span_notice("You start to shake the ants off!"))
 	if(!do_after(living, 2 SECONDS, target = living))
 		return
 	for (var/datum/status_effect/ants/ant_covered in living.status_effects)

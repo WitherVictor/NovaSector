@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 //Ninja modules for MODsuits
 
 ///Cloaking - Lowers the user's visibility, can be interrupted by being touched or attacked.
@@ -39,7 +38,7 @@
 /obj/item/mod/module/stealth/proc/unstealth(datum/source)
 	SIGNAL_HANDLER
 
-	to_chat(mod.wearer, span_warning(LANG("obj.af764fe4", list(src))))
+	to_chat(mod.wearer, span_warning("[src] gets discharged from contact!"))
 	do_sparks(2, TRUE, src)
 	drain_power(use_energy_cost)
 	deactivate()
@@ -154,7 +153,7 @@
 	new /obj/effect/temp_visual/emp/pulse(get_turf(src))
 	new /obj/effect/temp_visual/emp(get_turf(hit_atom))
 	playsound(src, 'sound/effects/empulse.ogg', 60, TRUE, MEDIUM_RANGE_SOUND_EXTRARANGE)
-	visible_message(LANG("obj.2316a14b", list(src)))
+	visible_message("[src] emits an electromagnetic pulse upon impact!")
 	if(isturf(loc)) // if we didn't embed in anything, go away
 		qdel(src)
 
@@ -215,9 +214,9 @@
 
 /obj/item/mod/module/hacker/proc/charge_message(atom/drained_atom, drain_amount)
 	if(drain_amount)
-		to_chat(mod.wearer, span_notice(LANG("obj.d3fff60d", list(drain_amount, drained_atom))))
+		to_chat(mod.wearer, span_notice("Gained <B>[drain_amount]</B> units of energy from [drained_atom]."))
 	else
-		to_chat(mod.wearer, span_warning(LANG("obj.1adcfe3b", list(drained_atom))))
+		to_chat(mod.wearer, span_warning("[drained_atom] has run dry of energy, you must find another source!"))
 
 //Security Records, Ninja objective This notifies the AI and sets everyone on arrest.
 /obj/machinery/computer/records/security/ninjadrain_act(mob/living/carbon/human/ninja, obj/item/mod/module/hacker/hacking_module)
@@ -231,7 +230,7 @@
 	return COMPONENT_CANCEL_ATTACK_CHAIN
 
 /obj/machinery/computer/records/security/proc/ninjadrain_charge(mob/living/carbon/human/ninja, obj/item/mod/module/hacker/hacking_module)
-	if(!do_after(ninja, 20 SECONDS, src, extra_checks = CALLBACK(src, PROC_REF(can_hack), ninja), hidden = TRUE))
+	if(!do_after(ninja, 20 SECONDS, src, extra_checks = CALLBACK(src, PROC_REF(can_hack), ninja), cog_icon = null))
 		return
 	for(var/datum/record/crew/target in GLOB.manifest.general)
 		target.wanted_status = WANTED_ARREST
@@ -247,12 +246,12 @@
 /obj/machinery/computer/records/security/proc/can_hack(mob/living/hacker, feedback = FALSE)
 	if(machine_stat & (NOPOWER|BROKEN))
 		if(feedback && hacker)
-			balloon_alert(hacker, LANG("obj.426ce8db", null))
+			balloon_alert(hacker, "can't hack!")
 		return FALSE
 	var/area/console_area = get_area(src)
 	if(!console_area || !(console_area.area_flags & VALID_TERRITORY))
 		if(feedback && hacker)
-			balloon_alert(hacker, LANG("obj.dbddc2b1", null))
+			balloon_alert(hacker, "signal too weak!")
 		return FALSE
 	return TRUE
 
@@ -278,7 +277,7 @@
 		if(hacking_module.mod.get_charge() + drain > hacking_module.mod.get_max_charge())
 			drain = hacking_module.mod.get_max_charge() - hacking_module.mod.get_charge()
 			maxcapacity = TRUE//Reached maximum battery capacity.
-		if (do_after(ninja, 1 SECONDS, target = src, hidden = TRUE))
+		if (do_after(ninja, 1 SECONDS, target = src, cog_icon = null))
 			spark_system.start()
 			playsound(loc, SFX_SPARKS, 50, TRUE, SHORT_RANGE_SOUND_EXTRARANGE)
 			cell.use(drain)
@@ -313,7 +312,7 @@
 		if(hacking_module.mod.get_charge() + drain > hacking_module.mod.get_max_charge())
 			drain = hacking_module.mod.get_max_charge() - hacking_module.mod.get_charge()
 			maxcapacity = TRUE
-		if (do_after(ninja, 1 SECONDS, target = src, hidden = TRUE))
+		if (do_after(ninja, 1 SECONDS, target = src, cog_icon = null))
 			spark_system.start()
 			playsound(loc, SFX_SPARKS, 50, TRUE, SHORT_RANGE_SOUND_EXTRARANGE)
 			charge -= drain
@@ -333,7 +332,7 @@
 
 /obj/item/stock_parts/power_store/cell/proc/ninjadrain_charge(mob/living/carbon/human/ninja, obj/item/mod/module/hacker/hacking_module)
 	var/drain_total = 0
-	if(charge && !do_after(ninja, 3 SECONDS, target = src, hidden = TRUE))
+	if(charge && !do_after(ninja, 3 SECONDS, target = src, cog_icon = null))
 		drain_total = charge
 		if(hacking_module.mod.get_charge() + charge > hacking_module.mod.get_max_charge())
 			drain_total = hacking_module.mod.get_max_charge() - hacking_module.mod.get_charge()
@@ -350,17 +349,17 @@
 	// If the traitor theft objective is still present, this will destroy it...
 	if(!source_code_hdd)
 		return ..()
-	to_chat(ninja, span_notice(LANG("obj.c7ca2810", list(src))))
+	to_chat(ninja, span_notice("Hacking \the [src]..."))
 	AI_notify_hack()
-	to_chat(ninja, span_notice(LANG("obj.83f9e920", null)))
+	to_chat(ninja, span_notice("Encrypted source code detected. Overloading storage device..."))
 	INVOKE_ASYNC(src, PROC_REF(ninjadrain_charge), ninja, hacking_module)
 	return COMPONENT_CANCEL_ATTACK_CHAIN
 
 /obj/machinery/rnd/server/master/ninjadrain_charge(mob/living/carbon/human/ninja, obj/item/mod/module/hacker/hacking_module)
-	if(!do_after(ninja, 30 SECONDS, target = src, hidden = TRUE))
+	if(!do_after(ninja, 30 SECONDS, target = src, cog_icon = null))
 		return
 	overload_source_code_hdd()
-	to_chat(ninja, span_notice(LANG("obj.ef612b0d", null)))
+	to_chat(ninja, span_notice("Sabotage complete. Storage device overloaded."))
 	var/datum/antagonist/ninja/ninja_antag = ninja.mind.has_antag_datum(/datum/antagonist/ninja)
 	if(!ninja_antag)
 		return
@@ -371,15 +370,15 @@
 /obj/machinery/rnd/server/ninjadrain_act(mob/living/carbon/human/ninja, obj/item/mod/module/hacker/hacking_module)
 	if(!ninja || !hacking_module)
 		return NONE
-	to_chat(ninja, span_notice(LANG("obj.dc20d2e0", null)))
+	to_chat(ninja, span_notice("Research notes detected. Corrupting data..."))
 	INVOKE_ASYNC(src, PROC_REF(ninjadrain_charge), ninja, hacking_module)
 	return COMPONENT_CANCEL_ATTACK_CHAIN
 
 /obj/machinery/rnd/server/proc/ninjadrain_charge(mob/living/carbon/human/ninja, obj/item/mod/module/hacker/hacking_module)
-	if(!do_after(ninja, 30 SECONDS, target = src, hidden = TRUE))
+	if(!do_after(ninja, 30 SECONDS, target = src, cog_icon = null))
 		return
 	stored_research.modify_points_all(0)
-	to_chat(ninja, span_notice(LANG("obj.922fe35b", null)))
+	to_chat(ninja, span_notice("Sabotage complete. Research notes corrupted."))
 	var/datum/antagonist/ninja/ninja_antag = ninja.mind.has_antag_datum(/datum/antagonist/ninja)
 	if(!ninja_antag)
 		return
@@ -421,7 +420,7 @@
 			return NONE
 		var/datum/objective/door_jack/objective = locate() in ninja_antag.objectives
 		if(objective && objective.doors_required == hacking_module.door_hack_counter)
-			ninja.balloon_alert(ninja, LANG("obj.c283ff86", null))
+			ninja.balloon_alert(ninja, "all doors hacked")
 		if(objective && objective.doors_required <= hacking_module.door_hack_counter)
 			objective.completed = TRUE
 	return COMPONENT_CANCEL_ATTACK_CHAIN
@@ -441,7 +440,7 @@
 	while(!maxcapacity && src)
 		drain = (round((rand(NINJA_MIN_DRAIN, NINJA_MAX_DRAIN))/2))
 		var/drained = 0
-		if(wire_powernet && do_after(ninja, 1 SECONDS, target = src, hidden = TRUE))
+		if(wire_powernet && do_after(ninja, 1 SECONDS, target = src, cog_icon = null))
 			drained = min(drain, delayed_surplus())
 			add_delayedload(drained)
 			if(drained < drain)//if no power on net, drain apcs
@@ -481,7 +480,7 @@
 			if(hacking_module.mod.get_charge() + drain > hacking_module.mod.get_max_charge())
 				drain = hacking_module.mod.get_max_charge() - hacking_module.mod.get_charge()
 				maxcapacity = TRUE
-			if (do_after(ninja, 1 SECONDS, target = src, hidden = TRUE))
+			if (do_after(ninja, 1 SECONDS, target = src, cog_icon = null))
 				spark_system.start()
 				playsound(loc, SFX_SPARKS, 50, TRUE, SHORT_RANGE_SOUND_EXTRARANGE)
 				cell.use(drain)
@@ -496,31 +495,31 @@
 	if(!ninja || !hacking_module || (has_faction(ROLE_NINJA)))
 		return NONE
 
-	to_chat(src, span_danger(LANG("mob.22b5cb3b", null)))
+	to_chat(src, span_danger("Warni-***BZZZZZZZZZRT*** UPLOADING SPYDERPATCHER VERSION 9.5.2..."))
 	INVOKE_ASYNC(src, PROC_REF(ninjadrain_charge), ninja, hacking_module)
 	return COMPONENT_CANCEL_ATTACK_CHAIN
 
 /mob/living/silicon/robot/proc/ninjadrain_charge(mob/living/carbon/human/ninja, obj/item/mod/module/hacker/hacking_module)
-	if(!do_after(ninja, 6 SECONDS, target = src, hidden = TRUE))
+	if(!do_after(ninja, 6 SECONDS, target = src, cog_icon = null))
 		return
 	spark_system.start()
 	playsound(loc, SFX_SPARKS, 50, TRUE, SHORT_RANGE_SOUND_EXTRARANGE)
-	to_chat(src, span_danger(LANG("mob.118bccfb", null)))
+	to_chat(src, span_danger("UPLOAD COMPLETE. NEW CYBORG MODEL DETECTED.  INSTALLING..."))
 	faction = list(ROLE_NINJA)
 	bubble_icon = "syndibot"
 	UnlinkSelf()
 	ionpulse = TRUE
-	laws = new /datum/ai_laws/ninja_override()
+	replace_law_set(/datum/ai_laws/ninja_override)
 	//model.transform_to(pick(/obj/item/robot_model/syndicate, /obj/item/robot_model/syndicate_medical, /obj/item/robot_model/saboteur)) // NOVA EDIT REMOVAL
-	//NOVA EDIT ADDITION START - Role Selection
+	// NOVA EDIT ADDITION START - Role Selection
 	var/list/modelselected = list(
 		"Assault" = "/obj/item/robot_model/ninja",
 		"Medical" = "/obj/item/robot_model/ninja/ninja_medical",
 		"Saboteur" = "/obj/item/robot_model/ninja_saboteur",
 	)
-	var/choice = input(src,LANG("mob.5fca178d", null),LANG("mob.a1b9dfd8", null)) in sort_list(modelselected)
+	var/choice = input(src,"What role do you wish to become?","Select Role") in sort_list(modelselected)
 	model.transform_to(modelselected[choice])
-	//NOVA EDIT ADDITION END
+	// NOVA EDIT ADDITION END
 
 	var/datum/antagonist/ninja/ninja_antag = ninja.mind.has_antag_datum(/datum/antagonist/ninja)
 	if(!ninja_antag)
@@ -537,7 +536,7 @@
 	if(hacking_module.mod.subtract_charge(DEFAULT_CHARGE_DRAIN*10))
 		//Got that electric touch
 		do_sparks(5, FALSE, loc)
-		visible_message(span_danger(LANG("mob.e7ae6904", list(ninja, src, ninja.p_their()))), span_userdanger(LANG("mob.6c491285", list(ninja, ninja.p_their()))))
+		visible_message(span_danger("[ninja] electrocutes [src] with [ninja.p_their()] touch!"), span_userdanger("[ninja] electrocutes you with [ninja.p_their()] touch!"))
 		addtimer(CALLBACK(src, PROC_REF(ninja_knockdown)), 0.3 SECONDS)
 	return NONE
 
@@ -548,7 +547,7 @@
 //CAMERAS, emps cameras disabling AI vision
 /obj/machinery/camera/ninjadrain_act(mob/living/carbon/human/ninja, obj/item/mod/module/hacker/hacking_module)
 	if(isEmpProof(TRUE))
-		balloon_alert(ninja, LANG("obj.7ce57912", null))
+		balloon_alert(ninja, "camera is shielded!")
 		return COMPONENT_CANCEL_ATTACK_CHAIN
 
 	if(!hacking_module.mod.subtract_charge(DEFAULT_CHARGE_DRAIN * 5))
@@ -559,8 +558,8 @@
 
 //BOTS, overloads them and causes a explosion
 /mob/living/basic/bot/ninjadrain_act(mob/living/carbon/human/ninja, obj/item/mod/module/hacker/hacking_module)
-	to_chat(src, span_boldwarning(LANG("mob.2805861b", null)))
-	if(!do_after(ninja, 1.5 SECONDS, target = src, hidden = TRUE))
+	to_chat(src, span_boldwarning("Your circutry suddenly begins heating up!"))
+	if(!do_after(ninja, 1.5 SECONDS, target = src, cog_icon = null))
 		return COMPONENT_CANCEL_ATTACK_CHAIN
 
 	if(!hacking_module.mod.subtract_charge(DEFAULT_CHARGE_DRAIN * 7))
@@ -568,7 +567,7 @@
 
 	do_sparks(number = 3, cardinal_only = FALSE, source = src)
 	playsound(get_turf(src), 'sound/machines/warning-buzzer.ogg', 35, TRUE)
-	balloon_alert(ninja, LANG("mob.7f767476", null))
+	balloon_alert(ninja, "stand back!")
 	addtimer(CALLBACK(GLOBAL_PROC, GLOBAL_PROC_REF(explosion), src, 0, 1, 2, 3), 2.5 SECONDS)
 	return COMPONENT_CANCEL_ATTACK_CHAIN
 
@@ -583,45 +582,45 @@
 //ENERGY WEAPONS, drains power from the weapon to supply your modsuit
 /obj/item/gun/energy/ninjadrain_act(mob/living/carbon/human/ninja, obj/item/mod/module/hacker/hacking_module)
 	if(cell.charge == 0)
-		balloon_alert(ninja, LANG("obj.2b5c9a9e", null))
+		balloon_alert(ninja, "no energy!")
 		return COMPONENT_CANCEL_ATTACK_CHAIN
 
-	if(!do_after(ninja, 1.5 SECONDS, target = src, hidden = TRUE))
+	if(!do_after(ninja, 1.5 SECONDS, target = src, cog_icon = null))
 		return COMPONENT_CANCEL_ATTACK_CHAIN
 
 	hacking_module.mod.add_charge(cell.charge)
 	hacking_module.charge_message(src, cell.charge)
 	cell.charge = 0
 	update_appearance()
-	visible_message(span_warning(LANG("obj.15d52529", list(ninja, src))))
+	visible_message(span_warning("[ninja] drains the energy from the [src]!"))
 	do_sparks(number = 3, cardinal_only = FALSE, source = src)
 	return COMPONENT_CANCEL_ATTACK_CHAIN
 
 //VENDING MACHINES, overload vending machines to throw its suppy at people
 /obj/machinery/vending/ninjadrain_act(mob/living/carbon/human/ninja, obj/item/mod/module/hacker/hacking_module)
 	if(shoot_inventory)
-		balloon_alert(ninja, LANG("obj.e5d5677d", null))
+		balloon_alert(ninja, "already hacked!")
 		return COMPONENT_CANCEL_ATTACK_CHAIN
 
-	if(!do_after(ninja, 2 SECONDS, target = src, hidden = TRUE))
+	if(!do_after(ninja, 2 SECONDS, target = src, cog_icon = null))
 		return COMPONENT_CANCEL_ATTACK_CHAIN
 
 	if(!hacking_module.mod.subtract_charge(DEFAULT_CHARGE_DRAIN * 5))
 		return COMPONENT_CANCEL_ATTACK_CHAIN
 
 	do_sparks(number = 3, cardinal_only = FALSE, source = src)
-	balloon_alert(ninja, LANG("obj.829fa681", null))
+	balloon_alert(ninja, "system overloaded!")
 	wires.on_pulse(WIRE_THROW)
 	return COMPONENT_CANCEL_ATTACK_CHAIN
 
 //RECYCLER, emaggs the recycler disabling its safety
 /obj/machinery/recycler/ninjadrain_act(mob/living/carbon/human/ninja, obj/item/mod/module/hacker/hacking_module)
 	if(obj_flags & EMAGGED)
-		balloon_alert(ninja, LANG("obj.e5d5677d", null))
+		balloon_alert(ninja, "already hacked!")
 		return COMPONENT_CANCEL_ATTACK_CHAIN
 
 	AI_notify_hack()
-	if(!do_after(ninja, 30 SECONDS, target = src, hidden = TRUE))
+	if(!do_after(ninja, 30 SECONDS, target = src, cog_icon = null))
 		return COMPONENT_CANCEL_ATTACK_CHAIN
 
 	do_sparks(3, cardinal_only = FALSE, source = src)
@@ -632,10 +631,10 @@
 //ELEVATOR CONTROLS//
 /obj/machinery/elevator_control_panel/ninjadrain_act(mob/living/carbon/human/ninja, obj/item/mod/module/hacker/hacking_module)
 	if(obj_flags & EMAGGED)
-		balloon_alert(ninja, LANG("obj.e5d5677d", null))
+		balloon_alert(ninja, "already hacked!")
 		return COMPONENT_CANCEL_ATTACK_CHAIN
 
-	if(!do_after(ninja, 2 SECONDS, target = src, hidden = TRUE))
+	if(!do_after(ninja, 2 SECONDS, target = src, cog_icon = null))
 		return COMPONENT_CANCEL_ATTACK_CHAIN
 
 	do_sparks(3, cardinal_only = FALSE, source = src)
@@ -647,16 +646,16 @@
 /obj/machinery/computer/tram_controls/ninjadrain_act(mob/living/carbon/human/ninja, obj/item/mod/module/hacker/hacking_module)
 	var/datum/round_event/tram_malfunction/malfunction_event = locate(/datum/round_event/tram_malfunction) in SSevents.running
 	if(malfunction_event)
-		balloon_alert(ninja, LANG("obj.5d7159ce", null))
+		balloon_alert(ninja, "tram is already malfunctioning!")
 		return COMPONENT_CANCEL_ATTACK_CHAIN
 
 	if(specific_transport_id != TRAMSTATION_LINE_1)
-		balloon_alert(ninja, LANG("obj.22020377", null))
+		balloon_alert(ninja, "cannot hack this tram!")
 		return COMPONENT_CANCEL_ATTACK_CHAIN
 
 	AI_notify_hack()
 
-	if(!do_after(ninja, 20 SECONDS, target = src, hidden = TRUE)) //Shorter due to how incredibly easy it is for someone to (even accidentally) interrupt.
+	if(!do_after(ninja, 20 SECONDS, target = src, cog_icon = null)) //Shorter due to how incredibly easy it is for someone to (even accidentally) interrupt.
 		return COMPONENT_CANCEL_ATTACK_CHAIN
 
 	force_event(/datum/round_event_control/tram_malfunction, "ninja interference")
@@ -718,23 +717,23 @@
 	if(!linked_weapon)
 		var/obj/item/weapon_to_link = mod.wearer.is_holding_item_of_type(accepted_type)
 		if(!weapon_to_link)
-			balloon_alert(mod.wearer, LANG("obj.72452fd7", null))
+			balloon_alert(mod.wearer, "no linked weapon!")
 			return
 		set_weapon(weapon_to_link)
-		balloon_alert(mod.wearer, LANG("obj.10ef8ea4", list(linked_weapon.name)))
+		balloon_alert(mod.wearer, "[linked_weapon.name] linked")
 		return
 	if(linked_weapon in mod.wearer.get_all_contents())
-		balloon_alert(mod.wearer, LANG("obj.90dbdb49", null))
+		balloon_alert(mod.wearer, "already on self!")
 		return
 	var/distance = get_dist(mod.wearer, linked_weapon)
 	var/in_view = (linked_weapon in view(mod.wearer)) && !(linked_weapon in get_turf(mod.wearer))
 	if(!in_view && !drain_power(use_energy_cost * distance))
-		balloon_alert(mod.wearer, LANG("obj.07f43d6c", null))
+		balloon_alert(mod.wearer, "not enough charge!")
 		return
 	linked_weapon.forceMove(linked_weapon.drop_location())
 	if(in_view)
 		do_sparks(5, FALSE, linked_weapon)
-		mod.wearer.visible_message(span_danger(LANG("obj.83bf9e06", list(linked_weapon, mod.wearer))),span_warning(LANG("obj.3fdc05cd", list(linked_weapon))))
+		mod.wearer.visible_message(span_danger("[linked_weapon] flies towards [mod.wearer]!"),span_warning("You hold out your hand and [linked_weapon] flies towards you!"))
 		linked_weapon.throw_at(mod.wearer, distance+1, linked_weapon.throw_speed, mod.wearer)
 	else
 		recall_weapon()
@@ -793,10 +792,10 @@
 	if(. != MOD_CANCEL_ACTIVATE || !isliving(user) || user != mod.wearer)
 		return
 	if(mod.ai_assistant == user)
-		to_chat(mod.ai_assistant, span_danger(LANG("obj.0f2bc449", null)))
+		to_chat(mod.ai_assistant, span_danger("<B>fATaL EERRoR</B>: 381200-*#00CODE <B>BLUE</B>\nAI INTErFERenCE DEtECted\nACTi0N DISrEGArdED"))
 		return
 	var/mob/living/living_user = user
-	to_chat(living_user, span_danger(LANG("obj.881ae3a3", null)))
+	to_chat(living_user, span_danger("<B>fATaL EERRoR</B>: 382200-*#00CODE <B>RED</B>\nUNAUTHORIZED USE DETECteD\nCoMMENCING SUB-R0UTIN3 13...\nTERMInATING U-U-USER..."))
 	living_user.investigate_log("has been gibbed by using a MODsuit equipped with [src].", INVESTIGATE_DEATHS)
 	living_user.gib(DROP_ALL_REMAINS)
 
@@ -858,7 +857,7 @@
 	if(!.)
 		return
 	if(IS_SPACE_NINJA(mod.wearer) && isliving(target))
-		mod.wearer.say(LANG("obj.5f7bfdc1", null), forced = type)
+		mod.wearer.say("Get over here!", forced = type)
 	var/obj/projectile/net = new /obj/projectile/energy_net(mod.wearer.loc, src)
 	net.aim_projectile(target, mod.wearer)
 	net.firer = mod.wearer
@@ -906,7 +905,7 @@
 	var/obj/item/mod/module/energy_net/module = net_module?.resolve()
 	if(module)
 		module.add_net(net)
-	firer?.visible_message(span_danger(LANG("obj.b40584cf", list(firer, target))), span_notice(LANG("obj.4bdab913", list(target))))
+	firer?.visible_message(span_danger("[firer] caught [target] with an energy net!"), span_notice("You caught [target] with an energy net!"))
 	if(target.buckled)
 		target.buckled.unbuckle_mob(target, force = TRUE)
 	net.buckle_mob(target, force = TRUE)
@@ -983,14 +982,14 @@
 
 /obj/item/mod/module/adrenaline_boost/used()
 	if(!reagents.has_reagent(reagent_required, reagent_required_amount))
-		balloon_alert(mod.wearer, LANG("obj.c0d39a14", null))
+		balloon_alert(mod.wearer, "no charge!")
 		return FALSE
 	return ..()
 
 /obj/item/mod/module/adrenaline_boost/on_use(mob/activator)
 	if(IS_SPACE_NINJA(mod.wearer))
 		mod.wearer.say(pick_list_replacements(NINJA_FILE, "lines"), forced = type)
-	to_chat(mod.wearer, span_notice(LANG("obj.2292fe9c", null)))
+	to_chat(mod.wearer, span_notice("You have used the adrenaline boost."))
 	mod.wearer.SetAllImmobility(0)
 	mod.wearer.adjust_stamina_loss(-200)
 	mod.wearer.remove_status_effect(/datum/status_effect/speech/stutter)
@@ -1016,15 +1015,15 @@
 	if(!attacking_item.is_open_container())
 		return FALSE
 	if(reagents.has_reagent(reagent_required, reagent_required_amount))
-		balloon_alert(mod.wearer, LANG("obj.70b1edda", null))
+		balloon_alert(mod.wearer, "already charged!")
 		return FALSE
 	if(!attacking_item.reagents.trans_to(src, reagent_required_amount, target_id = reagent_required))
 		return FALSE
-	balloon_alert(mod.wearer, LANG("obj.3fd35936", list(reagents.has_reagent(reagent_required, reagent_required_amount) ? "fully" : "partially")))
+	balloon_alert(mod.wearer, "charge [reagents.has_reagent(reagent_required, reagent_required_amount) ? "fully" : "partially"] reloaded")
 	return TRUE
 
 /obj/item/mod/module/adrenaline_boost/proc/boost_aftereffects(mob/affected_mob)
 	if(!affected_mob)
 		return
 	reagents.trans_to(affected_mob, reagents.total_volume)
-	to_chat(affected_mob, span_danger(LANG("obj.473eb83a", null)))
+	to_chat(affected_mob, span_danger("You are beginning to feel the after-effect of the injection."))

@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 /obj/machinery/gibber
 	name = "gibber"
 	desc = "The name isn't descriptive enough?"
@@ -27,7 +26,10 @@
 	RegisterSignal(src, COMSIG_COMPONENT_CLEAN_ACT, PROC_REF(on_cleaned))
 	if(prob(5))
 		name = "meat grinder"
-		desc = LANG("obj.0b1c92a9", null)
+		desc = "Okay, if I... if I chop you up in a meat grinder, and the only thing that comes out, that's left of you, is your eyeball, \
+			you'r- you're PROBABLY DEAD! You're probably going to - not you, I'm just sayin', like, if you- if somebody were to, like, \
+			push you into a meat grinder, and, like, your- one of your finger bones is still intact, they're not gonna pick it up and go, \
+			Well see, yeah it wasn't deadly, it wasn't an instant kill move! You still got, like, this part of your finger left!"
 		dirty = TRUE
 		update_appearance(UPDATE_OVERLAYS)
 
@@ -45,7 +47,7 @@
 /obj/machinery/gibber/examine(mob/user)
 	. = ..()
 	if(in_range(user, src) || isobserver(user))
-		. += span_notice(LANG("obj.4f41ff84", list(efficiency, gibtime*0.1)))
+		. += span_notice("The status display reads: Outputting <b>[efficiency]%</b> of meat after <b>[gibtime*0.1]</b> seconds of processing.")
 		for(var/datum/stock_part/servo/servo in component_parts)
 			if(servo.tier >= 2)
 				. += span_notice("[src] has been upgraded to process inorganic materials.")
@@ -92,21 +94,21 @@
 	if(machine_stat & (NOPOWER|BROKEN))
 		return
 	if(operating)
-		to_chat(user, span_danger(LANG("obj.fc4d37c9", null)))
+		to_chat(user, span_danger("It's locked and running."))
 		return
 
 	if(!anchored)
-		to_chat(user, span_warning(LANG("obj.7ba35faf", list(src))))
+		to_chat(user, span_warning("[src] cannot be used unless bolted to the ground!"))
 		return
 
 	if(user.pulling && isliving(user.pulling))
 		var/mob/living/L = user.pulling
 		if(!iscarbon(L))
-			to_chat(user, span_warning(LANG("obj.6284e4b5", list(src))))
+			to_chat(user, span_warning("This item is not suitable for [src]!"))
 			return
 		var/mob/living/carbon/C = L
 		if(C.buckled || C.has_buckled_mobs())
-			to_chat(user, span_warning(LANG("obj.2ea65959", list(C))))
+			to_chat(user, span_warning("[C] is attached to something!"))
 			return
 
 		if(!ignore_clothing)
@@ -115,13 +117,13 @@
 					to_chat(user, span_warning("Subject may not have abiotic items on!"))
 					return
 
-		user.visible_message(span_danger(LANG("obj.fa9f1c74", list(user, C, src))))
+		user.visible_message(span_danger("[user] starts to put [C] into [src]!"))
 
 		add_fingerprint(user)
 
 		if(do_after(user, gibtime, target = src))
 			if(C && user.pulling == C && !C.buckled && !C.has_buckled_mobs() && !occupant)
-				user.visible_message(span_danger(LANG("obj.a6a57d11", list(user, C, src))))
+				user.visible_message(span_danger("[user] stuffs [C] into [src]!"))
 				C.forceMove(src)
 				set_occupant(C)
 				update_appearance()
@@ -143,10 +145,9 @@
 	. = ..()
 	icon_state = panel_open ? "[base_icon_state]_open" : base_icon_state
 
-/obj/machinery/gibber/verb/eject()
-	set name = "清空绞肉机"
-	set src in oview(1)
-	if (usr.stat != CONSCIOUS || HAS_TRAIT(usr, TRAIT_HANDS_BLOCKED))
+GAME_VERB_SRC(/obj/machinery/gibber, eject, oview(1), "Empty gibber", null)
+
+	if (IS_UNCONSCIOUS_OR_CRIT(usr) || HAS_TRAIT(usr, TRAIT_HANDS_BLOCKED))
 		return
 	if(!usr.can_perform_action(src))
 		return
@@ -163,18 +164,18 @@
 		return
 
 	if(!occupant)
-		audible_message(span_hear(LANG("obj.75409ca1", null)))
+		audible_message(span_hear("You hear a loud metallic grinding sound."))
 		return
 
 	if(occupant.flags_1 & HOLOGRAM_1)
-		audible_message(span_hear(LANG("obj.95e0fb19", null)))
+		audible_message(span_hear("You hear a very short metallic grinding sound."))
 		playsound(loc, 'sound/machines/hiss.ogg', 20, TRUE)
 		qdel(occupant)
 		set_occupant(null)
 		return
 
 	use_energy(active_power_usage)
-	audible_message(span_hear(LANG("obj.35ad5caf", null)))
+	audible_message(span_hear("You hear a loud squelchy grinding sound."))
 	playsound(loc, 'sound/machines/juicer.ogg', 50, TRUE)
 	operating = TRUE
 	update_appearance()

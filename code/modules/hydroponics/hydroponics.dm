@@ -218,9 +218,9 @@
 
 /obj/machinery/hydroponics/constructable/examine(mob/user)
 	. = ..()
-	. += span_notice(LANG("obj.a4a2f356", null))
+	. += span_notice("Use <b>Ctrl-Click</b> to activate autogrow. <b>RMB</b> to empty the tray's nutrients.")
 	if(in_range(user, src) || isobserver(user))
-		. += span_notice(LANG("obj.e17c6005", list(rating*100)))
+		. += span_notice("The status display reads: Tray efficiency at <b>[rating*100]%</b>.")
 
 /obj/machinery/hydroponics/constructable/add_context(
 	atom/source,
@@ -300,7 +300,7 @@
 			adjust_pestlevel(-0.5 * seconds_per_tick)
 		else
 			set_self_sustaining(FALSE)
-			visible_message(span_warning(LANG("obj.643b2c28", list(name))))
+			visible_message(span_warning("[name]'s auto-grow functionality shuts off!"))
 
 	if(isturf(loc))
 		var/turf/currentTurf = loc
@@ -668,25 +668,25 @@
 /obj/machinery/hydroponics/examine(user)
 	. = ..()
 	if(myseed)
-		. += span_info(LANG("obj.7443c344", list(span_name("[myseed.plantname]"))))
+		. += span_info("It has [span_name("[myseed.plantname]")] planted.")
 		if (plant_status == HYDROTRAY_PLANT_DEAD)
-			. += span_warning(LANG("obj.31da5f16", null))
+			. += span_warning("It's dead!")
 		else if (plant_status == HYDROTRAY_PLANT_HARVESTABLE)
-			. += span_info(LANG("obj.aa000b6c", null))
+			. += span_info("It's ready to harvest.")
 		else if (plant_health <= (myseed.endurance / 2))
-			. += span_warning(LANG("obj.a5b9924f", null))
+			. += span_warning("It looks unhealthy.")
 	else
-		. += span_info(LANG("obj.552a4105", null))
+		. += span_info("It's empty.")
 
-	. += span_info(LANG("obj.d6ee4991", list(waterlevel, maxwater)))
-	. += span_info(LANG("obj.0333316c", list(reagents.total_volume, maxnutri)))
+	. += span_info("Water: [waterlevel]/[maxwater].")
+	. += span_info("Nutrient: [reagents.total_volume]/[maxnutri].")
 	if(self_sustaining)
-		. += span_info(LANG("obj.160a6da0", null))
+		. += span_info("The tray's autogrow is active, protecting it from species mutations, weeds, and pests.")
 
 	if(weedlevel >= 5)
-		. += span_warning(LANG("obj.e8c294a1", null))
+		. += span_warning("It's filled with weeds!")
 	if(pestlevel >= 5)
-		. += span_warning(LANG("obj.a4c02c3f", null))
+		. += span_warning("It's filled with tiny worms!")
 
 /**
  * What happens when a tray's weeds grow too large.
@@ -721,7 +721,7 @@
 	set_plant_health(myseed.endurance, update_icon = FALSE)
 	set_weedlevel(0, update_icon = FALSE) // Reset
 	set_pestlevel(0) // Reset
-	visible_message(span_warning(LANG("obj.3c3b0a0c", list(oldPlantName, myseed.plantname))))
+	visible_message(span_warning("The [oldPlantName] is overtaken by some [myseed.plantname]!"))
 
 /// Mutates the stats of the current seed
 /obj/machinery/hydroponics/proc/mutate(lifemut = 2, endmut = 5, productmut = 1, yieldmut = 2, potmut = 25, wrmut = 2, wcmut = 5, traitmut = 0, stabmut = 3) // Mutates the current seed
@@ -802,7 +802,7 @@
 /// Mutates the weeds in the tray into a random weed plant (which can overtake existing plants)
 /obj/machinery/hydroponics/proc/mutateweed()
 	if(weedlevel <= 5)
-		visible_message(span_warning(LANG("obj.ed0fe8cc", list(src))))
+		visible_message(span_warning("The few weeds in [src] seem to react, but only for a moment..."))
 		return
 
 	set_seed(null)
@@ -879,7 +879,7 @@
  */
 /obj/machinery/hydroponics/proc/mutatepest()
 	if(pestlevel <= 5)
-		visible_message(span_warning(LANG("obj.94b56dd5", list(src))))
+		visible_message(span_warning("The pests seem to behave oddly in [src], but quickly settle down..."))
 		return
 
 	var/mob/user = lastuser?.resolve()
@@ -887,7 +887,7 @@
 		message_admins("[ADMIN_LOOKUPFLW(user)] last altered a hydro tray's contents which spawned spiderlings.")
 		user.log_message("last altered a hydro tray, which spiderlings spawned from.", LOG_GAME)
 
-	visible_message(span_warning(LANG("obj.19c2f0f9", null)))
+	visible_message(span_warning("The pests seem to behave oddly..."))
 	spawn_atom_to_turf(/mob/living/basic/spider/growing/spiderling/hunter, src, 3, FALSE)
 
 /obj/machinery/hydroponics/wrench_act(mob/living/user, obj/item/tool)
@@ -895,18 +895,17 @@
 	default_unfasten_wrench(user, tool)
 	return ITEM_INTERACT_SUCCESS
 
-/obj/machinery/hydroponics/attackby(obj/item/O, mob/user, list/modifiers, list/attack_modifiers)
-	//Called when mob user "attacks" it with object O
-	if(IS_EDIBLE(O) || is_reagent_container(O))  // Syringe stuff (and other reagent containers now too)
-		var/obj/item/reagent_containers/reagent_source = O
+/obj/machinery/hydroponics/item_interaction(mob/living/user, obj/item/tool, list/modifiers)
+	if(IS_EDIBLE(tool) || is_reagent_container(tool))  // Syringe stuff (and other reagent containers now too)
+		var/obj/item/reagent_containers/reagent_source = tool
 
 		if(!reagent_source.reagents.total_volume)
-			to_chat(user, span_warning(LANG("obj.02d482cc", list(reagent_source))))
-			return 1
+			to_chat(user, span_warning("[reagent_source] is empty!"))
+			return ITEM_INTERACT_BLOCKING
 
 		if(reagents.total_volume >= reagents.maximum_volume && !reagent_source.reagents.has_reagent(/datum/reagent/water, 1))
-			to_chat(user, span_notice(LANG("obj.8e2d390c", list(src))))
-			return
+			to_chat(user, span_notice("[src] is full."))
+			return ITEM_INTERACT_BLOCKING
 
 		var/list/trays = list(src)//makes the list just this in cases of syringes and compost etc
 		var/target = myseed ? myseed.plantname : src
@@ -915,9 +914,9 @@
 
 		if(IS_EDIBLE(reagent_source))
 			if(HAS_TRAIT(reagent_source, TRAIT_UNCOMPOSTABLE))
-				to_chat(user, LANG("obj.24c86b21", list(reagent_source)))
-				return
-			visi_msg="[user] composts [reagent_source], spreading it through [target]"
+				to_chat(user, "[reagent_source] cannot be composted in its current state.")
+				return ITEM_INTERACT_BLOCKING
+			visi_msg = "[user] composts [reagent_source], spreading it through [target]"
 			transfer_amount = reagent_source.reagents.total_volume
 			SEND_SIGNAL(reagent_source, COMSIG_ITEM_ON_COMPOSTED, user)
 			if((tray_flags & WORM_HABITAT) && prob(transfer_amount / 2))
@@ -928,8 +927,7 @@
 		else
 			transfer_amount = min(reagent_source.amount_per_transfer_from_this, reagent_source.reagents.total_volume)
 			if(istype(reagent_source, /obj/item/reagent_containers/syringe/))
-				var/obj/item/reagent_containers/syringe/syr = reagent_source
-				visi_msg="[user] injects [target] with [syr]"
+				visi_msg = "[user] injects [target] with [reagent_source]"
 			// Beakers, bottles, buckets, etc.
 			if(reagent_source.is_drainable())
 				playsound(loc, 'sound/effects/slosh.ogg', 25, TRUE)
@@ -940,70 +938,74 @@
 		if(visi_msg)
 			visible_message(span_notice("[visi_msg]."))
 
-		for(var/obj/machinery/hydroponics/H in trays)
+		for(var/obj/machinery/hydroponics/iterating_tray in trays)
 		//cause I don't want to feel like im juggling 15 tamagotchis and I can get to my real work of ripping flooring apart in hopes of validating my life choices of becoming a space-gardener
 			//This was originally in apply_chemicals, but due to apply_chemicals only holding nutrients, we handle it here now.
 			if(reagent_source.reagents.has_reagent(/datum/reagent/water))
 				var/water_amt = reagent_source.reagents.get_reagent_amount(/datum/reagent/water) * transfer_amount / reagent_source.reagents.total_volume
-				var/water_amt_adjusted = H.adjust_waterlevel(round(water_amt))
+				var/water_amt_adjusted = iterating_tray.adjust_waterlevel(round(water_amt))
 				reagent_source.reagents.remove_reagent(/datum/reagent/water, water_amt_adjusted)
 				for(var/datum/reagent/not_water_reagent as anything in reagent_source.reagents.reagent_list)
 					if(istype(not_water_reagent,/datum/reagent/water))
 						continue
 					var/transfer_me_to_tray = reagent_source.reagents.get_reagent_amount(not_water_reagent.type) * transfer_amount / reagent_source.reagents.total_volume
-					reagent_source.reagents.trans_to(H.reagents, transfer_me_to_tray, target_id = not_water_reagent.type)
+					reagent_source.reagents.trans_to(iterating_tray.reagents, transfer_me_to_tray, target_id = not_water_reagent.type)
 			else
-				reagent_source.reagents.trans_to(H.reagents, transfer_amount, transferred_by = user)
+				reagent_source.reagents.trans_to(iterating_tray.reagents, transfer_amount, transferred_by = user)
 			lastuser = WEAKREF(user)
 			if(IS_EDIBLE(reagent_source) || istype(reagent_source, /obj/item/reagent_containers/applicator/pill))
 				qdel(reagent_source)
-				H.update_appearance()
-				return 1
-			H.update_appearance()
+				iterating_tray.update_appearance()
+				return ITEM_INTERACT_SUCCESS
+
+			iterating_tray.update_appearance()
 		if(reagent_source) // If the source wasn't composted and destroyed
 			reagent_source.update_appearance()
-		return 1
+		return ITEM_INTERACT_SUCCESS
 
-	else if(istype(O, /obj/item/seeds))
-		propagate_plant(O, user)
-		return
-	else if(istype(O, /obj/item/cultivator))
-		if(weedlevel > 0)
-			user.visible_message(span_notice(LANG("obj.d121fa7f", list(user))), span_notice(LANG("obj.6dfa88a0", list(src))))
-			set_weedlevel(0)
-			return
-		else
-			to_chat(user, span_warning(LANG("obj.430adfc4", null)))
-			return
+	if(istype(tool, /obj/item/seeds))
+		propagate_plant(tool, user)
+		return ITEM_INTERACT_SUCCESS
 
-	else if(istype(O, /obj/item/secateurs))
+	if(istype(tool, /obj/item/cultivator))
+		if(!weedlevel)
+			to_chat(user, span_warning("This plot is completely devoid of weeds! It doesn't need uprooting."))
+			return ITEM_INTERACT_BLOCKING
+
+		user.visible_message(span_notice("[user] uproots the weeds."), span_notice("You remove the weeds from [src]."))
+		set_weedlevel(0)
+		return ITEM_INTERACT_SUCCESS
+
+	if(istype(tool, /obj/item/secateurs))
 		if(!myseed)
-			to_chat(user, span_notice(LANG("obj.e2b2c257", null)))
-			return
-		else if(plant_status != HYDROTRAY_PLANT_HARVESTABLE)
-			to_chat(user, span_notice(LANG("obj.ed8062fc", null)))
-			return
-		else if(myseed.grafts_taken >= ((tray_flags & MULTIGRAFT) ? MULTI_GRAFT_MAX_COUNT : 1))
-			to_chat(user, span_notice(LANG("obj.5634b538", null)))
-			return
-		else
-			user.visible_message(span_notice(LANG("obj.5c4c6c8c", list(user, src))), span_notice(LANG("obj.4a20b12a", list(src))))
-			var/obj/item/graft/snip = myseed.create_graft()
-			if(!snip)
-				return // The plant did not return a graft.
+			to_chat(user, span_notice("This plot is empty."))
+			return ITEM_INTERACT_BLOCKING
 
-			snip.forceMove(drop_location())
-			myseed.grafts_taken++
-			adjust_plant_health(-5)
-			return
+		if(plant_status != HYDROTRAY_PLANT_HARVESTABLE)
+			to_chat(user, span_notice("This plant must be harvestable in order to be grafted."))
+			return ITEM_INTERACT_BLOCKING
 
-	else if(istype(O, /obj/item/geneshears))
+		if(myseed.grafts_taken >= ((tray_flags & MULTIGRAFT) ? MULTI_GRAFT_MAX_COUNT : 1))
+			to_chat(user, span_notice("You can't take any more cuttings from this plant!"))
+			return ITEM_INTERACT_BLOCKING
+		user.visible_message(span_notice("[user] grafts off a limb from [src]."), span_notice("You carefully graft off a portion of [src]."))
+		var/obj/item/graft/snip = myseed.create_graft()
+		if(!snip)
+			return ITEM_INTERACT_BLOCKING // The plant did not return a graft.
+
+		snip.forceMove(drop_location())
+		myseed.grafts_taken++
+		adjust_plant_health(-5)
+		return ITEM_INTERACT_SUCCESS
+
+	if(istype(tool, /obj/item/geneshears))
 		if(!myseed)
-			to_chat(user, span_notice(LANG("obj.1e9f917a", null)))
-			return
+			to_chat(user, span_notice("The tray is empty."))
+			return ITEM_INTERACT_BLOCKING
+
 		if(plant_health <= GENE_SHEAR_MIN_HEALTH)
-			to_chat(user, span_notice(LANG("obj.937359ee", null)))
-			return
+			to_chat(user, span_notice("This plant looks too unhealty to be sheared right now."))
+			return ITEM_INTERACT_BLOCKING
 
 		var/list/current_traits = list()
 		for(var/datum/plant_gene/gene in myseed.genes)
@@ -1012,15 +1014,19 @@
 			if(!(gene.mutability_flags & PLANT_GENE_REMOVABLE))
 				continue // Don't show genes that can't be removed.
 			current_traits[gene.name] = gene
-		var/removed_trait = tgui_input_list(user, LANG("obj.85196e44", list(myseed.plantname)), LANG("obj.1a15d997", null), sort_list(current_traits))
+		var/removed_trait = tgui_input_list(user, "Trait to remove from the [myseed.plantname]", "Plant Trait Removal", sort_list(current_traits))
 		if(isnull(removed_trait))
-			return
+			return ITEM_INTERACT_BLOCKING
+
 		if(!user.can_perform_action(src))
-			return
+			return ITEM_INTERACT_BLOCKING
+
 		if(!myseed)
-			return
+			return ITEM_INTERACT_BLOCKING
+
 		if(plant_health <= GENE_SHEAR_MIN_HEALTH) //Check health again to make sure they're not keeping inputs open to get free shears.
-			return
+			return ITEM_INTERACT_BLOCKING
+
 		for(var/datum/plant_gene/gene in myseed.genes)
 			if(gene.name == removed_trait)
 				if(myseed.genes.Remove(gene))
@@ -1029,93 +1035,115 @@
 					break
 		myseed.reagents_from_genes()
 		adjust_plant_health(-15)
-		to_chat(user, span_notice(LANG("obj.f3fe9db5", list(myseed.plantname))))
+		to_chat(user, span_notice("You carefully shear the genes off of the [myseed.plantname], leaving the plant looking weaker."))
 		update_appearance()
-		return
+		return ITEM_INTERACT_SUCCESS
 
-	else if(istype(O, /obj/item/graft))
-		var/obj/item/graft/snip = O
+	if(istype(tool, /obj/item/graft))
+		var/obj/item/graft/snip = tool
 		if(!myseed)
-			if(tray_flags & GRAFT_MEDIUM)
-				propagate_plant(snip.plant_dna, user)
-				qdel(snip)
-				return
-			to_chat(user, span_notice(LANG("obj.1e9f917a", null)))
-			return
+			if(!(tray_flags & GRAFT_MEDIUM))
+				to_chat(user, span_notice("The tray is empty."))
+				return ITEM_INTERACT_BLOCKING
+
+			propagate_plant(snip.plant_dna, user)
+			qdel(snip)
+			return ITEM_INTERACT_SUCCESS
+
 		var/datum/plant_gene/grafted_trait = myseed.apply_graft(snip)
 		if(grafted_trait)
-			to_chat(user, span_notice(LANG("obj.aeff3640", list(myseed.plantname, grafted_trait.get_name()))))
+			to_chat(user, span_notice("You carefully integrate the grafted plant limb onto [myseed.plantname], granting it [grafted_trait.get_name()]."))
+			. = ITEM_INTERACT_SUCCESS
 		else
-			to_chat(user, span_notice(LANG("obj.d07dd16a", list(myseed.plantname, snip))))
+			to_chat(user, span_notice("You try to integrate the grafted plant limb onto [myseed.plantname], but it rejects the trait from the [snip]."))
+			. = ITEM_INTERACT_BLOCKING
 		qdel(snip)
-		return
+		return .
 
-	else if(istype(O, /obj/item/storage/bag/plants))
+	if(istype(tool, /obj/item/storage/bag/plants))
 		if(plant_status == HYDROTRAY_PLANT_HARVESTABLE)
 			var/list/harvest = myseed.harvest(user)
-			for(var/obj/item/food/grown/G in harvest)
-				O.atom_storage?.attempt_insert(G, user, TRUE)
-		else if(plant_status == HYDROTRAY_PLANT_DEAD)
-			to_chat(user, span_notice(LANG("obj.79d154fd", list(src))))
-			set_seed(null)
-		return
+			for(var/obj/item/food/grown/bounty in harvest)
+				tool.atom_storage?.attempt_insert(bounty, user, TRUE)
+			return ITEM_INTERACT_SUCCESS
 
-	else if(O.tool_behaviour == TOOL_SHOVEL)
+		if(plant_status == HYDROTRAY_PLANT_DEAD)
+			to_chat(user, span_notice("You remove the dead plant from [src]."))
+			set_seed(null)
+			return ITEM_INTERACT_SUCCESS
+
+		return NONE
+
+	if(tool.tool_behaviour == TOOL_SHOVEL)
 		if(!myseed && !weedlevel)
-			to_chat(user, span_warning(LANG("obj.264645e9", list(src))))
-			return
-		user.visible_message(span_notice(LANG("obj.4c06f45c", list(user, src))),
-			span_notice(LANG("obj.993d2039", list(src))))
-		if(O.use_tool(src, user, 50, volume=50) || (!myseed && !weedlevel))
-			user.visible_message(span_notice(LANG("obj.9fb5e30a", list(user, src))), span_notice(LANG("obj.f0b2c981", list(src))))
-			remove_plant()
-			return
-	else if(istype(O, /obj/item/gun/energy/floragun))
-		var/obj/item/gun/energy/floragun/flowergun = O
+			to_chat(user, span_warning("[src] doesn't have any plants or weeds!"))
+			return ITEM_INTERACT_BLOCKING
+
+		user.visible_message(span_notice("[user] starts digging out [src]'s plants..."),
+							span_notice("You start digging out [src]'s plants..."))
+		if(!tool.use_tool(src, user, 5 SECONDS, volume = 50) || (!myseed && !weedlevel))
+			return ITEM_INTERACT_BLOCKING
+
+		user.visible_message(span_notice("[user] digs out the plants in [src]!"), span_notice("You dig out all of [src]'s plants!"))
+		remove_plant()
+		return ITEM_INTERACT_SUCCESS
+
+	if(istype(tool, /obj/item/gun/energy/floragun))
+		var/obj/item/gun/energy/floragun/flowergun = tool
 		if(flowergun.cell.charge < flowergun.cell.maxcharge)
-			to_chat(user, span_notice(LANG("obj.7056331e", list(flowergun))))
-			return
+			to_chat(user, span_notice("[flowergun] must be fully charged to lock in a mutation!"))
+			return ITEM_INTERACT_BLOCKING
+
 		if(!myseed)
-			to_chat(user, span_warning(LANG("obj.02d482cc", list(src))))
-			return
+			to_chat(user, span_warning("[src] is empty!"))
+			return ITEM_INTERACT_BLOCKING
+
 		if(myseed.endurance <= FLORA_GUN_MIN_ENDURANCE)
-			to_chat(user, span_warning(LANG("obj.e9a6f613", list(myseed.plantname))))
-			return
+			to_chat(user, span_warning("[myseed.plantname] isn't hardy enough to sequence its mutation!"))
+			return ITEM_INTERACT_BLOCKING
+
 		if(!LAZYLEN(myseed.mutatelist))
-			to_chat(user, span_warning(LANG("obj.a0a2d0ba", list(myseed.plantname))))
-			return
-		else
-			var/list/fresh_mut_list = list()
-			for(var/muties in myseed.mutatelist)
-				var/obj/item/seeds/another_mut = new muties
-				fresh_mut_list[another_mut.plantname] = muties
-			var/locked_mutation = tgui_input_list(user, LANG("obj.b895b194", null), LANG("obj.6d3b207d", null), sort_list(fresh_mut_list))
-			if(isnull(locked_mutation))
-				return
-			if(isnull(fresh_mut_list[locked_mutation]))
-				return
-			if(!user.can_perform_action(src))
-				return
-			myseed.mutatelist = list(fresh_mut_list[locked_mutation])
-			myseed.set_endurance(myseed.endurance/2)
-			flowergun.cell.use(flowergun.cell.charge)
-			flowergun.update_appearance()
-			to_chat(user, span_notice(LANG("obj.b31cf978", list(myseed.plantname, locked_mutation, flowergun))))
-			return
-	else if(istype(O, /obj/item/soil_sack))
-		var/obj/item/soil_sack/oursoil = O
+			to_chat(user, span_warning("[myseed.plantname] has nothing else to mutate into!"))
+			return ITEM_INTERACT_BLOCKING
+
+		var/list/fresh_mut_list = list()
+		for(var/muties in myseed.mutatelist)
+			var/obj/item/seeds/another_mut = new muties
+			fresh_mut_list[another_mut.plantname] = muties
+		var/locked_mutation = tgui_input_list(user, "Mutation to lock", "Plant Mutation Locks", sort_list(fresh_mut_list))
+		if(isnull(locked_mutation))
+			return ITEM_INTERACT_BLOCKING
+
+		if(isnull(fresh_mut_list[locked_mutation]))
+			return ITEM_INTERACT_BLOCKING
+
+		if(!user.can_perform_action(src))
+			return ITEM_INTERACT_BLOCKING
+
+		myseed.mutatelist = list(fresh_mut_list[locked_mutation])
+		myseed.set_endurance(myseed.endurance/2)
+		flowergun.cell.use(flowergun.cell.charge)
+		flowergun.update_appearance()
+		to_chat(user, span_notice("[myseed.plantname]'s mutation was set to [locked_mutation], depleting [flowergun]'s cell!"))
+		return ITEM_INTERACT_SUCCESS
+
+	if(istype(tool, /obj/item/soil_sack))
+		var/obj/item/soil_sack/oursoil = tool
 
 		if(plant_status != HYDROTRAY_NO_PLANT)
-			balloon_alert(user, LANG("obj.2ddd0cc3", null))
-			return
+			balloon_alert(user, "remove the plants first!")
+			return ITEM_INTERACT_BLOCKING
 
 		if(!isnull(current_soil))
-			balloon_alert(user, LANG("obj.febeff8d", null))
-			return
+			balloon_alert(user, "tray is full!")
+			return ITEM_INTERACT_BLOCKING
 
-		balloon_alert(user, LANG("obj.c97c73cc", null))
+		balloon_alert(user, "filling the tray...")
 		if(!do_after(user, 2 SECONDS, src))
-			return
+			return ITEM_INTERACT_BLOCKING
+
+		if((plant_status != HYDROTRAY_NO_PLANT) || current_soil)
+			return ITEM_INTERACT_BLOCKING
 
 		current_soil = oursoil.transfer_soil(src, inside_tray = TRUE)
 		RefreshParts()
@@ -1123,16 +1151,15 @@
 
 		qdel(oursoil)
 		update_appearance()
-		return TRUE
+		return ITEM_INTERACT_SUCCESS
 
-	else
-		return ..()
+	return NONE
 
-/obj/machinery/hydroponics/attackby_secondary(obj/item/weapon, mob/user, list/modifiers, list/attack_modifiers)
-	if (istype(weapon, /obj/item/reagent_containers/syringe))
-		to_chat(user, span_warning(LANG("obj.7b6bd5d4", null)))
-		return SECONDARY_ATTACK_CANCEL_ATTACK_CHAIN
-	return SECONDARY_ATTACK_CALL_NORMAL
+/obj/machinery/hydroponics/item_interaction_secondary(mob/living/user, obj/item/tool, list/modifiers)
+	if (istype(tool, /obj/item/reagent_containers/syringe))
+		to_chat(user, span_warning("You can't get any extract out of this plant."))
+		return ITEM_INTERACT_BLOCKING
+	return NONE
 
 /obj/machinery/hydroponics/can_be_unfasten_wrench(mob/user, silent)
 	if (!unwrenchable)  // case also covered by NODECONSTRUCT checks in default_unfasten_wrench
@@ -1150,7 +1177,7 @@
 		return myseed.harvest(user)
 
 	else if(plant_status == HYDROTRAY_PLANT_DEAD)
-		to_chat(user, span_notice(LANG("obj.79d154fd", list(src))))
+		to_chat(user, span_notice("You remove the dead plant from [src]."))
 		set_seed(null)
 	else
 		if(user)
@@ -1163,12 +1190,12 @@
 	update_use_power(ACTIVE_POWER_USE)
 
 	if(!powered())
-		to_chat(user, span_warning(LANG("obj.7617f8a9", list(name))))
+		to_chat(user, span_warning("[name] has no power."))
 		update_use_power(NO_POWER_USE)
 		return CLICK_ACTION_BLOCKING
 
 	set_self_sustaining(!self_sustaining)
-	to_chat(user, span_notice(LANG("obj.8820c8f3", list(self_sustaining ? "activate" : "deactivated", src, self_sustaining ? ", maintaining the tray's health while using high amounts of power" : ""))))
+	to_chat(user, span_notice("You [self_sustaining ? "activate" : "deactivated"] [src]'s autogrow function[self_sustaining ? ", maintaining the tray's health while using high amounts of power" : ""]."))
 	return CLICK_ACTION_SUCCESS
 
 /obj/machinery/hydroponics/attack_hand_secondary(mob/user, list/modifiers)
@@ -1177,7 +1204,7 @@
 		return
 	if(!anchored)
 		return SECONDARY_ATTACK_CANCEL_ATTACK_CHAIN
-	var/warning = tgui_alert(user, LANG("obj.edd6fd6a", null),LANG("obj.f7a59134", null), list("Yes", "No"))
+	var/warning = tgui_alert(user, "Are you sure you wish to empty the tray's nutrient beaker?","Empty Tray Nutrients?", list("Yes", "No"))
 	if(warning == "Yes" && user.can_perform_action(src, FORBID_TELEKINESIS_REACH))
 		empty_tray(user)
 	update_appearance()
@@ -1188,7 +1215,7 @@
 	reagents.clear_reagents()
 	for(var/obj/item/mob_holder/snail/possible_snail in contents)
 		possible_snail.forceMove(drop_location())
-	to_chat(user, span_warning(LANG("obj.f861229f", list(src))))
+	to_chat(user, span_warning("You empty [src]'s nutrient tank."))
 
 /**
  * Update Tray Proc
@@ -1200,11 +1227,11 @@
 /obj/machinery/hydroponics/proc/update_tray(mob/user, product_count)
 	lastproduce = age
 	if(istype(myseed, /obj/item/seeds/replicapod))
-		to_chat(user, span_notice(LANG("obj.ac9737d4", list(myseed.plantname))))
+		to_chat(user, span_notice("You harvest from the [myseed.plantname]."))
 	else if(product_count <= 0)
-		to_chat(user, span_warning(LANG("obj.60dcc0bc", null)))
+		to_chat(user, span_warning("You fail to harvest anything useful!"))
 	else
-		to_chat(user, span_notice(LANG("obj.41d9ea44", list(product_count, myseed.plantname))))
+		to_chat(user, span_notice("You harvest [product_count] items from the [myseed.plantname]."))
 	if(!myseed.get_gene(/datum/plant_gene/trait/repeated_harvest))
 		set_seed(null)
 		if(self_sustaining) //No reason to pay for an empty tray.
@@ -1229,17 +1256,17 @@
 	if(!istype(young_plant))
 		return
 	if(myseed)
-		to_chat(user, span_warning(LANG("obj.aa7df4e6", list(src))))
+		to_chat(user, span_warning("[src] already has a plant growing in it!"))
 		return
 	if(young_plant.seed_flags & NO_PLANTING)
-		to_chat(user, span_warning(LANG("obj.8a29f472", list(young_plant, src))))
+		to_chat(user, span_warning("[young_plant] cannot be planted in [src]!"))
 		return
 	if(istype(young_plant, /obj/item/seeds/kudzu))
 		investigate_log("had Kudzu planted in it by [key_name(user)] at [AREACOORD(src)].", INVESTIGATE_BOTANY)
 	if(!user.transferItemToLoc(young_plant, src))
 		return
 	SEND_SIGNAL(young_plant, COMSIG_SEED_ON_PLANTED, src)
-	to_chat(user, span_notice(LANG("obj.19efdae6", list(young_plant))))
+	to_chat(user, span_notice("You plant [young_plant]."))
 	set_seed(young_plant)
 	set_plant_health(myseed.endurance)
 	lastcycle = world.time

@@ -5,12 +5,9 @@ GLOBAL_LIST_EMPTY(ckey_to_sooc_name)
 #define SOOC_LISTEN_PLAYER 1
 #define SOOC_LISTEN_ADMIN 2
 
-/client/verb/sooc(msg as text)
-	set name = "安保 OOC"
-	set category = "OOC"
-
+GAME_VERB(/client, sooc, "SOOC", "OOC", msg as text)
 	if(GLOB.say_disabled)	//This is here to try to identify lag problems
-		to_chat(usr, span_danger(LANG("client.b79ad8a3", null)))
+		to_chat(usr, span_danger("Speech is currently admin-disabled."))
 		return
 
 	if(!mob)
@@ -20,16 +17,16 @@ GLOBAL_LIST_EMPTY(ckey_to_sooc_name)
 	if(!holder)
 		var/job = mob?.mind.assigned_role.title
 		if(!job || !job_lookup[job])
-			to_chat(src, span_danger(LANG("client.2d3c1ccc", null)))
+			to_chat(src, span_danger("You're not a security role!"))
 			return
 		if(!GLOB.sooc_allowed)
-			to_chat(src, span_danger(LANG("client.7b81d1c7", null)))
+			to_chat(src, span_danger("SOOC is globally muted."))
 			return
 		if(prefs.muted & MUTE_OOC)
-			to_chat(src, span_danger(LANG("client.058db9ff", null)))
+			to_chat(src, span_danger("You cannot use OOC (muted)."))
 			return
 	if(is_banned_from(ckey, "OOC"))
-		to_chat(src, span_danger(LANG("client.aaaae170", null)))
+		to_chat(src, span_danger("You have been banned from OOC."))
 		return
 	if(QDELETED(src))
 		return
@@ -43,7 +40,7 @@ GLOBAL_LIST_EMPTY(ckey_to_sooc_name)
 	msg = emoji_parse(msg)
 
 	if(!(prefs.chat_toggles & CHAT_OOC))
-		to_chat(src, span_danger(LANG("client.a877c979", null)))
+		to_chat(src, span_danger("You have OOC muted."))
 		return
 
 	mob.log_talk(raw_msg, LOG_OOC, tag="SOOC")
@@ -75,7 +72,7 @@ GLOBAL_LIST_EMPTY(ckey_to_sooc_name)
 		var/mode = listeners[iterated_client]
 		var/color = (!anon && CONFIG_GET(flag/allow_admin_ooccolor) && iterated_client?.prefs?.read_preference(/datum/preference/color/ooc_color)) ? iterated_client?.prefs?.read_preference(/datum/preference/color/ooc_color) : GLOB.SOOC_COLOR
 		var/name = (mode == SOOC_LISTEN_ADMIN && anon) ? "([key])[keyname]" : keyname
-		to_chat(iterated_client, span_oocplain("<font color='[color]'><b><span class='prefix'>SOOC:</span> <EM>[name]:</EM> <span class='message linkify'>[msg]</span></b></font>"), avoid_highlighting = (iterated_client == src), skip_i18n_fallback = TRUE) // NOVA EDIT - i18n: player-authored, don't auto-translate
+		to_chat(iterated_client, span_oocplain("<font color='[color]'><b><span class='prefix'>SOOC:</span> <EM>[name]:</EM> <span class='message linkify'>[msg]</span></b></font>"), avoid_highlighting = (iterated_client == src))
 
 #undef SOOC_LISTEN_PLAYER
 #undef SOOC_LISTEN_ADMIN
@@ -103,7 +100,7 @@ GLOBAL_LIST_EMPTY(ckey_to_sooc_name)
 		var/client/iterated_client = iterated_listener
 		to_chat(iterated_client, span_oocplain("<b>The SOOC channel has been globally [GLOB.sooc_allowed ? "enabled" : "disabled"].</b>"))
 
-ADMIN_VERB(togglesooc, R_ADMIN, "切换安保 OOC", "Toggles Security OOC.", ADMIN_CATEGORY_SERVER)
+ADMIN_VERB(togglesooc, R_ADMIN, "Toggle Security OOC", "Toggles Security OOC.", ADMIN_CATEGORY_SERVER)
 	toggle_sooc()
 	log_admin("[key_name(usr)] toggled Security OOC.")
 	message_admins("[key_name_admin(usr)] toggled Security OOC.")

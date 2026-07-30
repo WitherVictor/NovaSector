@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 /**
  * Paper
  * also scraps of paper
@@ -326,46 +325,44 @@
 		icon_state = initial(icon_state)
 	return ..()
 
-/obj/item/paper/verb/rename()
-	set name = "重命名纸张"
-	set src in usr
+GAME_VERB_SRC(/obj/item/paper, rename, usr, "Rename paper", null)
 
 	if(!usr.can_read(src) || usr.is_blind() || INCAPACITATED_IGNORING(usr, INCAPABLE_RESTRAINTS|INCAPABLE_GRAB) || (isobserver(usr) && !isAdminGhostAI(usr)))
 		return
 	if(ishuman(usr))
 		var/mob/living/carbon/human/H = usr
 		if(HAS_TRAIT(H, TRAIT_CLUMSY) && prob(25))
-			to_chat(H, span_warning(LANG("obj.87140f7e", null)))
+			to_chat(H, span_warning("You cut yourself on the paper! Ahhhh! Ahhhhh!"))
 			H.damageoverlaytemp = 9001
 			H.update_damage_hud()
 			return
-	var/n_name = tgui_input_text(usr, LANG("obj.82759545", null), LANG("obj.a12ca291", null), max_length = MAX_NAME_LEN)
+	var/n_name = tgui_input_text(usr, "Enter a paper label", "Paper Labelling", max_length = MAX_NAME_LEN)
 	if(isnull(n_name) || n_name == "")
 		return
-	if(((loc == usr || istype(loc, /obj/item/clipboard)) && usr.stat == CONSCIOUS))
+	if(((loc == usr || istype(loc, /obj/item/clipboard)) && !IS_UNCONSCIOUS_OR_CRIT(usr)))
 		name = "paper[(n_name ? "- '[n_name]'" : null)]"
 	add_fingerprint(usr)
 	update_static_data()
 
 /obj/item/paper/suicide_act(mob/living/user)
-	user.visible_message(span_suicide(LANG("obj.4c7553c7", list(user, user.p_their(), user.p_theyre()))))
+	user.visible_message(span_suicide("[user] scratches a grid on [user.p_their()] wrist with the paper! It looks like [user.p_theyre()] trying to commit sudoku..."))
 	return BRUTELOSS
 
 /obj/item/paper/examine(mob/user)
 	. = ..()
-	. += span_notice(LANG("obj.18682024", list(src)))
+	. += span_notice("Alt-click [src] to fold it into a paper plane.")
 	if(!in_range(user, src) && !isobserver(user))
-		. += span_warning(LANG("obj.93746d69", null))
+		. += span_warning("You're too far away to read it!")
 		return
 
 	if(user.is_blind())
-		to_chat(user, span_warning(LANG("obj.2977ae45", null)))
+		to_chat(user, span_warning("You are blind and can't read anything!"))
 		return
 
 	if(user.can_read(src))
 		ui_interact(user)
 		return
-	. += span_warning(LANG("obj.19108b40", null))
+	. += span_warning("You cannot read it!")
 
 /obj/item/paper/ui_status(mob/user, datum/ui_state/state)
 	// Are we on fire?  Hard to read if so
@@ -380,7 +377,7 @@
 	// Even harder to read if your blind...braile? humm
 	// .. or if you cannot read
 	if(user.is_blind())
-		to_chat(user, span_warning(LANG("obj.2977ae45", null)))
+		to_chat(user, span_warning("You are blind and can't read anything!"))
 		return UI_CLOSE
 	if(!user.can_read(src))
 		return UI_CLOSE
@@ -411,7 +408,7 @@
  * * plane_type - what it will be folded into (path)
  */
 /obj/item/paper/proc/make_plane(mob/living/user, plane_type = /obj/item/paperplane)
-	loc.balloon_alert(user, LANG("obj.d504ff55", null))
+	loc.balloon_alert(user, "folded into a plane")
 	user.temporarilyRemoveItemFromInventory(src)
 	var/obj/item/paperplane/new_plane = new plane_type(loc, src)
 	if(user.Adjacent(new_plane))
@@ -435,7 +432,7 @@
 		if(!user.can_write(tool))
 			return ITEM_INTERACT_BLOCKING
 		if(get_total_length() >= MAX_PAPER_LENGTH)
-			to_chat(user, span_warning(LANG("obj.4c9828bd", null)))
+			to_chat(user, span_warning("This sheet of paper is full!"))
 			return ITEM_INTERACT_BLOCKING
 
 		ui_interact(user)
@@ -446,11 +443,11 @@
 		if(!user.can_read(src) || user.is_blind())
 			//The paper's stampable window area is assumed approx 300x400
 			add_stamp(writing_stats["stamp_class"], rand(0, 300), rand(0, 400), rand(0, 360), writing_stats["stamp_icon_state"], stamp_icon = writing_stats["stamp_icon"])
-			user.visible_message(span_notice(LANG("obj.db0aecdd", list(user, src, tool))))
-			to_chat(user, span_notice(LANG("obj.be3d2c55", list(src, tool))))
+			user.visible_message(span_notice("[user] blindly stamps [src] with \the [tool]!"))
+			to_chat(user, span_notice("You stamp [src] with \the [tool] the best you can!"))
 			playsound(src, 'sound/items/handling/standard_stamp.ogg', 50, vary = TRUE)
 		else
-			to_chat(user, span_notice(LANG("obj.507009a1", null)))
+			to_chat(user, span_notice("You ready your stamp over the paper! "))
 			ui_interact(user)
 		return ITEM_INTERACT_SUCCESS
 
@@ -470,8 +467,8 @@
 
 	add_stamp(writing_stats["stamp_class"], rand(1, 300), rand(1, 400), stamp_icon_state = writing_stats["stamp_icon_state"], stamp_icon = writing_stats["stamp_icon"])
 	user.visible_message(
-		span_notice(LANG("obj.2d57ef6f", list(user, src, tool))),
-		span_notice(LANG("obj.5cfaacee", list(src, tool))),
+		span_notice("[user] quickly stamps [src] with [tool] without looking."),
+		span_notice("You quickly stamp [src] with [tool] without looking."),
 	)
 	playsound(src, 'sound/items/handling/standard_stamp.ogg', 50, vary = TRUE)
 
@@ -512,6 +509,8 @@
 	)
 
 /obj/item/paper/ui_interact(mob/user, datum/tgui/ui)
+	if(!user.client) //bro stop trying to open UI on AI man ur gonna drive me nuts man comeon man
+		return
 	if(resistance_flags & ON_FIRE)
 		return
 	ui = SStgui.try_update_ui(user, src, ui)
@@ -669,7 +668,7 @@
 			var/obj/item/holding = user.get_active_held_item()
 			var/stamp_info = holding?.get_writing_implement_details()
 			if(!stamp_info || (stamp_info["interaction_mode"] != MODE_STAMPING))
-				to_chat(src, span_warning(LANG("obj.828dbf7a", list(holding))))
+				to_chat(src, span_warning("You can't stamp with the [holding]!"))
 				return TRUE
 
 			var/stamp_class = stamp_info["stamp_class"];
@@ -692,7 +691,7 @@
 				return TRUE
 
 			add_stamp(stamp_class, stamp_x, stamp_y, stamp_rotation, stamp_icon_state, stamp_icon)
-			user.visible_message(span_notice(LANG("obj.5272ba60", list(user, src, holding.name))), span_notice(LANG("obj.7cf1a568", list(src, holding.name))))
+			user.visible_message(span_notice("[user] stamps [src] with \the [holding.name]!"), span_notice("You stamp [src] with \the [holding.name]!"))
 			playsound(src, 'sound/items/handling/standard_stamp.ogg', 50, vary = TRUE)
 
 			update_appearance()
@@ -743,7 +742,7 @@
 			add_raw_text(paper_input, writing_implement_data["font"], writing_implement_data["color"], writing_implement_data["use_bold"], check_rights_for(user?.client, R_FUN))
 
 			log_paper("[key_name(user)] wrote to [name]: \"[paper_input]\"")
-			to_chat(user, LANG("obj.08cd468e", null));
+			to_chat(user, "You have added to your paper masterpiece!");
 
 			update_static_data_for_all_viewers()
 			update_appearance()

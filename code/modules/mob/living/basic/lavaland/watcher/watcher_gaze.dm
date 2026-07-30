@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 /**
  * Do something nasty to everyone nearby if they're looking at us.
  */
@@ -37,30 +36,39 @@
 	show_indicator_overlay("eye_open")
 	stage_timer = addtimer(CALLBACK(src, PROC_REF(show_indicator_overlay), "eye_pulse"), animation_time, TIMER_STOPPABLE)
 	StartCooldown(360 SECONDS, 360 SECONDS)
-	owner.visible_message(span_warning(LANG("datum.74759e38", list(owner))))
-	if (do_after(owner, delay = wait_delay, target = owner, hidden = TRUE))
+	owner.visible_message(span_warning("[owner]'s eye glows ominously!"))
+	if (do_after(owner, delay = wait_delay, target = owner, cog_icon = null))
 		trigger_effect()
+		proxmon_cleanup()
 	else
 		deltimer(stage_timer)
 		clear_current_overlay()
+		proxmon_cleanup()
+		tracked_mobs.Cut()
 	StartCooldown()
-	tracked_mobs.Cut()
-	QDEL_NULL(proximity_monitor)
 	return TRUE
 
 /datum/action/cooldown/mob_cooldown/watcher_gaze/Destroy()
+	proxmon_cleanup()
 	tracked_mobs.Cut()
-	QDEL_NULL(proximity_monitor)
 	deltimer(stage_timer)
 	clear_current_overlay()
 	return ..()
 
 /datum/action/cooldown/mob_cooldown/watcher_gaze/Remove(mob/removed_from)
+	proxmon_cleanup()
 	tracked_mobs.Cut()
-	QDEL_NULL(proximity_monitor)
 	deltimer(stage_timer)
 	clear_current_overlay()
 	return ..()
+
+/datum/action/cooldown/mob_cooldown/watcher_gaze/proc/proxmon_cleanup()
+	if (!QDELETED(proximity_monitor))
+		QDEL_NULL(proximity_monitor)
+	for (var/victim_ref in tracked_mobs)
+		var/mob/living/victim = locate(victim_ref)
+		if (victim)
+			UnregisterSignal(victim, list(COMSIG_ATOM_POST_DIR_CHANGE, COMSIG_MOB_STATCHANGE))
 
 /// Do some effects to whoever is looking at us
 /datum/action/cooldown/mob_cooldown/watcher_gaze/proc/trigger_effect()
@@ -69,7 +77,7 @@
 	for (var/mob/living/viewer in viewers(effect_radius, owner))
 		if (!valid_target(viewer))
 			continue
-		if (!apply_effect(viewer))
+		if (!apply_effect(viewer) || !viewer.client)
 			continue
 		var/image/flashed_overlay = image(
 			icon = 'icons/effects/eldritch.dmi',
@@ -84,7 +92,7 @@
 	living_owner.Stun(1.5 SECONDS, ignore_canstun = TRUE)
 
 /datum/action/cooldown/mob_cooldown/watcher_gaze/proc/valid_target(mob/living/viewer)
-	if (!istype(viewer) || viewer.stat || viewer == owner)
+	if (!istype(viewer) || IS_UNCONSCIOUS_OR_CRIT(viewer) || viewer == owner)
 		return FALSE
 	if (!(viewer.dir & get_dir(viewer, owner)))
 		return FALSE
@@ -95,12 +103,13 @@
 	if (!viewer.flash_act(intensity = 4, affect_silicon = TRUE, visual = TRUE, length = 3 SECONDS))
 		return FALSE
 	viewer.set_confusion_if_lower(12 SECONDS)
-	to_chat(viewer, span_warning(LANG("datum.bfe7ee0d", list(owner))))
+	to_chat(viewer, span_warning("You are blinded by [owner]'s piercing gaze!"))
 	return TRUE
 
 /// Animate our effect out
 /datum/action/cooldown/mob_cooldown/watcher_gaze/proc/hide_eye()
 	show_indicator_overlay("eye_close")
+	tracked_mobs.Cut()
 	stage_timer = addtimer(CALLBACK(src, PROC_REF(clear_current_overlay)), animation_time, TIMER_STOPPABLE)
 
 /// Display an animated overlay over our head to indicate what's going on
@@ -195,7 +204,7 @@
 	desc = "After a delay, burn and stun everyone looking at you."
 
 /datum/action/cooldown/mob_cooldown/watcher_gaze/fire/apply_effect(mob/living/viewer)
-	to_chat(viewer, span_warning(LANG("datum.05a1ba61", list(owner))))
+	to_chat(viewer, span_warning("[owner]'s searing glare forces you to the ground!"))
 	viewer.Paralyze(3 SECONDS)
 	viewer.adjust_fire_stacks(10)
 	viewer.ignite_mob()
@@ -211,7 +220,7 @@
 /datum/action/cooldown/mob_cooldown/watcher_gaze/ice/apply_effect(mob/living/viewer)
 	if(!HAS_TRAIT(viewer, TRAIT_RESISTCOLD))
 		return
-	to_chat(viewer, span_warning(LANG("datum.5e64601b", list(owner))))
+	to_chat(viewer, span_warning("You are repulsed by the force of [owner]'s cold stare!"))
 	viewer.apply_status_effect(/datum/status_effect/freon/watcher/extended)
 	viewer.safe_throw_at(
 		target = get_edge_target_turf(owner, get_dir(owner, get_step_away(viewer, owner))),

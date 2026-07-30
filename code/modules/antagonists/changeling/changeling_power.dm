@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 /*
  * Don't use the apostrophe in name or desc. Causes script errors.//probably no longer true
  */
@@ -27,9 +26,9 @@
 	/// Similar to req_dna, but only gained from absorbing, not DNA sting
 	var/req_absorbs = 0
 	/// Maximum stat before the ability is blocked.
-	/// For example, `UNCONSCIOUS` prevents it from being used when in hard crit or dead,
-	/// while `DEAD` allows the ability to be used on any stat values.
-	var/req_stat = CONSCIOUS
+	/// For example, `STABLE` can only be used while not in crit, and
+	/// `DEAD` allows the ability to be used on any stat values.
+	var/req_stat = STABLE
 	/// usable when the changeling is in death coma
 	var/ignores_fakedeath = FALSE
 	/// used by a few powers that toggle
@@ -71,7 +70,7 @@ the same goes for Remove(). if you override Remove(), call parent or else your p
 	if(!can_sting(user, target))
 		return FALSE
 	if(disabled_by_fire && user.fire_stacks && user.on_fire)
-		user.balloon_alert(user, LANG("datum.30bf3724", null))
+		user.balloon_alert(user, "on fire!")
 		return FALSE
 	var/datum/antagonist/changeling/changeling = IS_CHANGELING(user)
 	if(sting_action(user, target))
@@ -95,19 +94,19 @@ the same goes for Remove(). if you override Remove(), call parent or else your p
 		return FALSE
 	var/datum/antagonist/changeling/changeling = IS_CHANGELING(user)
 	if(changeling.chem_charges < chemical_cost)
-		user.balloon_alert(user, LANG("datum.a9531cb9", list(chemical_cost)))
+		user.balloon_alert(user, "needs [chemical_cost] chemicals!")
 		return FALSE
 	if(changeling.absorbed_count < req_dna)
-		user.balloon_alert(user, LANG("datum.7c03fca3", list(req_dna)))
+		user.balloon_alert(user, "needs [req_dna] dna sample\s!")
 		return FALSE
 	if(changeling.true_absorbs < req_absorbs)
-		user.balloon_alert(user, LANG("datum.0f38abe9", list(req_absorbs)))
+		user.balloon_alert(user, "needs [req_absorbs] absorption\s!")
 		return FALSE
-	if(req_stat < user.stat)
-		user.balloon_alert(user, LANG("datum.7ac2788b", null))
+	if(req_stat < IS_UNCONSCIOUS_OR_CRIT(user) || (req_stat == STABLE && IS_UNCONSCIOUS(user)))
+		user.balloon_alert(user, "incapacitated!")
 		return FALSE
 	if((HAS_TRAIT(user, TRAIT_DEATHCOMA)) && (!ignores_fakedeath))
-		user.balloon_alert(user, LANG("datum.aee0285f", null))
+		user.balloon_alert(user, "playing dead!")
 		return FALSE
 	return TRUE
 
@@ -117,6 +116,6 @@ the same goes for Remove(). if you override Remove(), call parent or else your p
 	if(!ishuman(user))
 		return FALSE
 	if(req_human && ismonkey(user))
-		user.balloon_alert(user, LANG("datum.aa92d828", null))
+		user.balloon_alert(user, "become human!")
 		return FALSE
 	return TRUE

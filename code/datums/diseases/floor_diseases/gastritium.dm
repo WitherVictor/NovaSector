@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 /// Caused by dirty food. Makes you burp out Tritium, sometimes burning hot!
 /datum/disease/gastritium
 	name = "Gastritium"
@@ -26,18 +25,18 @@
 			if(SPT_PROB(1, seconds_per_tick))
 				affected_mob.emote("burp")
 		if(3)
-			if(SPT_PROB(1, seconds_per_tick) && affected_mob.stat == CONSCIOUS)
-				to_chat(affected_mob, span_warning(LANG("datum.76b56d56", null)))
+			if(SPT_PROB(1, seconds_per_tick) && !IS_UNCONSCIOUS_OR_CRIT(affected_mob))
+				to_chat(affected_mob, span_warning("Your stomach makes turbine noises..."))
 			else if(SPT_PROB(1, seconds_per_tick))
 				affected_mob.emote("burp")
 		if(4)
-			if(SPT_PROB(1, seconds_per_tick) && affected_mob.stat == CONSCIOUS)
-				to_chat(affected_mob, span_warning(LANG("datum.b6e285a4", null)))
+			if(SPT_PROB(1, seconds_per_tick) && !IS_UNCONSCIOUS_OR_CRIT(affected_mob))
+				to_chat(affected_mob, span_warning("You're starting to feel like a burn chamber..."))
 			else if(SPT_PROB(1, seconds_per_tick))
 				tritium_burp()
 		if(5)
-			if(SPT_PROB(1, seconds_per_tick) && affected_mob.stat == CONSCIOUS)
-				to_chat(affected_mob, span_warning(LANG("datum.7aa1bf50", null)))
+			if(SPT_PROB(1, seconds_per_tick) && !IS_UNCONSCIOUS_OR_CRIT(affected_mob))
+				to_chat(affected_mob, span_warning("You feel like you're about to delam..."))
 			else if(SPT_PROB(1, seconds_per_tick))
 				tritium_burp(hot_chance = TRUE)
 	var/change_limit = max(affected_mob.get_body_temp_heat_damage_limit() - 5 - affected_mob.get_body_temp_normal(apply_change=FALSE), 0)
@@ -49,7 +48,7 @@
 	burp.temperature = affected_mob.bodytemperature
 	if(hot_chance && prob(tritium_burp_hot_chance))
 		burp.set_temperature(TRITIUM_MINIMUM_BURN_TEMPERATURE)
-		if(affected_mob.stat == CONSCIOUS)
-			to_chat(affected_mob, span_warning(LANG("datum.cad00aab", null)))
-	affected_mob.visible_message(LANG("datum.94a8c219", null), visible_message_flags = EMOTE_MESSAGE)
+		if(!IS_UNCONSCIOUS_OR_CRIT(affected_mob))
+			to_chat(affected_mob, span_warning("Your throat feels hot!"))
+	affected_mob.visible_message("burps out green gas.", visible_message_flags = EMOTE_MESSAGE)
 	affected_mob.loc.assume_air(burp)

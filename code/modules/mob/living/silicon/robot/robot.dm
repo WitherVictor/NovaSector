@@ -1,5 +1,11 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
-/mob/living/silicon/robot/Initialize(mapload)
+/**
+ * Init args
+ * * innate_laws: If set, the cyborg will use this lawset and will not linked to an ai. Make sure you're passing a copy of the lawset
+ * * master_ai: If set, the cyborg will try to link to this ai on spawn rather than the first ai found
+ * * aisync: If TRUE, will try to link to an AI on spawn. If FALSE, will not link to any AI on spawn, even if master_ai is set
+ * * lawsync: Sets lawupdate variable - if FALSE we will link to an ai but we won't take their laws
+ */
+/mob/living/silicon/robot/Initialize(mapload, datum/ai_laws/innate_laws, mob/living/silicon/master_ai, aisync = TRUE, lawsync = src.lawupdate)
 	spark_system = new /datum/effect_system/basic/spark_spread(src, 5, FALSE)
 	spark_system.attach(src)
 
@@ -31,12 +37,25 @@
 	model = new /obj/item/robot_model(src)
 	model.rebuild_modules()
 
-	if(lawupdate)
+	if(istype(innate_laws, /datum/ai_laws))
+		laws = innate_laws.copy_lawset()
+		lawupdate = FALSE
+	else
 		make_laws()
-		for (var/law in laws.inherent)
-			lawcheck += law
-		if(!TryConnectToAI())
+	if(!aisync || !lawsync)
+		lawupdate = FALSE
+	// try connect to ai will update the lawset so we need to ensure law update is set before calling it
+	if(aisync && !try_connect_to_ai(master_ai))
+		var/datum/job/human_ai_job = SSjob.get_job(JOB_HUMAN_AI)
+		// we failed to connect to an ai, but that might be because there is a human ai. so we have to check for that
+		if(human_ai_job && human_ai_job.current_positions && !laws.zeroth_borg)
+			laws.zeroth_borg = "Follow the orders of Big Brother."
+			laws.protected_zeroth = TRUE
+		// however, if we found no ai and no human ai, we fall back to no law updates
+		// and link ourselves to the first law rack if possible
+		else
 			lawupdate = FALSE
+			link_to_first_rack()
 
 	if(!scrambledcodes && !builtInCamera)
 		builtInCamera = new(src)
@@ -155,11 +174,11 @@
 		return
 
 	if(wires.is_cut(WIRE_RESET_MODEL))
-		to_chat(src,span_userdanger(LANG("mob.ebe078e6", null)))
+		to_chat(src,span_userdanger("ERROR: Model installer reply timeout. Please check internal connections."))
 		return
 
 	if(lockcharge == TRUE)
-		to_chat(src,span_userdanger(LANG("mob.fb386521", null)))
+		to_chat(src,span_userdanger("ERROR: Lockdown is engaged. Please disengage lockdown to pick module."))
 		return
 
 	// NOVA EDIT START - Making the cyborg model list static to reduce how many times it's generated.
@@ -246,14 +265,14 @@
 
 /mob/living/silicon/robot/proc/toggle_ionpulse()
 	if(!ionpulse)
-		to_chat(src, span_notice(LANG("mob.149d67a8", null)))
+		to_chat(src, span_notice("No thrusters are installed!"))
 		return
 
 	if(!ion_trail)
 		ion_trail = new(src)
 
 	ionpulse_on = !ionpulse_on
-	to_chat(src, span_notice(LANG("mob.d1e9603e", list(ionpulse_on ? null :"de"))))
+	to_chat(src, span_notice("You [ionpulse_on ? null :"de"]activate your ion thrusters."))
 	if(ionpulse_on)
 		ion_trail.start()
 	else
@@ -262,12 +281,12 @@
 /mob/living/silicon/robot/get_status_tab_items()
 	. = ..()
 	if(cell)
-		. += LANG("mob.b1a7b653", list(display_energy(cell.charge), display_energy(cell.maxcharge)))
+		. += "Charge Left: [display_energy(cell.charge)]/[display_energy(cell.maxcharge)]"
 	else
-		. += LANG("mob.36c17f5e", null)
+		. += "No Cell Inserted!"
 
 	if(connected_ai)
-		. += LANG("mob.575291cf", list(connected_ai.name))
+		. += "Master AI: [connected_ai.name]"
 
 /mob/living/silicon/robot/proc/alarm_triggered(datum/source, alarm_type, area/source_area)
 	SIGNAL_HANDLER
@@ -302,7 +321,7 @@
 	cut_overlays()
 	SSvis_overlays.remove_vis_overlay(src, managed_vis_overlays)
 	icon_state = model.cyborg_base_icon
-	if(stat < UNCONSCIOUS && !HAS_TRAIT(src, TRAIT_KNOCKEDOUT) && !IsStun() && !IsParalyzed() && !low_power_mode) //Not dead, not stunned.
+	if(!IS_UNCONSCIOUS(src) && !IsStun() && !IsParalyzed() && !low_power_mode) //Not dead, not stunned.
 		if(!eye_lights)
 			eye_lights = new()
 		if(lamp_enabled || lamp_doom)
@@ -470,7 +489,7 @@
 	. = ..()
 	if(lamp_enabled)
 		toggle_headlamp(TRUE)
-		balloon_alert(src, LANG("mob.a68aa180", null))
+		balloon_alert(src, "headlamp off!")
 	COOLDOWN_START(src, disabled_time, disrupt_duration)
 	return TRUE
 
@@ -487,7 +506,7 @@
 	lamp_functional = FALSE
 	playsound(src, 'sound/effects/footstep/glass_step.ogg', 50)
 	toggle_headlamp(TRUE)
-	to_chat(src, span_danger(LANG("mob.be4a660a", null)))
+	to_chat(src, span_danger("Your headlamp is broken! You'll need a human to help replace it."))
 
 /**
  * Handles headlamp toggling, disabling, and color setting.
@@ -505,10 +524,10 @@
 /mob/living/silicon/robot/proc/toggle_headlamp(turn_off = FALSE, update_color = FALSE)
 	//if both lamp is enabled AND the update_color flag is on, keep the lamp on. Otherwise, if anything listed is true, disable the lamp.
 	if(!COOLDOWN_FINISHED(src, disabled_time))
-		balloon_alert(src, LANG("mob.492a03fe", null))
+		balloon_alert(src, "disrupted!")
 		return FALSE
 
-	if(!(update_color && lamp_enabled) && (turn_off || lamp_enabled || update_color || !lamp_functional || stat || low_power_mode))
+	if(!(update_color && lamp_enabled) && (turn_off || lamp_enabled || update_color || !lamp_functional || IS_UNCONSCIOUS_OR_CRIT(src) || low_power_mode))
 		set_light_on(lamp_functional && stat != DEAD && lamp_doom) //If the lamp isn't broken and borg isn't dead, doomsday borgs cannot disable their light fully.
 		set_light_color(COLOR_RED) //This should only matter for doomsday borgs, as any other time the lamp will be off and the color not seen
 		set_light_range(1) //Again, like above, this only takes effect when the light is forced on by doomsday mode.
@@ -573,12 +592,13 @@
 
 	if(removing.brainmob)
 		if(removing.brainmob.stat == DEAD)
-			removing.brainmob.set_stat(CONSCIOUS)
+			removing.brainmob.set_stat(STABLE)
 		mind.transfer_to(removing.brainmob)
 		removing.update_appearance()
 
 	else
-		to_chat(src, span_bolddanger(LANG("mob.4f95f26d", null)))
+		to_chat(src, span_bolddanger("Oops! Something went very wrong, your MMI was unable to receive your mind. \
+			You have been ghosted. Please make a bug report so we can fix this bug."))
 		ghostize()
 		stack_trace("Borg MMI lacked a brainmob")
 
@@ -601,7 +621,7 @@
 
 /mob/living/silicon/robot/can_perform_action(atom/target, action_bitflags)
 	if(lockcharge || low_power_mode)
-		to_chat(src, span_warning(LANG("mob.93b3c965", null)))
+		to_chat(src, span_warning("You can't do that right now!"))
 		return FALSE
 	return ..()
 
@@ -684,11 +704,10 @@
 /mob/living/silicon/robot/update_stat()
 	if(HAS_TRAIT(src, TRAIT_GODMODE))
 		return
-	if(stat != DEAD)
-		if(health <= -maxHealth) //die only once
-			death()
-			toggle_headlamp(1)
-			return
+	if(stat != DEAD && health <= -maxHealth) //die only once
+		death()
+		toggle_headlamp(TRUE)
+		return
 	diag_hud_set_status()
 	diag_hud_set_health()
 	diag_hud_set_aishell()
@@ -708,17 +727,18 @@
 	if(eye_flash_timer)
 		deltimer(eye_flash_timer)
 		eye_flash_timer = null
-	src.set_stat(CONSCIOUS)
+	src.set_stat(STABLE)
 	notify_ai(AI_NOTIFICATION_NEW_BORG)
 	toggle_headlamp(FALSE, TRUE) //This will reenable borg headlamps if doomsday is currently going on still.
 	update_stat()
 	return TRUE
 
-/mob/living/silicon/robot/fully_replace_character_name(oldname, newname)
+/mob/living/silicon/robot/fully_replace_character_name(oldname, newname, log_new_name = FALSE)
 	. = ..()
 	if(!.)
 		return
-	notify_ai(AI_NOTIFICATION_CYBORG_RENAMED, oldname, newname)
+	if(oldname)
+		notify_ai(AI_NOTIFICATION_CYBORG_RENAMED, oldname, newname)
 	if(!QDELETED(builtInCamera))
 		builtInCamera.c_tag = real_name
 		modularInterface.imprint_id(name = real_name)
@@ -808,15 +828,15 @@
 	if(!user.temporarilyRemoveItemFromInventory(new_upgrade)) //calling the upgrade's dropped() proc /before/ we add action buttons
 		return FALSE
 	if(!new_upgrade.action(src, user))
-		to_chat(user, span_danger(LANG("mob.b68282e0", null)))
+		to_chat(user, span_danger("Upgrade error."))
 		new_upgrade.forceMove(loc) //gets lost otherwise
 		return FALSE
-	to_chat(user, span_notice(LANG("mob.23c68f5b", list(src))))
+	to_chat(user, span_notice("You apply the upgrade to [src]."))
 	add_to_upgrades(new_upgrade)
 
 ///Moves the upgrade inside the robot and registers relevant signals.
 /mob/living/silicon/robot/proc/add_to_upgrades(obj/item/borg/upgrade/new_upgrade)
-	to_chat(src, LANG("mob.1e8630b8", list(new_upgrade)))
+	to_chat(src, "----------------\nNew hardware detected...Identified as \"<b>[new_upgrade]</b>\"...Setup complete.\n----------------")
 	if(new_upgrade.one_use)
 		logevent("Firmware [new_upgrade] run successfully.")
 		qdel(new_upgrade)
@@ -965,10 +985,10 @@
 	if(incapacitated)
 		return FALSE
 	if(!HAS_TRAIT(target, TRAIT_CAN_MOUNT_CYBORGS))
-		target.visible_message(span_warning(LANG("mob.d388ba33", list(target, src))))
+		target.visible_message(span_warning("[target] really can't seem to mount [src]..."))
 		return FALSE
 	if(model && !model.allow_riding)
-		target.visible_message(span_boldwarning(LANG("mob.d241b7c5", list(target, src))))
+		target.visible_message(span_boldwarning("Unfortunately, [target] just can't seem to hold onto [src]!"))
 		return FALSE
 
 	return ..()
@@ -983,7 +1003,7 @@
 
 /mob/living/silicon/robot/can_resist()
 	if(lockcharge)
-		balloon_alert(src, LANG("mob.024f9f0d", null))
+		balloon_alert(src, "locked down!")
 		return FALSE
 	return ..()
 
@@ -994,21 +1014,20 @@
 	for(var/mob/unbuckle_me_now as anything in buckled_mobs)
 		unbuckle_mob(unbuckle_me_now, FALSE)
 
-/mob/living/silicon/robot/proc/TryConnectToAI()
-	set_connected_ai(select_active_ai_with_fewest_borgs(z))
+/mob/living/silicon/robot/proc/try_connect_to_ai(mob/living/silicon/connect_to)
+	if(isnull(connect_to))
+		var/turf/robot_turf = get_turf(src)
+		connect_to = select_active_ai_with_fewest_borgs(robot_turf.z)
+		if(isnull(connect_to))
+			return FALSE
+
+	set_connected_ai(connect_to)
 	if(connected_ai)
-		lawsync()
+		sync_to_ai()
 		lawupdate = TRUE
 		return TRUE
-	picturesync()
-	return FALSE
 
-/mob/living/silicon/robot/proc/picturesync()
-	if(connected_ai?.aicamera && aicamera)
-		for(var/i in aicamera.stored)
-			connected_ai.aicamera.stored[i] = TRUE
-		for(var/i in connected_ai.aicamera.stored)
-			aicamera.stored[i] = TRUE
+	return FALSE
 
 /mob/living/silicon/robot/proc/charge(datum/source, datum/callback/charge_cell, seconds_per_tick, repairs, sendmats)
 	SIGNAL_HANDLER
@@ -1026,18 +1045,18 @@
 /mob/living/silicon/robot/proc/set_connected_ai(new_ai)
 	if(connected_ai == new_ai)
 		return
-	. = connected_ai
+	var/mob/living/silicon/ai/old_ai = connected_ai
 	connected_ai = new_ai
-	if(.)
-		var/mob/living/silicon/ai/old_ai = .
+	if(old_ai)
 		old_ai.connected_robots -= src
 		// if the borg has a malf AI zeroth law and has been unsynced from the malf AI, then remove the law
 		if(isnull(connected_ai) && IS_MALF_AI(old_ai) && !isnull(laws?.zeroth))
-			clear_zeroth_law(FALSE, TRUE)
+			laws.clear_zeroth_law(force = TRUE)
 	lamp_doom = FALSE
 	if(connected_ai)
 		connected_ai.connected_robots |= src
-		lamp_doom = connected_ai.doomsday_device ? TRUE : FALSE
+		lamp_doom = !!connected_ai.doomsday_device
+		try_sync_laws()
 	toggle_headlamp(FALSE, TRUE)
 
 /mob/living/silicon/robot/get_exp_list(minutes)
@@ -1045,7 +1064,7 @@
 	.[/datum/job/cyborg::title] = minutes
 
 /mob/living/silicon/robot/proc/untip_roleplay()
-	to_chat(src, span_notice(LANG("mob.e76b35b7", null)))
+	to_chat(src, span_notice("Your frustration has empowered you! You can now right yourself faster!"))
 
 /mob/living/silicon/robot/get_fire_overlay(stacks, on_fire)
 	return make_generic_fire_overlay()
@@ -1053,16 +1072,6 @@
 /// Draw power from the robot
 /mob/living/silicon/robot/proc/draw_power(power_to_draw)
 	cell?.use(power_to_draw)
-
-
-/mob/living/silicon/robot/set_stat(new_stat)
-	. = ..()
-	update_stat() // This is probably not needed, but hopefully should be a little sanity check for the spaghetti that borgs are built from
-
-/mob/living/silicon/robot/on_knockedout_trait_loss(datum/source)
-	. = ..()
-	set_stat(CONSCIOUS) //This is a horrible hack, but silicon code forced my hand
-	update_stat()
 
 /mob/living/silicon/robot/proc/on_dampen()
 	SIGNAL_HANDLER
@@ -1076,3 +1085,15 @@
 		buckled_mob.Paralyze(1 SECONDS)
 		unbuckle_mob(buckled_mob)
 	do_sparks(5, 0, src)
+
+/mob/living/silicon/robot/get_unconscious_appearance()
+	var/image/static_overlay = image('icons/effects/effects.dmi', null, "static_base")
+	static_overlay.blend_mode = BLEND_INSET_OVERLAY
+
+	var/image/static_image = image('icons/mob/silicon/robots.dmi', src, "robot")
+	static_image.appearance_flags |= KEEP_TOGETHER
+	static_image.overlays += static_overlay
+	static_image.override = TRUE
+	static_image.name = "unknown cyborg"
+
+	return static_image

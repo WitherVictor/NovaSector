@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 	////////////
 	//SECURITY//
 	////////////
@@ -85,7 +84,7 @@ GLOBAL_LIST_INIT(unrecommended_builds, list(
 			topiclimiter[SECOND_COUNT] = 0
 		topiclimiter[SECOND_COUNT] += 1
 		if (topiclimiter[SECOND_COUNT] > stl)
-			to_chat(src, span_danger(LANG("client.fc42b749", null)))
+			to_chat(src, span_danger("Your previous action was ignored because you've done too many in a second"))
 			return
 
 	// Tgui Topic middleware
@@ -100,7 +99,7 @@ GLOBAL_LIST_INIT(unrecommended_builds, list(
 
 	//byond bug ID:2256651
 	if (asset_cache_job && (asset_cache_job in completed_asset_jobs))
-		to_chat(src, span_danger(LANG("client.af875680", null)))
+		to_chat(src, span_danger("An error has been detected in how your client is receiving resources. Attempting to correct.... (If you keep seeing these messages you might want to close byond and reconnect)"))
 		src << browse("...", "window=asset_cache_browser")
 		return
 	if (href_list["asset_cache_preload_data"])
@@ -129,7 +128,7 @@ GLOBAL_LIST_INIT(unrecommended_builds, list(
 
 	// TGUIless adminhelp
 	if(href_list["tguiless_adminhelp"])
-		no_tgui_adminhelp(input(src, LANG("client.fe16a79e", null), LANG("client.5506e907", null)) as null|message)
+		no_tgui_adminhelp(input(src, "Enter your ahelp", "Ahelp") as null|message)
 		return
 
 	if(href_list["commandbar_typing"])
@@ -171,7 +170,7 @@ GLOBAL_LIST_INIT(unrecommended_builds, list(
 
 /client/proc/is_content_unlocked()
 	if(!prefs.unlock_content)
-		to_chat(src, LANG("client.700fb84d", null))
+		to_chat(src, "Become a BYOND member to access member-perks and features, as well as support the engine that makes this game possible. Only 10 bucks for 3 months! <a href=\"https://secure.byond.com/membership\">Click Here to find out more</a>.")
 		return FALSE
 	return TRUE
 
@@ -226,13 +225,13 @@ GLOBAL_LIST_INIT(unrecommended_builds, list(
 
 		src.last_message_count++
 		if(src.last_message_count >= SPAM_TRIGGER_AUTOMUTE)
-			to_chat(src, span_danger(LANG("client.997ed42f", null)))
+			to_chat(src, span_danger("You have exceeded the spam filter limit for identical messages. A mute was automatically applied for the current round. Contact admins to request its removal."))
 			cmd_admin_mute(src, mute_type, 1)
 			return TRUE
 		if(src.last_message_count >= SPAM_TRIGGER_WARNING)
 			//"auto-ban" sends the message that the cold and uncaring gamecode has been designed to quiash you like a bug in short measure should you continue, and it's quite intentional that the user isn't told exactly what that entails.
-			to_chat(src, span_userdanger(LANG("client.8c53756b", null)))
-			mob.balloon_alert(mob, LANG("client.e9e00d31", null))
+			to_chat(src, span_userdanger("You are nearing the auto-ban limit for identical messages."))
+			mob.balloon_alert(mob, "stop spamming!")
 			return FALSE
 	else
 		last_message = message
@@ -245,10 +244,10 @@ GLOBAL_LIST_INIT(unrecommended_builds, list(
 	if (holder)
 		var/admin_max_file_size = CONFIG_GET(number/upload_limit_admin)
 		if(filelength > admin_max_file_size)
-			to_chat(src, span_warning(LANG("client.9a9f9a07", list(admin_max_file_size/1024))))
+			to_chat(src, span_warning("Error: AllowUpload(): File Upload too large. Upload Limit: [admin_max_file_size/1024]KiB."))
 			return FALSE
 	else if(filelength > client_max_file_size)
-		to_chat(src, span_warning(LANG("client.9a9f9a07", list(client_max_file_size/1024))))
+		to_chat(src, span_warning("Error: AllowUpload(): File Upload too large. Upload Limit: [client_max_file_size/1024]KiB."))
 		return FALSE
 	return TRUE
 
@@ -306,10 +305,10 @@ GLOBAL_LIST_INIT(unrecommended_builds, list(
 	prefs.last_id = computer_id //these are gonna be used for banning
 
 	if(fexists(roundend_report_file()))
-		add_verb(src, /client/proc/show_previous_roundend_report)
+		ASSIGN_GAME_VERB(src, /client, show_previous_roundend_report)
 
 	if(fexists("data/server_last_roundend_report.html"))
-		add_verb(src, /client/proc/show_servers_last_roundend_report)
+		ASSIGN_GAME_VERB(src, /client, show_servers_last_roundend_report)
 
 	var/full_version = "[byond_version].[byond_build ? byond_build : "xxx"]"
 	log_access("Login: [key_name(src)] from [address ? address : "localhost"]-[computer_id] || BYOND v[full_version]")
@@ -381,20 +380,20 @@ GLOBAL_LIST_INIT(unrecommended_builds, list(
 		admin_datum.associate(src)
 		connecting_admin = TRUE
 	else if(GLOB.deadmins[ckey])
-		add_verb(src, /client/proc/readmin)
+		ASSIGN_GAME_VERB(src, /client, readmin)
 		connecting_admin = TRUE
 	if(CONFIG_GET(flag/autoadmin))
 		if(!GLOB.admin_datums[ckey])
 			var/list/autoadmin_ranks = ranks_from_rank_name(CONFIG_GET(string/autoadmin_rank))
 			if (autoadmin_ranks.len == 0)
-				to_chat(world, LANG("client.a5f1c188", null))
+				to_chat(world, "Autoadmin rank not found")
 			else
 				new /datum/admins(autoadmin_ranks, ckey)
 
 	if(CONFIG_GET(flag/enable_localhost_rank) && !connecting_admin && is_localhost())
 		var/datum/admin_rank/localhost_rank = new("!localhost!", RANK_SOURCE_LOCAL, R_EVERYTHING, R_DBRANKS, R_EVERYTHING) //+EVERYTHING -DBRANKS *EVERYTHING
 		if(QDELETED(localhost_rank))
-			to_chat(world, LANG("client.f76268a8", null))
+			to_chat(world, "Local admin rank creation failed, somehow?")
 			return
 		new /datum/admins(list(localhost_rank), ckey, 1, 1)
 
@@ -403,23 +402,23 @@ GLOBAL_LIST_INIT(unrecommended_builds, list(
 		if (!length(GLOB.stickybanadminexemptions))
 			restore_stickybans()
 
-	if (byond_version >= 512)
-		if (!byond_build || byond_build < 1386)
-			message_admins(span_adminnotice("[key_name(src)] has been detected as spoofing their byond version. Connection rejected."))
-			add_system_note("Spoofed-Byond-Version", "Detected as using a spoofed byond version.")
-			log_suspicious_login("Failed Login: [key] - Spoofed byond version")
-			qdel(src)
+	if (!byond_build)
+		message_admins(span_adminnotice("[key_name(src)] has been detected as spoofing their BYOND version. Connection rejected."))
+		add_system_note("Spoofed-BYOND-Version", "Detected as using a spoofed BYOND version.")
+		log_suspicious_login("Failed Login: [key] - Spoofed BYOND version")
+		qdel(src)
+		return
 
-		if (num2text(byond_build) in GLOB.blacklisted_builds)
-			log_access("Failed login: [key] - blacklisted byond version")
-			to_chat_immediate(src, span_userdanger("Your version of byond is blacklisted."))
-			to_chat_immediate(src, span_danger("Byond build [byond_build] ([byond_version].[byond_build]) has been blacklisted for the following reason: [GLOB.blacklisted_builds[num2text(byond_build)]]."))
-			to_chat_immediate(src, span_danger("Please download a new version of byond. If [byond_build] is the latest, you can go to <a href=\"https://secure.byond.com/download/build\">BYOND's website</a> to download other versions."))
-			if(connecting_admin)
-				to_chat_immediate(src, "As an admin, you are being allowed to continue using this version, but please consider changing byond versions")
-			else
-				qdel(src)
-				return
+	if (num2text(byond_build) in GLOB.blacklisted_builds)
+		log_access("Failed login: [key] - blacklisted BYOND version")
+		to_chat_immediate(src, span_userdanger("Your version of BYOND is blacklisted."))
+		to_chat_immediate(src, span_danger("BYOND build [byond_build] ([byond_version].[byond_build]) has been blacklisted for the following reason: [GLOB.blacklisted_builds[num2text(byond_build)]]."))
+		to_chat_immediate(src, span_danger("Please download a new version of BYOND. If [byond_build] is the latest, you can go to <a href=\"https://secure.byond.com/download/build\">BYOND's website</a> to download other versions."))
+		if(connecting_admin)
+			to_chat_immediate(src, "As an admin, you are being allowed to continue using this version, but please consider changing BYOND versions.")
+		else
+			qdel(src)
+			return
 
 	if(SSinput.initialized)
 		set_macros()
@@ -439,23 +438,24 @@ GLOBAL_LIST_INIT(unrecommended_builds, list(
 
 	tgui_say.initialize()
 
+	initialize_escape_menu()
+
 	if(alert_mob_dupe_login && !holder)
 		// Notify admins if the connecting player's CID is configured to be ignored by stickybans
 		if (SSstickyban && (computer_id in SSstickyban.ignored_cids))
 			message_admins("<B>MULTIKEYING: </B></span><span class='notice'>[key_name_admin(src)] Connecting player joined with IGNORED CID [computer_id].")
 			log_admin_private("MULTIKEYING: [key_name(src)] Connecting player joined with IGNORED CID [computer_id].")
-			return
-
-		// If the CID is not ignored, notify the player with the pop-up.
-		var/dupe_login_message = "Your ComputerID has already logged in with another key this round, please log out of this one NOW or risk being banned!"
-		// Notify admins if the connecting player's CID is a duplicate of another player's CID
-		if (alert_admin_multikey)
-			dupe_login_message += "\nAdmins have been informed."
-			message_admins(span_danger("<B>MULTIKEYING: </B></span><span class='notice'>[key_name_admin(src)] has a matching CID+IP with another player and is clearly multikeying. They have been warned to leave the server or risk getting banned."))
-			log_admin_private("MULTIKEYING: [key_name(src)] has a matching CID+IP with another player and is clearly multikeying. They have been warned to leave the server or risk getting banned.")
-		spawn(0.5 SECONDS) //needs to run during world init, do not convert to add timer
-			alert(mob, dupe_login_message) //players get banned if they don't see this message, do not convert to tgui_alert (or even tg_alert) please.
-			to_chat_immediate(mob, span_danger(dupe_login_message))
+		else
+			// If the CID is not ignored, notify the player with the pop-up.
+			var/dupe_login_message = "Your ComputerID has already logged in with another key this round, please log out of this one NOW or risk being banned!"
+			// Notify admins if the connecting player's CID is a duplicate of another player's CID
+			if (alert_admin_multikey)
+				dupe_login_message += "\nAdmins have been informed."
+				message_admins(span_danger("<B>MULTIKEYING: </B></span><span class='notice'>[key_name_admin(src)] has a matching CID+IP with another player and is clearly multikeying. They have been warned to leave the server or risk getting banned."))
+				log_admin_private("MULTIKEYING: [key_name(src)] has a matching CID+IP with another player and is clearly multikeying. They have been warned to leave the server or risk getting banned.")
+			spawn(0.5 SECONDS) //needs to run during world init, do not convert to add timer
+				alert(mob, dupe_login_message) //players get banned if they don't see this message, do not convert to tgui_alert (or even tg_alert) please.
+				to_chat_immediate(mob, span_danger(dupe_login_message))
 
 
 	connection_time = world.time
@@ -480,19 +480,18 @@ GLOBAL_LIST_INIT(unrecommended_builds, list(
 			return
 	else if (byond_version < warn_version || (byond_version == warn_version && byond_build < warn_build)) //We have words for this client.
 		if(CONFIG_GET(flag/client_warn_popup))
-			// NOVA EDIT - i18n: 旧 browse 弹窗 raw browse 不过 /datum/browser 的 AC 钩子，直接复用下方 else 分支同款 LANG key 拼装（精确、含占位符/链接）
-			var/msg = "[LANG("client.832182db", null)]<br>"
+			var/msg = "<b>Your version of byond may be getting out of date:</b><br>"
 			msg += CONFIG_GET(string/client_warn_message) + "<br><br>"
-			msg += "[LANG("client.2becbdd0", list(byond_version, byond_build))]<br>"
-			msg += "[LANG("client.7dad8d5b", list(warn_version, warn_build))]<br>"
-			msg += "[LANG("client.b16bec0e", null)]<br>"
+			msg += "Your version: [byond_version].[byond_build]<br>"
+			msg += "Required version to remove this message: [warn_version].[warn_build] or later<br>"
+			msg += "Visit <a href=\"https://secure.byond.com/download\">BYOND's website</a> to get the latest version of BYOND.<br>"
 			src << browse(HTML_SKELETON(msg), "window=warning_popup")
 		else
-			to_chat(src, span_danger(LANG("client.832182db", null)))
+			to_chat(src, span_danger("<b>Your version of byond may be getting out of date:</b>"))
 			to_chat(src, CONFIG_GET(string/client_warn_message))
-			to_chat(src, LANG("client.2becbdd0", list(byond_version, byond_build)))
-			to_chat(src, LANG("client.7dad8d5b", list(warn_version, warn_build)))
-			to_chat(src, LANG("client.b16bec0e", null))
+			to_chat(src, "Your version: [byond_version].[byond_build]")
+			to_chat(src, "Required version to remove this message: [warn_version].[warn_build] or later")
+			to_chat(src, "Visit <a href=\"https://secure.byond.com/download\">BYOND's website</a> to get the latest version of BYOND.")
 
 	if (connection == "web" && !connecting_admin)
 		if (!CONFIG_GET(flag/allow_webclient))
@@ -568,7 +567,7 @@ GLOBAL_LIST_INIT(unrecommended_builds, list(
 	apply_clickcatcher()
 
 	if(prefs.lastchangelog != GLOB.changelog_hash) //bolds the changelog button on the interface so we know there are updates.
-		to_chat(src, span_info(LANG("client.b1b23f96", null)))
+		to_chat(src, span_info("You have unread updates in the changelog."))
 		if(CONFIG_GET(flag/aggressive_changelog))
 			changelog()
 
@@ -581,7 +580,7 @@ GLOBAL_LIST_INIT(unrecommended_builds, list(
 		convert_notes_sql(ckey)
 	display_admin_messages(src)
 	if(!winexists(src, "asset_cache_browser")) // The client is using a custom skin, tell them.
-		to_chat(src, span_warning(LANG("client.8d4be7fa", null)))
+		to_chat(src, span_warning("Unable to access asset cache browser, if you are using a custom skin file, please allow DS to download the updated version, if you are not, then make a bug report. This is not a critical issue but can cause issues with resource downloading, as it is impossible to know when extra resources arrived to you."))
 
 	update_ambience_pref(prefs.read_preference(/datum/preference/numeric/volume/sound_ambience_volume))
 	check_ip_intel()
@@ -742,7 +741,7 @@ GLOBAL_LIST_INIT(unrecommended_builds, list(
 			var/list/panic_addr = CONFIG_GET(string/panic_server_address)
 			if(panic_addr && !connectiontopic_a["redirect"])
 				var/panic_name = CONFIG_GET(string/panic_server_name)
-				to_chat(src, span_notice(LANG("client.4cf0422f", list(panic_name ? panic_name : panic_addr))))
+				to_chat(src, span_notice("Sending you to [panic_name ? panic_name : panic_addr]."))
 				winset(src, null, "command=.options")
 				src << link("[panic_addr]?redirect=1")
 			qdel(query_client_in_db)
@@ -817,10 +816,6 @@ GLOBAL_LIST_INIT(unrecommended_builds, list(
 	. = player_age
 
 /client/proc/findJoinDate()
-	// NOVA EDIT ADDITION START - BYOND_ACCOUNT_AGE_CHECK - allow operators to avoid external member page lookups
-	if(CONFIG_GET(flag/disable_byond_account_age_check))
-		return
-	// NOVA EDIT ADDITION END
 	var/list/http = world.Export("http://byond.com/members/[ckey]?format=text")
 	if(!http)
 		log_world("Failed to connect to byond member page to age check [ckey]")
@@ -952,7 +947,7 @@ GLOBAL_LIST_INIT(unrecommended_builds, list(
 		clicklimiter[SECOND_COUNT] += 1 + (!!ab)
 
 		if (clicklimiter[SECOND_COUNT] > scl)
-			to_chat(src, span_danger(LANG("client.693418f7", null)))
+			to_chat(src, span_danger("Your previous click was ignored because you've done too many in a second"))
 			return
 
 	//check if the server is overloaded and if it is then queue up the click for next tick
@@ -975,11 +970,11 @@ GLOBAL_LIST_INIT(unrecommended_builds, list(
 	if (interviewee)
 		return
 	if(CONFIG_GET(flag/see_own_notes))
-		add_verb(src, /client/proc/self_notes)
+		ASSIGN_GAME_VERB(src, /client, self_notes)
 	if(CONFIG_GET(flag/use_exp_tracking))
-		add_verb(src, /client/proc/self_playtime)
+		ASSIGN_GAME_VERB(src, /client, self_playtime)
 	if(!CONFIG_GET(flag/forbid_preferences_export))
-		add_verb(src, /client/proc/export_preferences)
+		ASSIGN_GAME_VERB(src, /client, export_preferences)
 
 
 //checks if a client is afk
@@ -1123,7 +1118,7 @@ GLOBAL_LIST_INIT(unrecommended_builds, list(
 	var/new_duration = world.realtime + duration
 	if(prefs.hearted_until > new_duration)
 		return
-	to_chat(src, span_nicegreen(LANG("client.993ec091", null)))
+	to_chat(src, span_nicegreen("Someone awarded you a heart!"))
 	prefs.hearted_until = new_duration
 	prefs.hearted = TRUE
 	prefs.save_preferences()
@@ -1148,14 +1143,12 @@ GLOBAL_LIST_INIT(unrecommended_builds, list(
 			continue
 		panel_tabs |= verb_to_init.category
 		verblist[++verblist.len] = list(verb_to_init.category, verb_to_init.name)
-	// NOVA EDIT CHANGE - i18n: 附带页签显示译名表（locale==en 时为空 list，JS 侧回落原名）
-	// - ORIGINAL: src.stat_panel.send_message("init_verbs", list(panel_tabs = panel_tabs, verblist = verblist))
-	src.stat_panel.send_message("init_verbs", list(panel_tabs = panel_tabs, verblist = verblist, tab_labels = lang_statpanel_tab_labels()))
+	src.stat_panel.send_message("init_verbs", list(panel_tabs = panel_tabs, verblist = verblist))
 
 /client/proc/check_panel_loaded()
 	if(stat_panel.is_ready())
 		return
-	to_chat(src, span_userdanger(LANG("client.d5f28dbd", list(REF(src)))))
+	to_chat(src, span_userdanger("Statpanel failed to load, click <a href='byond://?src=[REF(src)];reload_statbrowser=1'>here</a> to reload the panel "))
 
 /client/proc/open_filter_editor(atom/in_atom)
 	if(holder)
@@ -1229,17 +1222,12 @@ GLOBAL_LIST_INIT(unrecommended_builds, list(
 	var/mob/dead/observer/observer = mob
 	observer.ManualFollow(target)
 
-/client/verb/stop_client_sounds()
-	set name = "停止音效"
-	set category = "OOC"
-	set desc = "Stop Current Sounds"
+GAME_VERB_DESC(/client, stop_client_sounds, "Stop Sounds", "Stop Current Sounds", "OOC")
 	SEND_SOUND(usr, sound(null))
 	tgui_panel?.stop_music()
 	SSblackbox.record_feedback("nested tally", "preferences_verb", 1, list("Stop Self Sounds"))
 
-/client/verb/toggle_fullscreen()
-	set name = "Toggle Fullscreen"
-	set category = "OOC"
+GAME_VERB(/client, toggle_fullscreen, "Toggle Fullscreen", "OOC")
 
 	var/is_on = prefs.read_preference(/datum/preference/toggle/fullscreen_mode)
 	prefs.write_preference(GLOB.preference_entries[/datum/preference/toggle/fullscreen_mode], !is_on)

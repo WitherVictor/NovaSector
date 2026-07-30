@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 /**
  * # Emote
  *
@@ -49,7 +48,9 @@
 	/// Trait that is required to use this emote.
 	var/trait_required
 	/// In which state can you use this emote? (Check stat.dm for a full list of them)
-	var/stat_allowed = CONSCIOUS
+	var/stat_allowed = STABLE
+
+	var/can_use_flags = NONE
 	/// Sound to play when emote is called.
 	var/sound
 	/// Does this emote vary in pitch?
@@ -90,16 +91,6 @@
 	if(!name)
 		name = key
 
-	// NOVA EDIT ADDITION START - i18n
-	// 这里**不能**反查 message/name。emote datum 由 make_datum_reference_lists() 的
-	// init_emote_list() 建立，那在 `Master => GLOB =>` 阶段，**早于 world.New() => config.Load()**
-	// （见 code/game/world.dm 顶部的启动顺序注释）——此刻 GLOB.i18n_server_locale 还没从 config
-	// 读出来，恒等于 en，任何 `locale != en` 的门都进不去（本文件曾放过这样一段，是死代码：
-	// 表情实际全靠 run_emote 末尾那道边界反查，而它在 replace_pronoun 之后，含 "their" 的
-	// 表情反查必 miss —— 表现为「stretches its arms.」这类整句漏翻）。
-	// 反查统一在 run_emote 的输出边界做，见该 proc 内的 i18n 注释。
-	// NOVA EDIT ADDITION END
-
 /**
  * Handles the modifications and execution of emotes.
  *
@@ -118,8 +109,6 @@
 		else
 			msg = params
 
-	// NOVA EDIT ADDITION - i18n: 留一份**代词替换前**的原串，反查要用它（见下方 lang_reverse_text）
-	var/pre_pronoun_msg = msg
 	msg = replace_pronoun(user, msg)
 	if(!msg)
 		return
@@ -129,18 +118,6 @@
 
 	if(user.client)
 		user.log_message(msg, LOG_EMOTE)
-
-	// NOVA EDIT ADDITION START - I18N - emote 消息在下游拼成「[user] [msg]」整句动态、无法命中目录；
-	// 在日志之后（日志保英文）对 msg 整串反查（含单词条目；miss 原样返回，locale==en 时 no-op）。
-	//
-	// **必须用代词替换前的原串查**：目录键是源码里的 "their" 形态（"stretches their arms."），而
-	// replace_pronoun 已按 mob 代词把它改成了 its/his/her，拿替换后的串去查必然 miss。这正是
-	// 「clears its throat.」「twitches its ears!」「flaps its wings ANGRILY!」这批含代词的表情
-	// 整句漏翻、其余表情却正常的原因。命中就用译文（中文无需再做代词替换）；未命中再退回按
-	// 替换后的串查一次，兼容那些译文本身带代词占位的条目。
-	var/localized_msg = lang_reverse_text(pre_pronoun_msg)
-	msg = (localized_msg != pre_pronoun_msg) ? localized_msg : lang_reverse_text(msg)
-	// NOVA EDIT ADDITION END
 
 	var/tmp_sound = get_sound(user)
 	if(tmp_sound && should_play_sound(user, intentional))
@@ -328,7 +305,7 @@
 	if(user.nextsoundemote > world.time) // NOVA EDIT CHANGE - ORIGINAL: if(user.emotes_used && user.emotes_used[src] + cooldown > world.time)
 		var/datum/emote/default_emote = /datum/emote
 		if(cooldown > initial(default_emote.cooldown)) // only worry about longer-than-normal emotes
-			to_chat(user, span_danger(LANG("datum.ec9895bb", list(DisplayTimeText(user.nextsoundemote - world.time)))))
+			to_chat(user, span_danger("You must wait another [DisplayTimeText(user.nextsoundemote - world.time)] before using that emote."))
 		return FALSE
 	//if(!user.emotes_used)
 	//	user.emotes_used = list()
@@ -445,22 +422,31 @@
 	if(is_type_in_typecache(user, mob_type_blacklist_typecache))
 		return FALSE
 	if(status_check && !is_type_in_typecache(user, mob_type_ignore_stat_typecache))
-		if(user.stat > stat_allowed)
-			if(!intentional)
-				return FALSE
-			switch(user.stat)
-				if(SOFT_CRIT)
-					to_chat(user, span_warning(LANG("datum.06026301", list(key))))
-				if(UNCONSCIOUS, HARD_CRIT)
-					to_chat(user, span_warning(LANG("datum.b0df7fb7", list(key))))
-				if(DEAD)
-					to_chat(user, span_warning(LANG("datum.9cfbc2db", list(key))))
+		if(IS_UNCONSCIOUS(user) && !(can_use_flags & EMOTE_CANUSE_UNCONSCIOUS))
+			if(intentional)
+				to_chat(user, span_warning("You cannot [key] while unconscious!"))
 			return FALSE
-		if(hands_use_check && HAS_TRAIT(user, TRAIT_HANDS_BLOCKED))
-			if(!intentional)
-				return FALSE
-			to_chat(user, span_warning(LANG("datum.a6c43807", list(key))))
+		if(HAS_TRAIT(user, TRAIT_HANDS_BLOCKED) && (can_use_flags & EMOTE_CANUSE_REQUIRE_HANDS))
+			if(intentional)
+				to_chat(user, span_warning("You cannot use your hands to [key] right now!"))
 			return FALSE
+
+		switch(user.stat)
+			if(SOFT_CRIT)
+				if(!(can_use_flags & EMOTE_CANUSE_SOFTCRIT))
+					if(intentional)
+						to_chat(user, span_warning("You cannot [key] while in a critical condition!"))
+					return FALSE
+			if(HARD_CRIT)
+				if(!(can_use_flags & EMOTE_CANUSE_HARDCRIT))
+					if(intentional)
+						to_chat(user, span_warning("You cannot [key] while in a critical condition!"))
+					return FALSE
+			if(DEAD)
+				if(!(can_use_flags & EMOTE_CANUSE_DEAD))
+					if(intentional)
+						to_chat(user, span_warning("You cannot [key] while dead!"))
+					return FALSE
 
 	if(HAS_TRAIT(user, TRAIT_EMOTEMUTE))
 		return FALSE
@@ -519,7 +505,7 @@
 	return TRUE
 
 /mob/manual_emote(text, log_emote = null)
-	if (stat != CONSCIOUS)
+	if (IS_UNCONSCIOUS_OR_CRIT(src))
 		return FALSE
 	if (isnull(log_emote))
 		log_emote = !isnull(client)

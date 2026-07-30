@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 // Heretic starting knowledge.
 
 /// Global list of all heretic knowledge that have is_starting_knowledge = TRUE. List of PATHS.
@@ -19,18 +18,29 @@ GLOBAL_LIST_INIT(heretic_start_knowledge, initialize_starting_knowledge())
  */
 /datum/heretic_knowledge/spell/basic
 	name = "Break of Dawn"
-	desc = "Starts your journey into the Mansus. \
-		Grants you the Mansus Grasp, a powerful and upgradable \
-		disabling spell that can be cast regardless of having a focus."
+	desc = "Starts your journey into the Mansus.<br>\
+		Grants you the Mansus Grasp, a powerful and upgradable disabling spell."
 	action_to_add = /datum/action/cooldown/spell/touch/mansus_grasp
 	cost = 0
 	is_starting_knowledge = TRUE
+	max_charges = 8
+	focus_recharge_amount = 0.25
+	holywater_drain_amount = 0.125
+	transmute_text = "Tapping influences and completing sacrifices will recharge the spell."
 
 // Heretics can enhance their fishing rods to fish better - fishing content.
 // Lasts until successfully fishing something up.
 /datum/heretic_knowledge/spell/basic/on_gain(mob/user, datum/antagonist/heretic/our_heretic)
-	..()
+	. = ..()
 	RegisterSignal(user, COMSIG_TOUCH_HANDLESS_CAST, PROC_REF(on_grasp_cast))
+	RegisterSignal(our_heretic, COMSIG_HERETIC_INFLUENCE_DRAINED, PROC_REF(on_influence_tap))
+	RegisterSignal(our_heretic, COMSIG_HERETIC_SACRIFICE, PROC_REF(on_sacrifice))
+
+/datum/heretic_knowledge/spell/basic/on_lose(mob/user, datum/antagonist/heretic/our_heretic)
+	. = ..()
+	UnregisterSignal(user, COMSIG_TOUCH_HANDLESS_CAST)
+	UnregisterSignal(our_heretic, COMSIG_HERETIC_INFLUENCE_DRAINED)
+	UnregisterSignal(our_heretic, COMSIG_HERETIC_SACRIFICE)
 
 /datum/heretic_knowledge/spell/basic/proc/on_grasp_cast(mob/living/carbon/cast_on, datum/action/cooldown/spell/touch/touch_spell)
 	SIGNAL_HANDLER
@@ -45,7 +55,7 @@ GLOBAL_LIST_INIT(heretic_start_knowledge, initialize_starting_knowledge())
 
 	INVOKE_ASYNC(cast_on, TYPE_PROC_REF(/atom/movable, say), message = "R'CH T'H F'SH!", forced = "fishing rod infusion invocation")
 	playsound(cast_on, /datum/action/cooldown/spell/touch/mansus_grasp::sound, 15)
-	cast_on.visible_message(span_notice(LANG("datum.e9bb7659", list(cast_on, cast_on.p_their(), held_rod))))
+	cast_on.visible_message(span_notice("[cast_on] snaps [cast_on.p_their()] fingers next to [held_rod], covering it in a burst of purple flames!"))
 
 	ADD_TRAIT(held_rod, TRAIT_ROD_MANSUS_INFUSED, REF(held_rod))
 	held_rod.difficulty_modifier -= 20
@@ -59,6 +69,14 @@ GLOBAL_LIST_INIT(heretic_start_knowledge, initialize_starting_knowledge())
 		REMOVE_TRAIT(item, TRAIT_ROD_MANSUS_INFUSED, REF(item))
 		item.difficulty_modifier += 20
 
+/datum/heretic_knowledge/spell/basic/proc/on_influence_tap(...)
+	SIGNAL_HANDLER
+	add_charges(max_charges)
+
+/datum/heretic_knowledge/spell/basic/proc/on_sacrifice(...)
+	SIGNAL_HANDLER
+	add_charges(max_charges)
+
 /**
  * The Living Heart heretic knowledge.
  *
@@ -67,13 +85,12 @@ GLOBAL_LIST_INIT(heretic_start_knowledge, initialize_starting_knowledge())
  */
 /datum/heretic_knowledge/living_heart
 	name = "The Living Heart"
-	desc = "Grants you a Living Heart, allowing you to track sacrifice targets. \
-		Should you lose your heart, you can transmute a poppy and a pool of blood \
-		to awaken your heart into a Living Heart. If your heart is Cybernetic, \
-		you will be unable to reawaken it."
+	desc = "Grants you a Living Heart, allowing you to track sacrifice targets."
+	transmute_text = "Should you lose your heart, you can transmute a poppy and a pool of blood \
+		to awaken your heart into a Living Heart."
 	required_atoms = list(
 		/obj/effect/decal/cleanable/blood = 1,
-		/obj/item/food/grown/poppy = 1,
+		/obj/item/food/grown/flower/poppy = 1,
 	)
 	cost = 0
 	priority = MAX_KNOWLEDGE_PRIORITY - 1 // Knowing how to remake your heart is important
@@ -81,6 +98,7 @@ GLOBAL_LIST_INIT(heretic_start_knowledge, initialize_starting_knowledge())
 	research_tree_icon_path = 'icons/obj/antags/eldritch.dmi'
 	research_tree_icon_state = "living_heart"
 	research_tree_icon_frame = 1
+	notice = "If your heart is Cybernetic, you will be unable to reawaken it."
 
 /datum/heretic_knowledge/living_heart/on_research(mob/user, datum/antagonist/heretic/our_heretic)
 	. = ..()
@@ -112,10 +130,13 @@ GLOBAL_LIST_INIT(heretic_start_knowledge, initialize_starting_knowledge())
 
 	if(where_to_put_our_heart)
 		where_to_put_our_heart.AddComponent(/datum/component/living_heart)
-		desc = LANG("datum.c926f8a7", list(where_to_put_our_heart.name, where_to_put_our_heart.name, where_to_put_our_heart.name, where_to_put_our_heart.name))
+		desc = "Grants you a Living Heart, tied to your [where_to_put_our_heart.name], allowing you to track sacrifice targets."
+		transmute_text = "Should you lose your [where_to_put_our_heart.name], you can transmute a poppy and a pool of blood \
+			to awaken your [where_to_put_our_heart.name] into a Living Heart. \
+			Cybernetic [where_to_put_our_heart.name]\s will block the ritual!"
 
 	else
-		to_chat(user, span_boldnotice(LANG("datum.68e761c1", null)))
+		to_chat(user, span_boldnotice("You don't have a heart, or any chest organs for that matter. You didn't get a Living Heart because of it."))
 
 /datum/heretic_knowledge/living_heart/on_lose(mob/user, datum/antagonist/heretic/our_heretic)
 	var/obj/item/organ/our_living_heart = user.get_organ_slot(our_heretic.living_heart_organ_slot)
@@ -133,14 +154,14 @@ GLOBAL_LIST_INIT(heretic_start_knowledge, initialize_starting_knowledge())
 	var/obj/item/organ/our_living_heart = user.get_organ_slot(our_heretic.living_heart_organ_slot)
 	// No heart, nothing to give living heart to
 	if(QDELETED(our_living_heart))
-		loc.balloon_alert(user, LANG("datum.82c2e336", list(our_heretic.living_heart_organ_slot)))
+		loc.balloon_alert(user, "ritual failed, no [our_heretic.living_heart_organ_slot]!")
 		return FALSE
 
 	// For sanity's sake, check if they've got a living heart -
 	// even though it's not invokable if you already have one,
 	// they may have gained one unexpectantly in between now and then
 	if(HAS_TRAIT(our_living_heart, TRAIT_LIVING_HEART))
-		loc.balloon_alert(user, LANG("datum.3ce6e3c6", null))
+		loc.balloon_alert(user, "ritual failed, already have a living heart!")
 		return FALSE
 
 	// By this point they are making a new heart
@@ -148,7 +169,7 @@ GLOBAL_LIST_INIT(heretic_start_knowledge, initialize_starting_knowledge())
 	if(is_valid_heart(our_living_heart))
 		return TRUE
 
-	loc.balloon_alert(user, LANG("datum.e0477c4b", list(our_heretic.living_heart_organ_slot))) // "heart can't be awakened!"
+	loc.balloon_alert(user, "ritual failed, [our_heretic.living_heart_organ_slot] can't be awakened!") // "heart can't be awakened!"
 	return FALSE
 
 /datum/heretic_knowledge/living_heart/on_finished_recipe(mob/living/user, list/selected_atoms, turf/loc)
@@ -158,7 +179,7 @@ GLOBAL_LIST_INIT(heretic_start_knowledge, initialize_starting_knowledge())
 	selected_atoms -= our_new_heart
 	// Make it the living heart
 	our_new_heart.AddComponent(/datum/component/living_heart)
-	to_chat(user, span_warning(LANG("datum.de5efd84", list(our_new_heart.name))))
+	to_chat(user, span_warning("You feel your [our_new_heart.name] begin pulse faster and faster as it awakens!"))
 	playsound(user, 'sound/effects/magic/demon_consume.ogg', 50, TRUE)
 	return TRUE
 
@@ -171,41 +192,15 @@ GLOBAL_LIST_INIT(heretic_start_knowledge, initialize_starting_knowledge())
 
 	return TRUE
 
-/**
- * Allows the heretic to craft a spell focus.
- * They require a focus to cast advanced spells.
- */
-/datum/heretic_knowledge/amber_focus
-	name = "Amber Focus"
-	desc = "Allows you to transmute a sheet of glass and a pair of eyes to create an Amber Focus. \
-		A focus must be worn in order to cast more advanced spells."
-	required_atoms = list(
-		/obj/item/organ/eyes = 1,
-		/obj/item/stack/sheet/glass = 1,
-	)
-	result_atoms = list(/obj/item/clothing/neck/heretic_focus)
-	cost = 0
-	priority = MAX_KNOWLEDGE_PRIORITY - 2 // Not as important as making a heart or sacrificing, but important enough.
-	is_starting_knowledge = TRUE
-	research_tree_icon_path = 'icons/obj/clothing/neck.dmi'
-	research_tree_icon_state = "eldritch_necklace"
-
-/datum/heretic_knowledge/spell/cloak_of_shadows
-	name = "Cloak of Shadow"
-	desc = "Grants you the spell Cloak of Shadow. This spell will completely conceal your identity in a purple smoke \
-		for three minutes, assisting you in keeping secrecy. Requires a focus to cast."
-	action_to_add = /datum/action/cooldown/spell/shadow_cloak
-	cost = 0
-	is_starting_knowledge = TRUE
-
 /datum/heretic_knowledge/feast_of_owls
 	name = "Feast of Owls"
-	desc = "Allows you to undergo a ritual that gives you 5 knowledge points but locks you out of ascension. This can only be done once and cannot be reverted."
+	desc = "Allows you to undergo a ritual that grants you five knowledge points, but locks you out of ascension."
 	gain_text = "Under the soft glow of unreason there is a beast that stalks the night. I shall bring it forth and let it enter my presence. It will feast upon my amibitions and leave knowledge in its wake."
 	is_starting_knowledge = TRUE
 	required_atoms = list()
 	research_tree_icon_path = 'icons/mob/actions/actions_animal.dmi'
 	research_tree_icon_state = "god_transmit"
+	notice = "This can only be done once and cannot be reverted."
 	/// amount of research points granted
 	var/reward = 5
 
@@ -213,7 +208,7 @@ GLOBAL_LIST_INIT(heretic_start_knowledge, initialize_starting_knowledge())
 	return !invoker.feast_of_owls
 
 /datum/heretic_knowledge/feast_of_owls/on_finished_recipe(mob/living/user, list/selected_atoms, turf/loc)
-	var/alert = tgui_alert(user,LANG("datum.5f83baba", null), LANG("datum.f9c939fa", null), list("Yes I'm sure", "No"), 30 SECONDS)
+	var/alert = tgui_alert(user,"Do you really want to forsake your ascension? This action cannot be reverted.", "Feast of Owls", list("Yes I'm sure", "No"), 30 SECONDS)
 	if(alert != "Yes I'm sure" || QDELETED(user) || QDELETED(src) || get_dist(user, loc) > 2)
 		return FALSE
 	var/datum/antagonist/heretic/heretic_datum = GET_HERETIC(user)
@@ -238,7 +233,7 @@ GLOBAL_LIST_INIT(heretic_start_knowledge, initialize_starting_knowledge())
 		if(QDELETED(user) || QDELETED(heretic_datum))
 			return FALSE
 
-	to_chat(user, span_danger(span_big(LANG("datum.24ca551a", null))))
+	to_chat(user, span_danger(span_big("Your ambition is ravaged, but something powerful remains in its wake...")))
 	var/drain_message = pick_list(HERETIC_INFLUENCE_FILE, "drain_message")
 	to_chat(user, span_hypnophrase(span_big("[drain_message]")))
 	return .

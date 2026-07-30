@@ -43,10 +43,8 @@ GLOBAL_LIST_EMPTY(soulcatchers)
 	var/obj/item/soulcatcher_holder/soul_holder = parent
 	if(istype(soul_holder) && ismob(soul_holder.loc))
 		var/mob/living/soulcatcher_owner = soul_holder.loc
-		add_verb(soulcatcher_owner, list(
-			/mob/living/proc/soulcatcher_say,
-			/mob/living/proc/soulcatcher_emote,
-		))
+		ASSIGN_GAME_VERB(soulcatcher_owner, /mob/living, soulcatcher_say)
+		ASSIGN_GAME_VERB(soulcatcher_owner, /mob/living, soulcatcher_emote)
 
 /datum/component/soulcatcher/Destroy(force)
 	GLOB.soulcatchers -= src
@@ -64,10 +62,8 @@ GLOBAL_LIST_EMPTY(soulcatchers)
 		soulcatcher_owner = parent_nif.linked_mob
 
 	if(istype(soulcatcher_owner))
-		remove_verb(soulcatcher_owner, list(
-			/mob/living/proc/soulcatcher_say,
-			/mob/living/proc/soulcatcher_emote,
-		))
+		UNASSIGN_GAME_VERB(soulcatcher_owner, /mob/living, soulcatcher_say)
+		UNASSIGN_GAME_VERB(soulcatcher_owner, /mob/living, soulcatcher_emote)
 
 	return ..()
 
@@ -123,7 +119,7 @@ GLOBAL_LIST_EMPTY(soulcatchers)
 	if(!soulcatcher_owner)
 		return FALSE
 
-	if(tgui_alert(soulcatcher_owner, LANG("datum.77f800aa", list(joiner_name)), name, list("Yes", "No"), autofocus = FALSE) != "Yes")
+	if(tgui_alert(soulcatcher_owner, "Do you wish to allow [joiner_name] into your soulcatcher?", name, list("Yes", "No"), autofocus = FALSE) != "Yes")
 		return FALSE
 
 	return TRUE
@@ -135,13 +131,13 @@ GLOBAL_LIST_EMPTY(soulcatchers)
 
 	var/signal_result = SEND_SIGNAL(parent_body, COMSIG_SOULCATCHER_SCAN_BODY, parent_body)
 	if(!signal_result)
-		to_chat(user, span_warning(LANG("datum.f1a321a6", list(parent_body))))
+		to_chat(user, span_warning("[parent_body] has already been scanned!"))
 		return FALSE
 
 	if(istype(parent, /obj/item/handheld_soulcatcher))
 		var/obj/item/handheld_soulcatcher/parent_device = parent
 		playsound(parent_device, 'modular_nova/modules/modular_implants/sounds/default_good.ogg', 50, FALSE, ignore_walls = FALSE)
-		parent_device.visible_message(span_notice(LANG("datum.1f4444cd", list(parent_device, parent_body))))
+		parent_device.visible_message(span_notice("[parent_device] beeps: [parent_body] is now scanned."))
 
 	return TRUE
 
@@ -245,11 +241,11 @@ GLOBAL_LIST_EMPTY(soulcatchers)
 		if(!new_soul.body_scan_needed)
 			new_soul.soul_desc = preferences.read_preference(/datum/preference/text/flavor_text)
 
-	to_chat(new_soul, span_cyan_nova(LANG("datum.c58d3494", list(name))))
+	to_chat(new_soul, span_cyan_nova("You find yourself now inside of: [name]"))
 	to_chat(new_soul, span_notice(room_description))
-	to_chat(new_soul, span_doyourjobidiot(LANG("datum.3cf794d2", null)))
-	to_chat(new_soul, span_notice(LANG("datum.d48516b3", null)))
-	to_chat(new_soul, span_notice(LANG("datum.30f996e6", null)))
+	to_chat(new_soul, span_doyourjobidiot("You have entered a soulcatcher, do not share any information you have received while a ghost. If you have died within the round, you do not know your identity until your body has been scanned, standard blackout policy also applies."))
+	to_chat(new_soul, span_notice("While inside of a soulcatcher, you are able to speak and emote by using the normal hotkeys and verbs, unless disabled by the owner."))
+	to_chat(new_soul, span_notice("You may use the leave soulcatcher verb to leave the soulcatcher and return to your body at any time."))
 
 	var/atom/parent_atom = parent_object
 	if(istype(parent_atom))
@@ -289,7 +285,7 @@ GLOBAL_LIST_EMPTY(soulcatchers)
 	current_souls -= target_soul
 	target_room.current_souls += target_soul
 
-	to_chat(target_soul, span_cyan_nova(LANG("datum.e4e264c8", list(target_room))))
+	to_chat(target_soul, span_cyan_nova("you've been transferred to [target_room]!"))
 	to_chat(target_soul, span_notice(target_room.room_description))
 
 	return TRUE
@@ -423,9 +419,7 @@ GLOBAL_LIST_EMPTY(soulcatchers)
 	var/mob/dead/observer/observer = usr
 	observer.join_soulcatcher()
 
-/mob/dead/observer/verb/join_soulcatcher()
-	set name = "进入灵魂捕手"
-
+GAME_VERB(/mob/dead/observer, join_soulcatcher, "Enter Soulcatcher", null)
 	var/list/joinable_soulcatchers = list()
 	for(var/datum/component/soulcatcher/soulcatcher in GLOB.soulcatchers)
 		if(!soulcatcher.ghost_joinable || !isobj(soulcatcher.parent) || !soulcatcher.check_for_vacancy())
@@ -438,10 +432,10 @@ GLOBAL_LIST_EMPTY(soulcatchers)
 		joinable_soulcatchers += soulcatcher
 
 	if(!length(joinable_soulcatchers))
-		to_chat(src, span_warning(LANG("mob.12c11998", null)))
+		to_chat(src, span_warning("No soulcatchers are joinable."))
 		return FALSE
 
-	var/datum/component/soulcatcher/soulcatcher_to_join = tgui_input_list(src, LANG("mob.08d0cbc9", null), LANG("mob.0327af66", null), joinable_soulcatchers)
+	var/datum/component/soulcatcher/soulcatcher_to_join = tgui_input_list(src, "Choose a soulcatcher to join", "Enter a soulcatcher", joinable_soulcatchers)
 	if(!soulcatcher_to_join || !(soulcatcher_to_join in joinable_soulcatchers))
 		return FALSE
 
@@ -454,17 +448,17 @@ GLOBAL_LIST_EMPTY(soulcatchers)
 
 	var/datum/soulcatcher_room/room_to_join
 	if(length(rooms_to_join) < 1)
-		to_chat(src, span_warning(LANG("mob.929fb5d2", null)))
+		to_chat(src, span_warning("There no rooms that you can join."))
 		return FALSE
 
 	if(length(rooms_to_join) == 1)
 		room_to_join = rooms_to_join[1]
 
 	else
-		room_to_join = tgui_input_list(src, LANG("mob.4df897d1", null), LANG("mob.fc0082d2", null), rooms_to_join)
+		room_to_join = tgui_input_list(src, "Choose a room to enter", "Enter a room", rooms_to_join)
 
 	if(!room_to_join)
-		to_chat(src, span_warning(LANG("mob.929fb5d2", null)))
+		to_chat(src, span_warning("There no rooms that you can join."))
 		return FALSE
 
 	if(soulcatcher_to_join.require_approval)
@@ -473,7 +467,7 @@ GLOBAL_LIST_EMPTY(soulcatchers)
 			ghost_name = "unknown"
 
 		if(!soulcatcher_to_join.get_approval(ghost_name))
-			to_chat(src, span_warning(LANG("mob.a629390d", list(soulcatcher_to_join.name))))
+			to_chat(src, span_warning("The owner of [soulcatcher_to_join.name] declined your request to join."))
 			return FALSE
 
 	room_to_join.add_soul_from_ghost(src)

@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 #define CREDIT_ROLL_SPEED (12.5 SECONDS)
 #define CREDIT_SPAWN_SPEED (1 SECONDS)
 #define CREDIT_ANIMATE_HEIGHT (14 * ICON_SIZE_Y)
@@ -12,7 +11,7 @@
 	var/icon/credits_icon = new(CREDITS_PATH)
 	LAZYINITLIST(credits)
 	var/list/_credits = credits
-	add_verb(src, /client/proc/ClearCredits)
+	ASSIGN_GAME_VERB(src, /client, ClearCredits)
 	var/static/list/credit_order_for_this_round
 	if(isnull(credit_order_for_this_round))
 		credit_order_for_this_round = list("Thanks for playing!") + (shuffle(icon_states(credits_icon)) - "Thanks for playing!")
@@ -22,13 +21,11 @@
 		_credits += new /atom/movable/screen/credit(null, null, I, src, credits_icon)
 		sleep(CREDIT_SPAWN_SPEED)
 	sleep(CREDIT_ROLL_SPEED - CREDIT_SPAWN_SPEED)
-	remove_verb(src, /client/proc/ClearCredits)
+	UNASSIGN_GAME_VERB(src, /client, ClearCredits)
 	qdel(credits_icon)
 
-/client/proc/ClearCredits()
-	set name = "隐藏鸣谢"
-	set category = "OOC"
-	remove_verb(src, /client/proc/ClearCredits)
+GAME_VERB_PROC(/client, ClearCredits, "Hide Credits", "OOC")
+	UNASSIGN_GAME_VERB(src, /client, ClearCredits)
 	QDEL_LIST(credits)
 	credits = null
 

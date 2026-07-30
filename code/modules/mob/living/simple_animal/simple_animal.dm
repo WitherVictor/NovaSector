@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 /// Simple, mostly AI-controlled critters, such as pets, bots, and drones.
 /mob/living/simple_animal
 	name = "animal"
@@ -224,9 +223,9 @@
 	. = ..()
 	if(stat == DEAD)
 		if(HAS_MIND_TRAIT(user, TRAIT_NAIVE))
-			. += span_deadsay(LANG("mob.e912a0a2", list(p_they(), p_s())))
+			. += span_deadsay("Upon closer examination, [p_they()] appear[p_s()] to be asleep.")
 		else
-			. += span_deadsay(LANG("mob.113d9601", list(p_they(), p_s())))
+			. += span_deadsay("Upon closer examination, [p_they()] appear[p_s()] to be dead.")
 
 /mob/living/simple_animal/update_stat()
 	if(HAS_TRAIT(src, TRAIT_GODMODE))
@@ -235,7 +234,7 @@
 		if(health <= 0)
 			death()
 		else
-			set_stat(CONSCIOUS)
+			set_stat(STABLE)
 	med_hud_set_status()
 
 /**
@@ -352,8 +351,8 @@
 
 /mob/living/simple_animal/get_status_tab_items()
 	. = ..()
-	. += LANG("mob.878005df", list(round((health / maxHealth) * 100)))
-	. += LANG("mob.00f6df32", list(combat_mode ? "On" : "Off"))
+	. += "Health: [round((health / maxHealth) * 100)]%"
+	. += "Combat Mode: [combat_mode ? "On" : "Off"]"
 
 /mob/living/simple_animal/proc/drop_loot(drop_loc)
 	if (!length(loot))
@@ -393,7 +392,7 @@
 			return FALSE
 	if (isliving(the_target))
 		var/mob/living/L = the_target
-		if(L.stat != CONSCIOUS)
+		if(IS_UNCONSCIOUS_OR_CRIT(L))
 			return FALSE
 	if (ismecha(the_target))
 		var/obj/vehicle/sealed/mecha/M = the_target
@@ -409,14 +408,14 @@
 	REMOVE_TRAIT(src, TRAIT_UNDENSE, BASIC_MOB_DEATH_TRAIT)
 
 /mob/living/simple_animal/proc/make_babies() // <3 <3 <3
-	if(gender != FEMALE || stat || next_scan_time > world.time || !childtype || !animal_species || !SSticker.IsRoundInProgress())
+	if(gender != FEMALE || IS_UNCONSCIOUS_OR_CRIT(src) || next_scan_time > world.time || !childtype || !animal_species || !SSticker.IsRoundInProgress())
 		return
 	next_scan_time = world.time + 400
 	var/alone = TRUE
 	var/mob/living/simple_animal/partner
 	var/children = 0
 	for(var/mob/M in view(7, src))
-		if(M.stat != CONSCIOUS) //Check if it's conscious FIRST.
+		if(IS_UNCONSCIOUS_OR_CRIT(M)) //Check if it's conscious FIRST.
 			continue
 		var/is_child = is_type_in_list(M, childtype)
 		if(is_child) //Check for children SECOND.
@@ -533,7 +532,7 @@
 	stop_automated_movement = FALSE
 	if(!isturf(src.loc)) // Are we on a proper turf?
 		return
-	if(stat || resting || buckled) // Are we conscious, upright, and not buckled?
+	if(IS_UNCONSCIOUS_OR_CRIT(src) || resting || buckled) // Are we conscious, upright, and not buckled?
 		return
 	if(!COOLDOWN_FINISHED(src, emote_cooldown)) // Has the cooldown on this ended?
 		return
@@ -545,18 +544,18 @@
 	if(isliving(hunted)) // Are we hunting a living mob?
 		var/mob/living/prey = hunted
 		if(inept_hunter) // Make your hunter inept to have them unable to catch their prey.
-			visible_message(span_warning(LANG("mob.5d040569", list(src, prey))))
+			visible_message(span_warning("[src] chases [prey] around, to no avail!"))
 			step(prey, pick(GLOB.cardinals))
 			COOLDOWN_START(src, emote_cooldown, 1 MINUTES)
 			return
-		if(!(prey.stat))
-			manual_emote(LANG("mob.abe45ebf", list(prey)))
+		if(!IS_UNCONSCIOUS_OR_CRIT(prey))
+			manual_emote("chomps [prey]!")
 			prey.death()
 			prey = null
 			COOLDOWN_START(src, emote_cooldown, 1 MINUTES)
 			return
 	else // We're hunting an object, and should delete it instead of killing it. Mostly useful for decal bugs like ants or spider webs.
-		manual_emote(LANG("mob.abe45ebf", list(hunted)))
+		manual_emote("chomps [hunted]!")
 		qdel(hunted)
 		hunted = null
 		COOLDOWN_START(src, emote_cooldown, 1 MINUTES)

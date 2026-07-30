@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 /// Anything you can pick up and hold.
 /obj/item
 	name = "item"
@@ -422,11 +421,9 @@
 	if(greyscale_config_inhand_right)
 		righthand_file = SSgreyscale.GetColoredIconByType(greyscale_config_inhand_right, greyscale_colors)
 
-/obj/item/verb/move_to_top()
-	set name = "移至顶部"
-	set src in oview(1)
+GAME_VERB_SRC(/obj/item, move_to_top, oview(1), "Move To Top", null)
 
-	if(!isturf(loc) || usr.stat != CONSCIOUS || HAS_TRAIT(usr, TRAIT_HANDS_BLOCKED) || anchored)
+	if(!isturf(loc) || IS_UNCONSCIOUS_OR_CRIT(usr) || HAS_TRAIT(usr, TRAIT_HANDS_BLOCKED) || anchored)
 		return
 
 	if(isliving(usr))
@@ -535,7 +532,7 @@
 		affixes.Add("---SUFFIXES---")
 		affixes.Add(suffixes)
 		//admin picks, cleanup the ones we didn't do and handle chosen
-		var/picked_affix_name = tgui_input_list(usr, LANG("obj.d6c2ebb8", list(src)), LANG("obj.4a0c8da4", list(src)), affixes)
+		var/picked_affix_name = tgui_input_list(usr, "Affix to add to [src]", "Enchant [src]", affixes)
 		if(isnull(picked_affix_name))
 			return
 		if(!affixes[picked_affix_name] || QDELETED(src))
@@ -554,9 +551,9 @@
 		var/announce = FALSE
 		//Apply fantasy with affix. failing this should never happen, but if it does it should not be silent.
 		if(AddComponent(/datum/component/fantasy, fantasy_quality, list(affix), canFail, announce) == COMPONENT_INCOMPATIBLE)
-			to_chat(usr, span_warning(LANG("obj.aba4f286", list(src))))
+			to_chat(usr, span_warning("Fantasy component not compatible with [src]."))
 			CRASH("fantasy component incompatible with object of type: [type]")
-		to_chat(usr, span_notice(LANG("obj.aeaf22ac", list(before_name, picked_affix_name))))
+		to_chat(usr, span_notice("[before_name] now has [picked_affix_name]!"))
 		log_admin("[key_name(usr)] has added [picked_affix_name] fantasy affix to [before_name]")
 		message_admins(span_notice("[key_name(usr)] has added [picked_affix_name] fantasy affix to [before_name]"))
 
@@ -580,7 +577,7 @@
 		var/grav = user.has_gravity()
 		if(grav > STANDARD_GRAVITY)
 			var/grav_power = min(3,grav - STANDARD_GRAVITY)
-			to_chat(user,span_notice(LANG("obj.4acae372", list(src))))
+			to_chat(user,span_notice("You start picking up [src]..."))
 			if(!do_after(user, 30 * grav_power, src))
 				return
 
@@ -629,7 +626,7 @@
 	if(!ayy.can_hold_items(src))
 		if(src in ayy.contents) // To stop Aliens having items stuck in their pockets
 			ayy.dropItemToGround(src)
-		to_chat(user, span_warning(LANG("obj.ef0f29a1", null)))
+		to_chat(user, span_warning("Your claws aren't capable of such fine manipulation!"))
 		return
 	attack_paw(ayy, modifiers)
 
@@ -647,7 +644,7 @@
 		return TRUE
 
 	if(prob(final_block_chance))
-		owner.visible_message(span_danger(LANG("obj.7237e40a", list(owner, attack_text, src))))
+		owner.visible_message(span_danger("[owner] blocks [attack_text] with [src]!"))
 		var/owner_turf = get_turf(owner)
 		new block_effect(owner_turf, COLOR_YELLOW)
 		playsound(src, block_sound, BLOCK_SOUND_VOLUME, vary = TRUE)
@@ -843,9 +840,7 @@
 
 	return M.can_equip(src, slot, disable_warning, bypass_equip_delay_self, ignore_equipped, indirect_action = indirect_action)
 
-/obj/item/verb/verb_pickup()
-	set src in oview(1)
-	set name = "拾取"
+GAME_VERB_SRC(/obj/item, verb_pickup, oview(1), "Pick up", null)
 
 	if(usr.incapacitated || !Adjacent(usr))
 		return
@@ -980,14 +975,11 @@
 		. = SFX_DESECRATION
 
 /// Creates an ignition hotspot if item is lit and located on turf, in mask, or in hand
-/obj/item/proc/open_flame(flame_heat=700)
+/obj/item/proc/open_flame(flame_heat = 700, mob_slots = ITEM_SLOT_MASK|ITEM_SLOT_HANDS)
 	var/turf/location = loc
 	if(ismob(location))
 		var/mob/pyromanic = location
-		var/success = FALSE
-		if(src == pyromanic.get_item_by_slot(ITEM_SLOT_MASK) || (src in pyromanic.held_items))
-			success = TRUE
-		if(success)
+		if((pyromanic.get_slot_by_item(src) & mob_slots))
 			location = get_turf(pyromanic)
 	if(isturf(location))
 		location.hotspot_expose(flame_heat, 5)
@@ -1179,14 +1171,10 @@
 /obj/item/proc/openTip(location, control, params, user)
 	if(last_force_string_check != force && !(item_flags & FORCE_STRING_OVERRIDE))
 		set_force_string()
-	// NOVA EDIT CHANGE - i18n: 反查 "Force" 标签与力量描述词(very low/robust… 进目录；locale==en 为 no-op）
-	// desc 也在此单独反查：content 是拼接串，openToolTip 那道整串反查对它必然落空。
-	var/localized_desc = lang_reverse_text(desc) // NOVA EDIT ADDITION - i18n
 	if(!(item_flags & FORCE_STRING_OVERRIDE))
-		openToolTip(user,src,params,title = name,content = "[localized_desc]<br>[force ? "<b>[lang_reverse_text("Force")]:</b> [lang_reverse_text(force_string)]" : ""]",theme = "")
+		openToolTip(user,src,params,title = name,content = "[desc]<br>[force ? "<b>Force:</b> [force_string]" : ""]",theme = "")
 	else
-		openToolTip(user,src,params,title = name,content = "[localized_desc]<br><b>[lang_reverse_text("Force")]:</b> [lang_reverse_text(force_string)]",theme = "")
-	// NOVA EDIT CHANGE END - ORIGINAL: content = "[desc]<br>[force ? "<b>Force:</b> [force_string]" : ""]" / content = "[desc]<br><b>Force:</b> [force_string]"
+		openToolTip(user,src,params,title = name,content = "[desc]<br><b>Force:</b> [force_string]",theme = "")
 
 /obj/item/MouseEntered(location, control, params)
 	. = ..()
@@ -1390,7 +1378,7 @@
 		return
 	user.dropItemToGround(src, silent = TRUE)
 	if(throwforce && (HAS_TRAIT(user, TRAIT_PACIFISM)) || HAS_TRAIT(user, TRAIT_NO_THROWING))
-		to_chat(user, span_notice(LANG("obj.3b0b0198", list(src))))
+		to_chat(user, span_notice("You set [src] down gently on the ground."))
 		return
 	return src
 
@@ -1417,8 +1405,8 @@
 /obj/item/proc/on_accidental_consumption(mob/living/carbon/victim, mob/living/carbon/user, obj/item/source_item, discover_after = TRUE)
 	if(get_sharpness() && force >= 5) //if we've got something sharp with a decent force (ie, not plastic)
 		INVOKE_ASYNC(victim, TYPE_PROC_REF(/mob, emote), "scream")
-		victim.visible_message(span_warning(LANG("obj.b149a228", list(victim, victim.p_theyve()))), \
-							span_boldwarning(LANG("obj.0e926ed9", null)))
+		victim.visible_message(span_warning("[victim] looks like [victim.p_theyve()] just bit something they shouldn't have!"), \
+							span_boldwarning("OH GOD! Was that a crunch? That didn't feel good at all!!"))
 
 		victim.apply_damage(max(15, force), BRUTE, BODY_ZONE_HEAD, wound_bonus = 10, sharpness = TRUE)
 		victim.losebreath += 2
@@ -1462,8 +1450,8 @@
 			discover_after = FALSE
 
 		victim.adjust_disgust(33)
-		victim.visible_message(span_warning(LANG("obj.e6dd30e7", list(victim, victim.p_theyve()))), \
-						span_warning(LANG("obj.7ae88ffe", null)))
+		victim.visible_message(span_warning("[victim] looks like [victim.p_theyve()] just bitten into something hard."), \
+						span_warning("Eugh! Did I just bite into something?"))
 		return discover_after
 
 	if(w_class > WEIGHT_CLASS_TINY) //small items like soap or toys that don't have mat datums
@@ -1473,7 +1461,7 @@
 	var/obj/item/organ/stomach/stomach = victim.get_organ_by_type(/obj/item/organ/stomach)
 	if (stomach?.consume_thing(src))
 		victim.losebreath += 2
-		to_chat(victim, span_warning(LANG("obj.a699c032", list(source_item? "Something small was in \the [source_item]..." : ""))))
+		to_chat(victim, span_warning("You swallow hard. [source_item? "Something small was in \the [source_item]..." : ""]"))
 		return FALSE
 
 	// victim's chest (for cavity implanting the item)
@@ -1481,12 +1469,12 @@
 	if(victim_cavity.cavity_item)
 		victim.vomit(vomit_flags = (MOB_VOMIT_MESSAGE | MOB_VOMIT_HARM), lost_nutrition = 5, distance = 0)
 		forceMove(drop_location())
-		to_chat(victim, span_warning(LANG("obj.c9d386f7", list(name, source_item? "Was that in \the [source_item]?" : ""))))
+		to_chat(victim, span_warning("You vomit up a [name]! [source_item? "Was that in \the [source_item]?" : ""]"))
 		return FALSE
 
 	victim.transferItemToLoc(src, victim, TRUE)
 	victim.losebreath += 2
-	to_chat(victim, span_warning(LANG("obj.a699c032", list(source_item? "Something small was in \the [source_item]..." : ""))))
+	to_chat(victim, span_warning("You swallow hard. [source_item? "Something small was in \the [source_item]..." : ""]"))
 	return FALSE
 
 #undef MAX_MATS_PER_BITE
@@ -1818,7 +1806,7 @@
 /// Common proc used by painting tools like spraycans and palettes that can access the entire 24 bits color space.
 /obj/item/proc/pick_painting_tool_color(mob/user, default_color)
 	var/chosen_color = tgui_color_picker(user, "Pick new color", "[src]", default_color)
-	if(!chosen_color || QDELETED(src) || IS_DEAD_OR_INCAP(user) || !user.is_holding(src))
+	if(!chosen_color || QDELETED(src) || user.incapacitated || !user.is_holding(src))
 		return
 	set_painting_tool_color(chosen_color)
 
@@ -1863,30 +1851,30 @@
 	if(show_visible_message)
 		if(HAS_TRAIT(equipping, TRAIT_DANGEROUS_OBJECT))
 			target.visible_message(
-				span_danger(LANG("obj.4e36be0d", list(user, equipping, target))),
-				span_userdanger(LANG("obj.8d22214d", list(user, equipping))),
+				span_danger("[user] tries to put [equipping] on [target]."),
+				span_userdanger("[user] tries to put [equipping] on you."),
 				ignored_mobs = user,
 			)
 
 		else
 			target.visible_message(
-				span_notice(LANG("obj.4e36be0d", list(user, equipping, target))),
-				span_notice(LANG("obj.8d22214d", list(user, equipping))),
+				span_notice("[user] tries to put [equipping] on [target]."),
+				span_notice("[user] tries to put [equipping] on you."),
 				ignored_mobs = user,
 			)
 
 		if(ishuman(target))
 			var/mob/living/carbon/human/victim_human = target
 			if(victim_human.key && !victim_human.client) // AKA braindead
-				if(victim_human.stat <= SOFT_CRIT && LAZYLEN(victim_human.afk_thefts) <= AFK_THEFT_MAX_MESSAGES)
+				if(!IS_UNCONSCIOUS(victim_human) && LAZYLEN(victim_human.afk_thefts) <= AFK_THEFT_MAX_MESSAGES)
 					var/list/new_entry = list(list(user.name, "tried equipping you with [equipping]", world.time))
 					LAZYADD(victim_human.afk_thefts, new_entry)
 
 			else if(victim_human.is_blind())
-				to_chat(target, span_userdanger(LANG("obj.72339f07", null)))
+				to_chat(target, span_userdanger("You feel someone trying to put something on you."))
 	user.do_item_attack_animation(target, used_item = equipping, animation_type = ATTACK_ANIMATION_BLUNT)
 
-	to_chat(user, span_notice(LANG("obj.9cff2ef4", list(equipping, target))))
+	to_chat(user, span_notice("You try to put [equipping] on [target]..."))
 
 	user.log_message("is putting [equipping] on [key_name(target)]", LOG_ATTACK, color="red")
 	target.log_message("is having [equipping] put on them by [key_name(user)]", LOG_VICTIM, color="orange", log_globally=FALSE)
@@ -2235,7 +2223,14 @@
 
 /obj/item/vv_get_header()
 	. = ..()
-	. += LANG("obj.9734bd49", list(HrefToken(), REF(src), uppertext(damtype), HrefToken(), REF(src), force, HrefToken(), REF(src), wound_bonus, HrefToken(), REF(src), exposed_wound_bonus))
+	. += {"
+		<br><font size='1'>
+			DAMTYPE: <font size='1'><a href='byond://?_src_=vars;[HrefToken()];item_to_tweak=[REF(src)];var_tweak=damtype' id='damtype'>[uppertext(damtype)]</a>
+			FORCE: <font size='1'><a href='byond://?_src_=vars;[HrefToken()];item_to_tweak=[REF(src)];var_tweak=force' id='force'>[force]</a>
+			WOUND: <font size='1'><a href='byond://?_src_=vars;[HrefToken()];item_to_tweak=[REF(src)];var_tweak=wound' id='wound'>[wound_bonus]</a>
+			BARE WOUND: <font size='1'><a href='byond://?_src_=vars;[HrefToken()];item_to_tweak=[REF(src)];var_tweak=bare wound' id='bare wound'>[exposed_wound_bonus]</a>
+		</font>
+	"}
 
 /// Fetches, or lazyloads, our embedding datum
 /obj/item/proc/get_embed()

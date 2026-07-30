@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 #define BOTTLE_KNOCKDOWN_DEFAULT_DURATION (1.3 SECONDS)
 
 ///////////////////////////////////////////////Alchohol bottles! -Agouri //////////////////////////
@@ -72,9 +71,9 @@
 /obj/item/reagent_containers/cup/glass/bottle/examine(mob/user)
 	. = ..()
 	if(message_in_a_bottle)
-		. += span_info(LANG("obj.ac377ac2", list(message_in_a_bottle, EXAMINE_HINT("right-click"))))
+		. += span_info("there's \a [message_in_a_bottle] inside it. Break it to take it out, or find a beach or ocean and toss it with [EXAMINE_HINT("right-click")].")
 	else if(isGlass)
-		. += span_tinynoticeital(LANG("obj.eedde387", null))
+		. += span_tinynoticeital("you could place a paper, photo or space cash inside it...")
 
 /obj/item/reagent_containers/cup/glass/bottle/update_overlays()
 	. = ..()
@@ -87,9 +86,9 @@
 	if(user.combat_mode || !HAS_TRAIT(target, TRAIT_MESSAGE_IN_A_BOTTLE_LOCATION))
 		return ..()
 	if(!user.temporarilyRemoveItemFromInventory(src))
-		balloon_alert(user, LANG("obj.f84f0f5d", null))
+		balloon_alert(user, "it's stuck to your hand!")
 		return ITEM_INTERACT_BLOCKING
-	user.visible_message(span_notice(LANG("obj.6e74c56c", list(user, src, target))), span_notice(LANG("obj.9f9d4e0f", list(src, target))), span_notice(LANG("obj.6d257f0d", null)))
+	user.visible_message(span_notice("[user] tosses [src] in [target]"), span_notice("You toss [src] in [target]"), span_notice("you hear a splash."))
 	SSpersistence.save_message_bottle(message_in_a_bottle, type)
 	playsound(target, 'sound/effects/bigsplash.ogg', 70)
 	qdel(src)
@@ -101,12 +100,12 @@
 	if(!istype(item, /obj/item/paper) && !istype(item, /obj/item/stack/spacecash) && !istype(item, /obj/item/photo))
 		return NONE
 	if(message_in_a_bottle)
-		balloon_alert(user, LANG("obj.231ba649", null))
+		balloon_alert(user, "has a message already!")
 		return ITEM_INTERACT_BLOCKING
 	if(!user.transferItemToLoc(item, src))
-		balloon_alert(user, LANG("obj.f84f0f5d", null))
+		balloon_alert(user, "it's stuck to your hand!")
 		return ITEM_INTERACT_BLOCKING
-	balloon_alert(user, LANG("obj.d7be5f28", null))
+	balloon_alert(user, "message inserted")
 	message_in_a_bottle = item
 	update_icon(UPDATE_OVERLAYS)
 	return ITEM_INTERACT_SUCCESS
@@ -126,20 +125,11 @@
 	volume = 50
 	custom_price = PAYCHECK_CREW * 0.9
 
-/obj/item/reagent_containers/cup/glass/bottle/smash(mob/living/target, mob/thrower, datum/thrownthing/throwingdatum, break_top)
-	if(bartender_check(target, thrower) && throwingdatum)
-		return FALSE
-	splash_reagents(target, thrower || throwingdatum?.get_thrower(), allow_closed_splash = TRUE)
-	var/obj/item/broken_bottle/broken = new(drop_location())
-	if(!throwingdatum && thrower)
-		thrower.put_in_hands(broken)
-	broken.mimic_broken(src, target, break_top)
+/obj/item/reagent_containers/cup/glass/bottle/post_smash(atom/target, atom/thrower, datum/thrownthing/throwingdatum, obj/item/broken_bottle/broken)
+	if(!throwingdatum && ismob(thrower))
+		astype(thrower, /mob).put_in_hands(broken)
 	broken.inhand_icon_state = broken_inhand_icon_state
-	if(message_in_a_bottle)
-		message_in_a_bottle.forceMove(drop_location())
-
-	qdel(src)
-	return TRUE
+	message_in_a_bottle?.forceMove(drop_location())
 
 /obj/item/reagent_containers/cup/glass/bottle/try_splash(mob/user, atom/target)
 	if(!isGlass)
@@ -164,14 +154,14 @@
 	// Displays a custom message which follows the attack
 	if(target == user)
 		user.visible_message(
-			span_warning(LANG("obj.4c2fb061", list(user, src, head_hitter ? "over [user.p_their()] head" : "against [user.p_them()]selves"))),
-			span_warning(LANG("obj.6010cb59", list(src, head_hitter ? "over your head" : "against yourself"))),
+			span_warning("[user] smashes [src] [head_hitter ? "over [user.p_their()] head" : "against [user.p_them()]selves"]!"),
+			span_warning("You smash [src] [head_hitter ? "over your head" : "against yourself"]!"),
 		)
 
 	else
 		user.visible_message(
-			span_warning(LANG("obj.4c2fb061", list(user, src, head_hitter ? "over [target]'s head" : "against [target]"))),
-			span_warning(LANG("obj.4c2fb061", list(user, src, head_hitter ? "over your head" : "against you"))),
+			span_warning("[user] smashes [src] [head_hitter ? "over [target]'s head" : "against [target]"]!"),
+			span_warning("You smash [src] [head_hitter ? "over [target]'s head" : "against [target]"]!"),
 		)
 
 	// Finally, smash the bottle. This kills (del) the bottle and also does all the logging for us
@@ -194,7 +184,7 @@
 	var/amount_lost = intensity * 5
 	reagents.remove_all(amount_lost)
 
-	visible_message(span_warning(LANG("obj.a594cbac", list(name))))
+	visible_message(span_warning("Some of [name]'s contents are let loose!"))
 	var/intensity_state = null
 	switch(intensity)
 		if(1)
@@ -249,7 +239,7 @@
 	icon_state = to_mimic.icon_state
 	var/icon/drink_icon = new(to_mimic.icon, icon_state)
 	if(break_top) //if the bottle breaks its top off instead of the bottom
-		desc = LANG("obj.f9321147", null)
+		desc = "A bottle with its neck smashed off."
 		drink_icon.Blend(flipped_broken_outline, ICON_OVERLAY, rand(5), 0)
 	else
 		drink_icon.Blend(broken_outline, ICON_OVERLAY, rand(5), 1)
@@ -259,7 +249,7 @@
 	if(istype(to_mimic, /obj/item/reagent_containers/cup/glass/bottle/juice))
 		force = 0
 		throwforce = 0
-		desc = LANG("obj.abc0de43", null)
+		desc = "A carton with the bottom half burst open. Might give you a papercut."
 	else
 		if(prob(33))
 			new /obj/item/shard(to_mimic.drop_location())
@@ -393,6 +383,7 @@
 	desc = "A flask of the chaplain's holy water."
 	icon = 'icons/obj/drinks/bottles.dmi'
 	icon_state = "holyflask"
+	worn_icon_state = "holyflask"
 	inhand_icon_state = "holyflask"
 	broken_inhand_icon_state = "broken_holyflask"
 	list_reagents = list(/datum/reagent/water/holywater = 100)
@@ -522,7 +513,7 @@
 
 	// Actually finally setting the new name and desc
 	name = "[shortname] [name]"
-	desc = LANG("obj.af4db4eb", list(desc, fullname))
+	desc = "[desc] [fullname] Inc."
 
 
 /obj/item/reagent_containers/cup/glass/bottle/absinthe/premium
@@ -668,7 +659,7 @@
 /obj/item/reagent_containers/cup/glass/bottle/champagne/attack_self(mob/user)
 	if(is_open_container())
 		return ..()
-	balloon_alert(user, LANG("obj.6f9e031c", null))
+	balloon_alert(user, "fiddling with cork...")
 	if(do_after(user, 1 SECONDS, src))
 		return pop_cork(user, sabrage = FALSE, froth_severity = pick(0, 1))
 
@@ -683,15 +674,15 @@
 		return NONE
 
 	if(tool != user.get_active_held_item()) //no TK allowed
-		to_chat(user, span_userdanger(LANG("obj.6ced2928", null)))
+		to_chat(user, span_userdanger("Such a feat is beyond your skills of telekinesis!"))
 		return ITEM_INTERACT_BLOCKING
 
 	if(tool.force < 5)
-		balloon_alert(user, LANG("obj.332ed454", null))
+		balloon_alert(user, "not strong enough!")
 		return ITEM_INTERACT_BLOCKING
 
 	playsound(user, 'sound/items/unsheath.ogg', 25, TRUE)
-	balloon_alert(user, LANG("obj.9f4e6fd8", null))
+	balloon_alert(user, "preparing to swing...")
 	if(!do_after(user, 2 SECONDS, src)) //takes longer because you are supposed to take the foil off the bottle first
 		return ITEM_INTERACT_BLOCKING
 
@@ -720,8 +711,8 @@
 		return pop_cork(user, sabrage = TRUE, froth_severity = severity_to_pass) ? ITEM_INTERACT_SUCCESS : ITEM_INTERACT_BLOCKING
 
 	user.visible_message(
-		span_danger(LANG("obj.fa14f871", list(user, src))),
-		span_danger(LANG("obj.e031ba4f", list(src))),
+		span_danger("[user] fumbles the sabrage and cuts [src] in half, spilling it over themselves!"),
+		span_danger("You fail your stunt and cut [src] in half, spilling it over you!"),
 		)
 	user.add_mood_event("sabrage_fail", /datum/mood_event/sabrage_fail)
 	return smash(target = user, break_top = TRUE) ? ITEM_INTERACT_SUCCESS : ITEM_INTERACT_BLOCKING
@@ -739,14 +730,14 @@
 /obj/item/reagent_containers/cup/glass/bottle/champagne/proc/pop_cork(mob/living/user, sabrage, froth_severity)
 	if(!sabrage)
 		user.visible_message(
-			span_danger(LANG("obj.370ed29f", list(user, src))),
-			span_nicegreen(LANG("obj.3e893a3a", list(src))),
+			span_danger("[user] loosens the cork of [src], causing it to pop out of the bottle with great force."),
+			span_nicegreen("You elegantly loosen the cork of [src], causing it to pop out of the bottle with great force."),
 			)
 	else
 		sabraged = TRUE
 		user.visible_message(
-			span_danger(LANG("obj.fd2c7578", list(user, src))),
-			span_nicegreen(LANG("obj.60dc3f81", list(src))),
+			span_danger("[user] cleanly slices off the cork of [src], causing it to fly off the bottle with great force."),
+			span_nicegreen("You elegantly slice the cork off of [src], causing it to fly off the bottle with great force."),
 			)
 		for(var/mob/living/carbon/stunt_witness in view(7, user))
 			stunt_witness.clear_mood_event("sabrage_success")
@@ -948,7 +939,7 @@
 	active = TRUE
 	log_bomber(user, "has primed a", src, "for detonation")
 
-	to_chat(user, span_info(LANG("obj.ac475cd8", list(src))))
+	to_chat(user, span_info("You light [src] on fire."))
 	add_overlay(custom_fire_overlay() || GLOB.fire_overlay)
 	if(!isGlass)
 		addtimer(CALLBACK(src, PROC_REF(explode)), 5 SECONDS)
@@ -969,9 +960,9 @@
 /obj/item/reagent_containers/cup/glass/bottle/molotov/attack_self(mob/user)
 	if(active)
 		if(!isGlass)
-			to_chat(user, span_danger(LANG("obj.c855d1e3", null)))
+			to_chat(user, span_danger("The flame's spread too far on it!"))
 			return
-		to_chat(user, span_info(LANG("obj.b2f557aa", list(src))))
+		to_chat(user, span_info("You snuff out the flame on [src]."))
 		cut_overlay(custom_fire_overlay() || GLOB.fire_overlay)
 		active = FALSE
 		return
@@ -1026,7 +1017,7 @@
 	else
 		reagents.add_reagent(/datum/reagent/consumable/ethanol/pruno, 50)
 	name = "bag of pruno"
-	desc = LANG("obj.70701d1f", null)
+	desc = "Fermented prison wine made from fruit, sugar, and despair. You probably shouldn't drink this around Security."
 	icon_state = "trashbag1" // pruno releases air as it ferments, we don't want to simulate this in atmos, but we can make it look like it did
 	for (var/mob/living/M in view(2, get_turf(src))) // letting people and/or narcs know when the pruno is done
 		if(HAS_TRAIT(M, TRAIT_ANOSMIA))

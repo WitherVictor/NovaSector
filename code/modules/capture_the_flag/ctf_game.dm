@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 #define WHITE_TEAM "White"
 #define RED_TEAM "Red"
 #define BLUE_TEAM "Blue"
@@ -84,18 +83,18 @@
 /obj/machinery/ctf/spawner/attack_ghost(mob/user)
 	if(ctf_game.ctf_enabled == FALSE)
 		if(user.client && user.client.holder)
-			var/response = tgui_alert(user, LANG("obj.1361043e", null), LANG("obj.7a3ac95c", null), list("Yes", "No"))
+			var/response = tgui_alert(user, "Enable this CTF game?", "CTF", list("Yes", "No"))
 			if(response == "Yes")
 				toggle_id_ctf(user, game_id)
 			return
 
 		if(!(GLOB.ghost_role_flags & GHOSTROLE_MINIGAME))
-			to_chat(user, span_warning(LANG("obj.97fd48b5", null)))
+			to_chat(user, span_warning("CTF has been temporarily disabled by admins."))
 			return
 		get_ctf_voting_controller(game_id).vote(user)
 		return
 	if(!SSticker.HasRoundStarted())
-		to_chat(user, span_warning(LANG("obj.c5b52977", null)))
+		to_chat(user, span_warning("Please wait until the round has started."))
 		return
 	if(user.ckey in ctf_game.get_players(team))
 		var/datum/component/ctf_player/ctf_player_component = ctf_game.get_player_component(team, user.ckey)
@@ -106,10 +105,10 @@
 			if(ctf_player_component.can_respawn)
 				spawn_team_member(new_team_member, ctf_player_component)
 			else
-				to_chat(user, span_warning(LANG("obj.4ee5fb03", null)))
+				to_chat(user, span_warning("You cannot respawn yet!"))
 		return
 	if(ctf_game.team_valid_to_join(team, user))
-		to_chat(user, span_userdanger(LANG("obj.7e53e4e0", list(src.team))))
+		to_chat(user, span_userdanger("You are now a member of [src.team]. Get the enemy flag and bring it back to your team's controller!"))
 		ctf_game.add_player(team, user.ckey)
 		var/client/new_team_member = user.client
 		spawn_team_member(new_team_member)
@@ -169,12 +168,17 @@
 	player_mob.add_traits(player_traits, CAPTURE_THE_FLAG_TRAIT)
 	return player_mob //used in medisim_game.dm
 
-/obj/machinery/ctf/spawner/attackby(obj/item/item, mob/user, list/modifiers, list/attack_modifiers)
-	if(istype(item, /obj/item/ctf_flag))
-		var/obj/item/ctf_flag/flag = item
-		if(flag.team != team)
-			ctf_game.capture_flag(team, user, team_span, flag)
-			flag.reset_flag(capture = TRUE) //This might be buggy, confirm and fix if it is.
+/obj/machinery/ctf/spawner/item_interaction(mob/living/user, obj/item/tool, list/modifiers)
+	if(!istype(tool, /obj/item/ctf_flag))
+		return NONE
+
+	var/obj/item/ctf_flag/flag = tool
+	if(flag.team == team)
+		return ITEM_INTERACT_BLOCKING
+
+	ctf_game.capture_flag(team, user, team_span, flag)
+	flag.reset_flag(capture = TRUE) //This might be buggy, confirm and fix if it is.
+	return ITEM_INTERACT_SUCCESS
 
 ///A flag used for the CTF minigame.
 /obj/item/ctf_flag
@@ -245,10 +249,10 @@
 /obj/item/ctf_flag/attack_hand(mob/living/user, list/modifiers)
 	//pre normal check item stuff, this is for our special flag checks
 	if(!is_ctf_target(user) && !anyonecanpickup)
-		to_chat(user, span_warning(LANG("obj.493cb757", null)))
+		to_chat(user, span_warning("Non-players shouldn't be moving the flag!"))
 		return
 	if(user.has_faction(team))
-		to_chat(user, span_warning(LANG("obj.4fd5f563", null)))
+		to_chat(user, span_warning("You can't move your own flag!"))
 		return
 	if(loc == user)
 		if(!user.dropItemToGround(src))
@@ -262,18 +266,21 @@
 		anchored = TRUE // Avoid directly assigning to anchored and prefer to use set_anchored() on normal circumstances.
 		return
 	//passing means the user picked up the flag so we can now apply this
-	to_chat(user, span_userdanger(LANG("obj.d3178d1a", list(initial(name)))))
+	to_chat(user, span_userdanger("Take \the [initial(name)] to your team's controller!"))
 	user.set_anchored(TRUE)
 	user.status_flags &= ~CANPUSH
 
-/obj/item/ctf_flag/attackby(obj/item/item, mob/user, list/modifiers, list/attack_modifiers)
-	if(!istype(item, /obj/item/ctf_flag))
-		return ..()
+/obj/item/ctf_flag/item_interaction(mob/living/user, obj/item/tool, list/modifiers)
+	if(!istype(tool, /obj/item/ctf_flag))
+		return NONE
 
-	var/obj/item/ctf_flag/flag = item
-	if(flag.team != team)
-		to_chat(user, span_userdanger(LANG("obj.d3178d1a", list(initial(flag.name)))))
-		user.playsound_local(get_turf(user), 'sound/machines/buzz/buzz-sigh.ogg', 100, vary = FALSE, use_reverb = FALSE)
+	var/obj/item/ctf_flag/flag = tool
+	if(flag.team == team)
+		return ITEM_INTERACT_BLOCKING
+
+	to_chat(user, span_userdanger("Take \the [initial(flag.name)] to your team's controller!"))
+	user.playsound_local(get_turf(user), 'sound/machines/buzz/buzz-sigh.ogg', 100, vary = FALSE, use_reverb = FALSE)
+	return ITEM_INTERACT_SUCCESS
 
 /obj/item/ctf_flag/dropped(mob/user)
 	..()
@@ -365,8 +372,9 @@
 			scores += UNLINT("<span style='color: [ctf_team.team_color]'>[ctf_team.team_color] - [ctf_team.points]/[ctf_game.points_to_win]</span>\n")
 		balloon_alert_to_viewers(scores)
 
-/obj/machinery/ctf/control_point/attackby(obj/item/item, mob/user, list/modifiers, list/attack_modifiers)
+/obj/machinery/ctf/control_point/item_interaction(mob/living/user, obj/item/tool, list/modifiers)
 	capture(user)
+	return ITEM_INTERACT_SUCCESS
 
 /obj/machinery/ctf/control_point/attack_hand(mob/user, list/modifiers)
 	. = ..()
@@ -379,7 +387,7 @@
 	if(do_after(user, 3 SECONDS, target = src))
 		var/datum/component/ctf_player/ctf_player = user.mind.GetComponent(/datum/component/ctf_player)
 		if(isnull(ctf_player))
-			to_chat(user, span_warning(LANG("obj.d95fc848", null)))
+			to_chat(user, span_warning("Non-players shouldn't be capturing control points"))
 			return
 		controlling_team = ctf_player.team
 		icon_state = "dominator-[controlling_team]"
@@ -407,7 +415,7 @@
 	if(!is_ctf_target(living))
 		return
 	if(!living.has_faction(team))
-		to_chat(living, span_bolddanger(LANG("obj.6bd5c441", null)))
+		to_chat(living, span_bolddanger("Stay out of the enemy spawn!"))
 		living.investigate_log("has died from entering the enemy spawn in CTF.", INVESTIGATE_DEATHS)
 		living.apply_damage(200) //Damage instead of instant death so we trigger the damage signal.
 
@@ -477,9 +485,9 @@
 		log_admin("[key_name_admin(user)] is attempting to unload CTF.")
 		message_admins("[key_name_admin(user)] is attempting to unload CTF.")
 		if(loading == CTF_LOADING_UNLOADED)
-			to_chat(user, span_warning(LANG("_root.e775d097", null)))
+			to_chat(user, span_warning("CTF cannot be unloaded if it was not loaded in the first place"))
 			return
-		to_chat(user, span_warning(LANG("_root.bd9ca356", null)))
+		to_chat(user, span_warning("CTF is being unloaded"))
 		ctf_controller.unload_ctf()
 		log_admin("[key_name_admin(user)] has unloaded CTF.")
 		message_admins("[key_name_admin(user)] has unloaded CTF.")
@@ -488,20 +496,20 @@
 	switch (loading)
 		if (CTF_LOADING_UNLOADED)
 			if (isnull(GLOB.ctf_spawner))
-				to_chat(user, span_boldwarning(LANG("_root.5cbc1435", null)))
+				to_chat(user, span_boldwarning("Couldn't find a CTF spawner. Call a maintainer!"))
 				return
 
-			to_chat(user, span_notice(LANG("_root.5cbf36c9", null)))
+			to_chat(user, span_notice("Loading CTF..."))
 
 			loading = CTF_LOADING_LOADING
 			if(activated_id == CTF_GHOST_CTF_GAME_ID) //Only ghost CTF supports map loading, if CTF is started by an admin elsewhere the map loader should not be used.
 				if(!GLOB.ctf_spawner.load_map(user))
-					to_chat(user, span_warning(LANG("_root.0078b0eb", null)))
+					to_chat(user, span_warning("CTF loading was cancelled"))
 					loading = CTF_LOADING_UNLOADED
 					return
 			loading = CTF_LOADING_LOADED
 		if (CTF_LOADING_LOADING)
-			to_chat(user, span_warning(LANG("_root.86c3bb79", null)))
+			to_chat(user, span_warning("CTF is loading!"))
 
 			return
 
@@ -515,7 +523,7 @@
 	else if(automated)
 		message_admins("CTF has finished a round and automatically restarted.")
 		notify_ghosts(
-			LANG("_root.21b527b9", list(initial(ctf_area.name))),
+			"CTF has automatically restarted after a round finished in [initial(ctf_area.name)]!",
 			ghost_sound = 'sound/effects/ghost2.ogg',
 			header = "CTF Restarted"
 		)
@@ -523,7 +531,7 @@
 		message_admins("The players have spoken! Voting has enabled CTF!")
 	if(!automated)
 		notify_ghosts(
-			LANG("_root.e6cd6d25", list(ctf_enabled? "enabled" : "disabled", initial(ctf_area.name))),
+			"CTF has been [ctf_enabled? "enabled" : "disabled"] in [initial(ctf_area.name)]!",
 			ghost_sound = 'sound/effects/ghost2.ogg',
 			header = "CTF [ctf_enabled? "Enabled" : "Disabled"]"
 		)

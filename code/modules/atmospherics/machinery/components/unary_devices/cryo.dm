@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 ///Max temperature allowed inside the cryotube, should break before reaching this heat
 #define MAX_TEMPERATURE 4000
 // Multiply factor is used with efficiency to multiply Tx quantity
@@ -189,28 +188,28 @@
 /obj/machinery/cryo_cell/examine(mob/user) //this is leaving out everything but efficiency since they follow the same idea of "better beaker, better results"
 	. = ..()
 	if(in_range(user, src) || isobserver(user))
-		. += span_notice(LANG("obj.ffac399b", list(efficiency * 100)))
+		. += span_notice("The status display reads: Efficiency at <b>[efficiency * 100]</b>%.")
 		if(occupant)
 			if(on)
-				. += span_notice(LANG("obj.d5c6cb20", list(src)))
+				. += span_notice("Someone's inside [src]!")
 			else
-				. += span_notice(LANG("obj.90d23a98", list(src)))
+				. += span_notice("You can barely make out a form floating in [src].")
 		else
-			. += span_notice(LANG("obj.2c36c513", list(src)))
+			. += span_notice("[src] seems empty.")
 		if(beaker)
-			. += span_notice(LANG("obj.0a93fdd7", list(beaker.reagents.maximum_volume)))
+			. += span_notice("A beaker of [beaker.reagents.maximum_volume]u capacity is located inside.")
 		else
-			. += span_warning(LANG("obj.020fb84c", null))
+			. += span_warning("Its missing a beaker.")
 
-		. += span_notice(LANG("obj.c149d4ae", list(EXAMINE_HINT("Alt-Click"), state_open ? "Close" : "Open")))
-		. += span_notice(LANG("obj.92a10cd2", list(EXAMINE_HINT("Ctrl-Click"), on ? "Off" : "On")))
+		. += span_notice("Use [EXAMINE_HINT("Alt-Click")] to [state_open ? "Close" : "Open"] the machine.")
+		. += span_notice("Use [EXAMINE_HINT("Ctrl-Click")] to turn [on ? "Off" : "On"] the machine.")
 
-		. += span_notice(LANG("obj.4f2c3146", list(EXAMINE_HINT("screwed"))))
+		. += span_notice("Its maintenance panel can be [EXAMINE_HINT("screwed")] open.")
 		if(panel_open)
-			. += span_notice(LANG("obj.6fb0d925", list(src, EXAMINE_HINT("pried"))))
-			. += span_notice(LANG("obj.61678dab", list(src, EXAMINE_HINT("wrench"))))
+			. += span_notice("[src] can be [EXAMINE_HINT("pried")] apart.")
+			. += span_notice("[src] can be rotated with a [EXAMINE_HINT("wrench")].")
 		else if(machine_stat & NOPOWER)
-			. += span_notice(LANG("obj.249a300d", list(src, EXAMINE_HINT("pried"))))
+			. += span_notice("[src] can be [EXAMINE_HINT("pried")] open.")
 
 /obj/machinery/cryo_cell/update_icon()
 	SET_PLANE_IMPLICIT(src, initial(plane))
@@ -236,30 +235,30 @@
 	if(!istype(tool, /obj/item/reagent_containers/cup))
 		return
 	if(!QDELETED(beaker))
-		balloon_alert(user, LANG("obj.3f639ef9", null))
+		balloon_alert(user, "beaker present!")
 		return ITEM_INTERACT_BLOCKING
 	if(!user.transferItemToLoc(tool, src))
 		return ITEM_INTERACT_BLOCKING
 
 	beaker = tool
-	balloon_alert(user, LANG("obj.eb9dfdb5", null))
+	balloon_alert(user, "beaker inserted")
 	user.log_message("added \a [tool] to cryo containing [pretty_string_from_reagent_list(tool.reagents.reagent_list)].", LOG_GAME)
 	return ITEM_INTERACT_SUCCESS
 
 /obj/machinery/cryo_cell/screwdriver_act(mob/living/user, obj/item/tool)
 	. = ITEM_INTERACT_BLOCKING
 	if(on)
-		balloon_alert(user, LANG("obj.55d6a7ad", null))
+		balloon_alert(user, "turn off!")
 		return ITEM_INTERACT_BLOCKING
 	if(occupant)
-		balloon_alert(user, LANG("obj.359117b8", null))
+		balloon_alert(user, "occupant inside!")
 		return ITEM_INTERACT_BLOCKING
 
 	return default_deconstruction_screwdriver(user, tool)
 
 /obj/machinery/cryo_cell/crowbar_act(mob/living/user, obj/item/tool)
 	if(on)
-		balloon_alert(user, LANG("obj.55d6a7ad", null))
+		balloon_alert(user, "turn off!")
 		return ITEM_INTERACT_BLOCKING
 
 	var/can_crowbar = FALSE
@@ -285,7 +284,7 @@
 
 	var/unsafe_release = FALSE
 	if(internal_pressure > 2 * ONE_ATMOSPHERE)
-		to_chat(user, span_warning(LANG("obj.0492c52b", list(src))))
+		to_chat(user, span_warning("As you begin prying \the [src] a gush of air blows in your face... maybe you should reconsider?"))
 		if(!do_after(user, 2 SECONDS, target = src))
 			return ITEM_INTERACT_BLOCKING
 		unsafe_release = TRUE
@@ -305,13 +304,13 @@
 /obj/machinery/cryo_cell/wrench_act(mob/living/user, obj/item/tool)
 	. = ITEM_INTERACT_BLOCKING
 	if(on)
-		balloon_alert(user, LANG("obj.55d6a7ad", null))
+		balloon_alert(user, "turn off!")
 		return
 	if(occupant)
-		balloon_alert(user, LANG("obj.359117b8", null))
+		balloon_alert(user, "occupant inside!")
 		return
 	if(state_open)
-		balloon_alert(user, LANG("obj.33c8300c", null))
+		balloon_alert(user, "close first!")
 		return
 
 	if(default_change_direction_wrench(user, tool))
@@ -519,14 +518,14 @@
 /obj/machinery/cryo_cell/container_resist_act(mob/living/user)
 	user.changeNext_move(CLICK_CD_BREAKOUT)
 	user.last_special = world.time + CLICK_CD_BREAKOUT
-	user.visible_message(span_notice(LANG("obj.591d5354", list(user, src))), \
-		span_notice(LANG("obj.907d1a29", list(src, DisplayTimeText(CRYO_BREAKOUT_TIME)))), \
-		span_hear(LANG("obj.a2fe6eff", list(src))))
-	if(do_after(user, CRYO_BREAKOUT_TIME, target = src, hidden = TRUE))
-		if(!user || user.stat != CONSCIOUS || user.loc != src )
+	user.visible_message(span_notice("You see [user] kicking against the glass of [src]!"), \
+		span_notice("You struggle inside [src], kicking the release with your foot... (this will take about [DisplayTimeText(CRYO_BREAKOUT_TIME)].)"), \
+		span_hear("You hear a thump from [src]."))
+	if(do_after(user, CRYO_BREAKOUT_TIME, target = src, cog_icon = null))
+		if(!user || IS_UNCONSCIOUS_OR_CRIT(user) || user.loc != src )
 			return
-		user.visible_message(span_warning(LANG("obj.37696909", list(user, src))), \
-			span_notice(LANG("obj.81c31f6b", list(src))))
+		user.visible_message(span_warning("[user] successfully broke out of [src]!"), \
+			span_notice("You successfully break out of [src]!"))
 		open_machine()
 
 /obj/machinery/cryo_cell/ui_state(mob/user)
@@ -556,10 +555,10 @@
 		occupant_data["name"] = mob_occupant.name
 		if(mob_occupant.stat == DEAD)
 			occupant_data["stat"] = "Dead"
-		else if (HAS_TRAIT(mob_occupant, TRAIT_KNOCKEDOUT))
+		else if (IS_UNCONSCIOUS(mob_occupant))
 			occupant_data["stat"] = "Unconscious"
 		else
-			occupant_data["stat"] = "Conscious"
+			occupant_data["stat"] = "Stable"
 
 		occupant_data["bodyTemperature"] = round(mob_occupant.bodytemperature, 1)
 
@@ -628,7 +627,7 @@
 /obj/machinery/cryo_cell/click_ctrl(mob/user)
 	if(is_operational && !state_open)
 		set_on(!on)
-		balloon_alert(user, LANG("obj.8fcfde3c", list(on ? "on" : "off")))
+		balloon_alert(user, "turned [on ? "on" : "off"]")
 		return CLICK_ACTION_SUCCESS
 	return CLICK_ACTION_BLOCKING
 
@@ -641,7 +640,7 @@
 		close_machine()
 	else
 		open_machine()
-	balloon_alert(user, LANG("obj.dbfc32e3", list(state_open ? "opened" : "closed")))
+	balloon_alert(user, "door [state_open ? "opened" : "closed"]")
 	return CLICK_ACTION_SUCCESS
 
 /obj/machinery/cryo_cell/mouse_drop_receive(mob/target, mob/user, params)
@@ -654,7 +653,7 @@
 			close_machine(target)
 		return
 
-	user.visible_message(span_notice(LANG("obj.4e7e17e6", list(user, target, src))), span_notice(LANG("obj.d5024bc0", list(target, src))))
+	user.visible_message(span_notice("[user] starts shoving [target] inside [src]."), span_notice("You start shoving [target] inside [src]."))
 	if (do_after(user, 2.5 SECONDS, target=target))
 		close_machine(target)
 

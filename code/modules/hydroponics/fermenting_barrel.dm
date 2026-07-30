@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 /obj/structure/fermenting_barrel
 	name = "wooden barrel"
 	desc = "A large wooden barrel. You can ferment fruits and such inside it, or just use it to hold reagents."
@@ -52,29 +51,32 @@
 	if(open)
 		var/fruit_count = contents.len
 		if(fruit_count)
-			. += span_notice(LANG("obj.4efe80a5", list(fruit_count)))
-			. += span_notice(LANG("obj.bd271499", list(EXAMINE_HINT("Right-click"), src)))
-		. += span_notice(LANG("obj.c05b560b", null))
+			. += span_notice("It contains [fruit_count] fruit\s ready to be fermented.")
+			. += span_notice("[EXAMINE_HINT("Right-click")] to take them out of [src].")
+		. += span_notice("It is currently open, letting you fill it with fruits or reagents.")
 	else
-		. += span_notice(LANG("obj.15d570d6", null))
+		. += span_notice("It is currently closed, letting it ferment fruits or draw reagents from its tap.")
 
-/obj/structure/fermenting_barrel/attackby(obj/item/object, mob/user, list/modifiers, list/attack_modifiers)
+/obj/structure/fermenting_barrel/item_interaction(mob/living/user, obj/item/tool, list/modifiers)
 	if(open)
-		if(istype(object, /obj/item/food/grown) && insert_fruit(user, object))
-			balloon_alert(user, LANG("obj.22727303", null))
-			return
-		if(istype(object, /obj/item/storage/bag/plants))
-			var/obj/item/storage/bag/plants/bag = object
+		if(istype(tool, /obj/item/food/grown) && insert_fruit(user, tool))
+			balloon_alert(user, "added fruit")
+			return ITEM_INTERACT_SUCCESS
+
+		if(istype(tool, /obj/item/storage/bag/plants))
+			var/obj/item/storage/bag/plants/bag = tool
 			var/inserted_fruits = 0
 			for(var/obj/item/food/grown/fruit in bag.contents)
 				if(!insert_fruit(user, fruit, bag))
 					break
 				inserted_fruits++
-			if(inserted_fruits)
-				balloon_alert(user, LANG("obj.6eb70280", list(inserted_fruits)))
-	else if(object.is_refillable())
-		return //so we can refill them via their afterattack.
-	return ..()
+			if(!inserted_fruits)
+				return ITEM_INTERACT_BLOCKING
+
+			balloon_alert(user, "added [inserted_fruits] fruit\s")
+			return ITEM_INTERACT_SUCCESS
+
+	return NONE
 
 /obj/structure/fermenting_barrel/attack_hand(mob/user, list/modifiers)
 	if(!can_open)
@@ -102,11 +104,11 @@
 		return .
 
 	if(!length(contents))
-		balloon_alert(user, LANG("obj.6ef93b07", null))
+		balloon_alert(user, "empty!")
 		return SECONDARY_ATTACK_CANCEL_ATTACK_CHAIN
 
 	dump_contents()
-	balloon_alert(user, LANG("obj.23fe6c97", list(src)))
+	balloon_alert(user, "emptied [src]")
 	return SECONDARY_ATTACK_CANCEL_ATTACK_CHAIN
 
 /obj/structure/fermenting_barrel/wrench_act(mob/living/user, obj/item/tool)
@@ -151,16 +153,16 @@
 /// Adds the fruit to the barrel to queue the fermentation
 /obj/structure/fermenting_barrel/proc/insert_fruit(mob/user, obj/item/food/grown/fruit, obj/item/storage/bag/plants/bag = null)
 	if(reagents.total_volume + potential_volume > reagents.maximum_volume)
-		balloon_alert(user, LANG("obj.2cb7d354", null))
+		balloon_alert(user, "it's full!")
 		return FALSE
 	if(!fruit.can_distill)
-		balloon_alert(user, LANG("obj.958896fa", null))
+		balloon_alert(user, "can't ferment this!")
 		return FALSE
 	if(bag && !bag.atom_storage.attempt_remove(fruit, src))
-		balloon_alert(user, LANG("obj.acbebe31", null))
+		balloon_alert(user, "can't take from bag!")
 		return FALSE
 	else if (!user.transferItemToLoc(fruit, src))
-		balloon_alert(user, LANG("obj.64310c6c", null))
+		balloon_alert(user, "can't take fruit!")
 		return FALSE
 	potential_volume += fruit.reagents.total_volume
 	return TRUE

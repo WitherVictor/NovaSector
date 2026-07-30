@@ -47,17 +47,14 @@
 	if(model && model.model_features && (TRAIT_R_TALL in model.model_features))
 		maptext_height = 48 //Offset value of tallborgs
 
-/mob/living/silicon/robot/proc/rest_style()
-	set name = "切换休息姿势"
-	set category = "AI Commands"
-	set desc = "Select your resting pose."
+GAME_VERB_PROC_DESC(/mob/living/silicon/robot, rest_style, "Switch Rest Style", "Select your resting pose.", "AI Commands")
 	if(!can_rest())
-		to_chat(src, span_warning(LANG("mob.56e41a3d", null)))
+		to_chat(src, span_warning("You can't do that!"))
 		return
 	var/list/choices = list("Resting", "Sitting", "Belly up")
 	if(model && model.model_features && (TRAIT_RESTING_ALTS in model.model_features))
 		choices = list("Resting", "Sitting", "Belly up", "Sleep", "Rest Wagging", "Sit Wagging")
-	var/choice = tgui_input_list(src, LANG("mob.7284295a", null), "", choices)
+	var/choice = tgui_input_list(src, "Select resting pose", "", choices)
 	switch(choice)
 		if("Resting")
 			robot_rest_style = ROBOT_REST_NORMAL
@@ -76,21 +73,21 @@
 		on_lying_down()
 	update_icons()
 
-/mob/living/silicon/robot/proc/robot_lay_down()
-	set name = "躺下"
-	set category = "AI Commands"
+GAME_VERB_PROC(/mob/living/silicon/robot, robot_lay_down, "Lay down", "AI Commands")
 	if(!can_rest())
-		to_chat(src, span_warning(LANG("mob.56e41a3d", null)))
+		to_chat(src, span_warning("You can't do that!"))
 		return
-	if(stat != CONSCIOUS) //Make sure we don't enable movement when not concious
+	if(IS_UNCONSCIOUS_OR_CRIT(src)) //Make sure we don't enable movement when not concious
 		return
 	if(robot_resting)
-		to_chat(src, span_notice(LANG("mob.63c0a69c", null)))
+		if(GetComponent(/datum/component/robot_smoke))
+			dissipate()
+		to_chat(src, span_notice("You are now getting up."))
 		robot_resting = FALSE
 		mobility_flags = MOBILITY_FLAGS_DEFAULT
 		on_standing_up()
 	else
-		to_chat(src, span_notice(LANG("mob.3f3898b9", null)))
+		to_chat(src, span_notice("You are now laying down."))
 		robot_resting = robot_rest_style
 		on_lying_down()
 	update_icons()

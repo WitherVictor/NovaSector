@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 #define MAX_NAVIGATE_RANGE 125
 
 /mob/living
@@ -9,18 +8,16 @@
 	/// Images of the path created by navigate().
 	var/list/navigation_images = list()
 
-/mob/living/verb/navigate()
-	set name = "导航"
-	set hidden = TRUE
+GAME_VERB_HIDDEN(/mob/living, navigate, "Navigate")
 
 	if(incapacitated)
 		return
 	if(length(client.navigation_images))
 		addtimer(CALLBACK(src, PROC_REF(cut_navigation)), world.tick_lag)
-		balloon_alert(src, LANG("mob.782a8c41", null))
+		balloon_alert(src, "navigation path removed")
 		return
 	if(!COOLDOWN_FINISHED(src, navigate_cooldown))
-		balloon_alert(src, LANG("mob.68863d58", null))
+		balloon_alert(src, "navigation on cooldown!")
 		return
 	addtimer(CALLBACK(src, PROC_REF(create_navigation)), world.tick_lag)
 
@@ -29,26 +26,25 @@
 	for(var/atom/destination as anything in GLOB.navigate_destinations)
 		if(get_dist(destination, src) > MAX_NAVIGATE_RANGE)
 			continue
-		// NOVA EDIT CHANGE - I18N - full reverse here: P1 (lang_reverse_phrase_tgui) skips any name in the tgui-catalog set, which wrongly leaves common area names (Bar/Kitchen/Chapel...) english even though they ARE in _map_names. Key the list by the localized name so the tgui_input_list display/return round-trips. - ORIGINAL: var/destination_name = GLOB.navigate_destinations[destination]
-		var/destination_name = lang_reverse_text(GLOB.navigate_destinations[destination])
+		var/destination_name = GLOB.navigate_destinations[destination]
 		if(destination.z != z && is_multi_z_level(z)) // up or down is just a good indicator "we're on the station", we don't need to check specifics
-			destination_name += " " + lang_reverse_text((get_dir_multiz(src, destination) & UP) ? "(Above)" : "(Below)") // NOVA EDIT CHANGE - I18N: localize the z-level suffix (was hardcoded English, appended after the name reverse) - ORIGINAL: destination_name += ((get_dir_multiz(src, destination) & UP) ? " (Above)" : " (Below)")
+			destination_name += ((get_dir_multiz(src, destination) & UP) ? " (Above)" : " (Below)")
 
 		destination_list[destination_name] = destination
 
 	var/can_go_down = SSmapping.level_trait(z, ZTRAIT_DOWN)
 	var/can_go_up = SSmapping.level_trait(z, ZTRAIT_UP)
 	if(can_go_down)
-		destination_list[lang_reverse_text("Nearest Way Down")] = DOWN // NOVA EDIT - I18N
+		destination_list["Nearest Way Down"] = DOWN
 	if(can_go_up)
-		destination_list[lang_reverse_text("Nearest Way Up")] = UP // NOVA EDIT - I18N
+		destination_list["Nearest Way Up"] = UP
 
 	if(!length(destination_list))
-		balloon_alert(src, LANG("mob.f7ee8e03", null))
+		balloon_alert(src, "no navigation signals!")
 		return
 
-	var/platform_code = tgui_input_list(src, LANG("mob.0e4a2fa4", null), LANG("mob.5abb374f", null), sort_list(destination_list))
-	var/atom/navigate_target = destination_list[platform_code] || destination_list[lang_unreverse_text(platform_code)] // NOVA EDIT - I18N - tolerate any residual P1 translation on names not covered by _map_names (translated picks already match the localized key directly)
+	var/platform_code = tgui_input_list(src, "Select a location", "Navigate", sort_list(destination_list))
+	var/atom/navigate_target = destination_list[platform_code]
 
 	if(isnull(navigate_target) || incapacitated)
 		return
@@ -65,7 +61,7 @@
 		var/atom/new_target = find_nearest_stair_or_ladder(nav_dir)
 
 		if(!new_target)
-			balloon_alert(src, LANG("mob.1b2d2fbc", list(direction_name)))
+			balloon_alert(src, "can't find ladder or staircase going [direction_name]!")
 			return
 
 		navigate_target = new_target
@@ -77,7 +73,7 @@
 
 	var/list/path = get_path_to(src, navigate_target, MAX_NAVIGATE_RANGE, mintargetdist = 1, access = get_access(), skip_first = FALSE)
 	if(!length(path))
-		balloon_alert(src, LANG("mob.38ec4930", null))
+		balloon_alert(src, "no valid path with current access!")
 		return
 	path |= get_turf(navigate_target)
 	for(var/i in 1 to length(path))
@@ -106,7 +102,7 @@
 	RegisterSignal(src, COMSIG_LIVING_DEATH, PROC_REF(cut_navigation))
 	if(finding_zchange)
 		RegisterSignal(src, COMSIG_MOVABLE_Z_CHANGED, PROC_REF(cut_navigation))
-	balloon_alert(src, LANG("mob.900191da", null))
+	balloon_alert(src, "navigation path created")
 
 /mob/living/proc/shine_navigation()
 	for(var/i in 1 to length(client.navigation_images))

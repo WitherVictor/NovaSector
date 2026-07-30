@@ -1,18 +1,10 @@
-/mob/living/carbon/proc/protean_ui()
-	set name = "打开套装界面"
-	set desc = "Opens your suit UI"
-	set category = "Protean"
-
+GAME_VERB_PROC_DESC(/mob/living/carbon, protean_ui, "Open Suit UI", "Opens your suit UI", "Protean")
 	var/obj/item/mod/control/pre_equipped/protean/suit = get_protean_modsuit(src)
 	if(isnull(suit))
 		return
 	suit.ui_interact(src)
 
-/mob/living/carbon/proc/protean_heal()
-	set name = "治疗器官和四肢"
-	set desc = "Heals your replaceable organs and limbs with 6 metal."
-	set category = "Protean"
-
+GAME_VERB_PROC_DESC(/mob/living/carbon, protean_heal, "Heal Organs and Limbs", "Heals your replaceable organs and limbs with 6 metal.", "Protean")
 	var/obj/item/organ/brain/protean/brain = get_organ_slot(ORGAN_SLOT_BRAIN)
 
 	if(!istype(brain))
@@ -22,28 +14,21 @@
 	if(isnull(suit))
 		return
 	if(incapacitated && loc != suit)
-		balloon_alert(src, LANG("mob.7ac2788b", null))
+		balloon_alert(src, "incapacitated!")
 		return
 
 	brain.replace_limbs()
 
-/mob/living/carbon/proc/lock_suit()
-	set name = "锁定套装"
-	set desc = "Locks your suit on someone"
-	set category = "Protean"
-
+GAME_VERB_PROC_DESC(/mob/living/carbon, lock_suit, "Lock Suit", "Locks your suit on someone", "Protean")
 	var/obj/item/mod/control/pre_equipped/protean/suit = get_protean_modsuit(src)
 	if(isnull(suit))
 		return
 
 	suit.toggle_lock()
-	to_chat(src, span_notice(LANG("mob.d31e1132", list(suit.modlocked ? "<b>lock</b>" : "<b>unlock</b>", isprotean(suit.wearer) || loc == suit ? "" : "onto [suit.wearer]"))))
+	to_chat(src, span_notice("You [suit.modlocked ? "<b>lock</b>" : "<b>unlock</b>"] the suit [isprotean(suit.wearer) || loc == suit ? "" : "onto [suit.wearer]"]"))
 	playsound(src, 'sound/machines/click.ogg', 25)
 
-/mob/living/carbon/proc/suit_transformation()
-	set name = "切换套装变形"
-	set desc = "Either leave or enter your suit."
-	set category = "Protean"
+GAME_VERB_PROC_DESC(/mob/living/carbon, suit_transformation, "Toggle Suit Transformation", "Either leave or enter your suit.", "Protean")
 	var/obj/item/organ/brain/protean/brain = get_organ_slot(ORGAN_SLOT_BRAIN)
 
 	if(!istype(brain))
@@ -57,45 +42,33 @@
 		if(!incapacitated)
 			brain.go_into_suit()
 		else
-			balloon_alert(src, LANG("mob.7ac2788b", null))
+			balloon_alert(src, "incapacitated!")
 
-/mob/living/carbon/proc/remove_assimilated_modsuit()
-	set name = "移除同化模组服"
-	set desc = "Pry out an absorbed modsuit from your protean suit."
-	set category = "Protean"
-
+GAME_VERB_PROC_DESC(/mob/living/carbon, remove_assimilated_modsuit, "Remove Assimilated Modsuit", "Pry out an absorbed modsuit from your protean suit.", "Protean")
 	var/obj/item/mod/control/pre_equipped/protean/suit = get_protean_modsuit(src)
 	if(isnull(suit))
 		return
 	suit.unassimilate_modsuit(src)
 
-/mob/living/carbon/proc/remove_assimilated_plating()
-	set name = "移除同化装甲板"
-	set desc = "Reset your modsuit appearance back to default."
-	set category = "Protean"
-
+GAME_VERB_PROC_DESC(/mob/living/carbon, remove_assimilated_plating, "Remove Assimilated Plating", "Reset your modsuit appearance back to default.", "Protean")
 	var/obj/item/mod/control/pre_equipped/protean/suit = get_protean_modsuit(src)
 	if(isnull(suit))
 		return
 	suit.unassimilate_theme()
 
-/mob/living/carbon/proc/low_power()
-	set name = "切换低功耗模式"
-	set desc = "Toggle whether you are running on low power mode."
-	set category = "Protean"
-
+GAME_VERB_PROC_DESC(/mob/living/carbon, low_power, "Toggle Low Power Mode", "Toggle whether you are running on low power mode.", "Protean")
 	var/obj/item/mod/control/pre_equipped/protean/suit = get_protean_modsuit(src)
 	if(isnull(suit))
 		return
 	var/obj/item/organ/stomach/protean/stomach = get_organ_slot(ORGAN_SLOT_STOMACH)
 	if(!istype(stomach))
-		to_chat(src, span_warning(LANG("mob.f360a083", null)))
+		to_chat(src, span_warning("You are missing a stomach and can't turn on low power mode"))
 		return
 	if(loc == suit)
-		to_chat(src, span_notice(LANG("mob.fd750461", null)))
+		to_chat(src, span_notice("You can't toggle low power when in a suit form!"))
 		return
 	if(!do_after(src, 2.5 SECONDS))
-		src.loc.balloon_alert(src, LANG("mob.08fef07e", null))
+		src.loc.balloon_alert(src, "toggle interrupted")
 		return
 	var/datum/status_effect/protean_low_power_mode/effect = /datum/status_effect/protean_low_power_mode/low_power
 	if(istype(has_status_effect(effect), effect))

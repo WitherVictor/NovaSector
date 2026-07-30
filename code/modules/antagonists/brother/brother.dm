@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 /datum/antagonist/brother
 	name = "\improper Brother"
 	antagpanel_category = "Brother"
@@ -41,7 +40,7 @@
 
 	var/is_first_brother = team.members.len == 1
 	if (!is_first_brother)
-		to_chat(carbon_owner, span_boldwarning(LANG("datum.f59bc4b2", null)))
+		to_chat(carbon_owner, span_boldwarning("The Syndicate have higher expectations from you than others. They have granted you an extra flash to convert one other person."))
 
 	return ..()
 
@@ -71,8 +70,12 @@
 	if (flashed.stat == DEAD || issilicon(flashed) || isdrone(flashed))
 		return
 
-	if (flashed.stat != CONSCIOUS)
-		flashed.balloon_alert(source, LANG("datum.dc8b5a42", null))
+	if (flashed.stat != STABLE)
+		flashed.balloon_alert(source, "in critical!")
+		return
+
+	if (IS_UNCONSCIOUS(flashed))
+		flashed.balloon_alert(source, "unconscious!")
 		return
 
 #ifdef TESTING
@@ -80,7 +83,7 @@
 		flashed.mind_initialize()
 #else
 	if (isnull(flashed.mind) || !GET_CLIENT(flashed))
-		flashed.balloon_alert(source, LANG("datum.96a90739", list(flashed.p_their())))
+		flashed.balloon_alert(source, "[flashed.p_their()] mind is vacant!")
 		return
 #endif
 
@@ -91,15 +94,15 @@
 			return
 
 	if (flashed.mind.has_antag_datum(/datum/antagonist/brother))
-		flashed.balloon_alert(source, LANG("datum.9e06faa2", list(flashed.p_theyre())))
+		flashed.balloon_alert(source, "[flashed.p_theyre()] loyal to someone else!")
 		return
 
 	if (HAS_MIND_TRAIT(flashed, TRAIT_UNCONVERTABLE))
-		flashed.balloon_alert(source, LANG("datum.5b91a8f9", list(flashed.p_they(), flashed.p_s())))
+		flashed.balloon_alert(source, "[flashed.p_they()] resist[flashed.p_s()]!")
 		return
 
 	if (!team.add_brother(flashed, key_name(source))) // Shouldn't happen given the former, more specific checks but just in case
-		flashed.balloon_alert(source, LANG("datum.31bf8acd", null))
+		flashed.balloon_alert(source, "failed!")
 		return
 
 	source.log_message("converted [key_name(flashed)] to blood brother", LOG_ATTACK)
@@ -114,7 +117,7 @@
 		protagonist = flashed, \
 		antagonist = owner.current, \
 	)
-	flashed.balloon_alert(source, LANG("datum.72ad5488", null))
+	flashed.balloon_alert(source, "converted")
 
 /datum/antagonist/brother/antag_panel_data()
 	return "Conspirators : [get_brother_names()] | Remaining: [team.brothers_left]"
@@ -125,7 +128,7 @@
 
 /// Add or remove the potential to put more bros in here
 /datum/antagonist/brother/proc/update_recruitments_remaining(mob/admin)
-	var/new_count = tgui_input_number(admin, LANG("datum.dcd666e6", null), LANG("datum.4f1d1b63", null), default = 1, min_value = 0)
+	var/new_count = tgui_input_number(admin, "How many more people should be able to be recruited?", "Adjust Conversions Remaining", default = 1, min_value = 0)
 	if (isnull(new_count))
 		return
 	team.set_brothers_left(new_count)
@@ -180,7 +183,7 @@
 	return brother_text
 
 /datum/antagonist/brother/greet()
-	to_chat(owner.current, span_alertsyndie(LANG("datum.aef74aab", null)))
+	to_chat(owner.current, span_alertsyndie("You are a Blood Brother."))
 	owner.announce_objectives()
 
 /datum/antagonist/brother/proc/finalize_brother()
@@ -267,18 +270,10 @@
 		var/list/split_name = splittext(team_minds.name," ")
 		last_names += split_name[split_name.len]
 
-	// NOVA EDIT CHANGE START - i18n: 队伍名走**整句模板**而非逐词反查 —— 中文语序与英文相反
-	// （"血亲兄弟 of 张三 & 李四" 逐词译出来是病句），模板在 _name_suffixes.json 里用 {0}/{1}
-	// 重排。刻意用 replacetext 而不是 lang_interpolate：后者会对实参跑本地化链，玩家姓氏里出现
-	// Cook / Baker 这类词会被当职业名译掉。locale==en 时取到的就是英文模板，输出逐字不变。
-	// ORIGINAL: name = "[last_names[1]]'s Isolated Intifada" / name = "[initial(name)] of " + last_names.Join(" & ")
 	if (last_names.len == 1)
-		var/solo_template = lang_template("nametmpl_brother_team_solo", GLOB.i18n_server_locale) || "{0}'s Isolated Intifada"
-		name = replacetext(solo_template, "{0}", last_names[1])
+		name = "[last_names[1]]'s Isolated Intifada"
 	else
-		var/team_template = lang_template("nametmpl_brother_team", GLOB.i18n_server_locale) || "{0} of {1}"
-		name = replacetext(replacetext(team_template, "{0}", lang_reverse_text(initial(name))), "{1}", last_names.Join(" & "))
-	// NOVA EDIT CHANGE END
+		name = "[initial(name)] of " + last_names.Join(" & ")
 
 /datum/team/brother_team/proc/forge_brother_objectives()
 	objectives = list()

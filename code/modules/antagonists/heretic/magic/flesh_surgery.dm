@@ -275,7 +275,7 @@
 	carbon_victim.balloon_alert(caster, LANG("datum.2a4235b4", list(chosen_organ)))
 	carbon_victim.remove_atom_colour(TEMPORARY_COLOUR_PRIORITY, COLOR_DARK_RED)
 	playsound(victim, 'sound/effects/dismember.ogg', 50, TRUE)
-	if(carbon_victim.stat == CONSCIOUS)
+	if(!IS_UNCONSCIOUS_OR_CRIT(carbon_victim))
 		carbon_victim.adjust_timed_status_effect(15 SECONDS, /datum/status_effect/speech/slurring/heretic)
 		carbon_victim.emote("scream")
 
@@ -359,7 +359,7 @@
 	victim.balloon_alert(caster, LANG("datum.048c1f34", list(inserted_organ)))
 	victim.remove_atom_colour(TEMPORARY_COLOUR_PRIORITY, COLOR_DARK_RED)
 	playsound(victim, 'sound/effects/dismember.ogg', 50, TRUE)
-	if(victim.stat == CONSCIOUS)
+	if(!IS_UNCONSCIOUS_OR_CRIT(victim))
 		victim.emote("scream")
 		if(!using_on_self)
 			victim.adjust_timed_status_effect(15 SECONDS, /datum/status_effect/speech/slurring/heretic)

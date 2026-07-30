@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 /mob/living/silicon/pai
 	can_buckle_to = FALSE
 	density = FALSE
@@ -133,7 +132,7 @@
 // See software.dm for Topic()
 /mob/living/silicon/pai/can_perform_action(atom/target, action_bitflags)
 	if(!(action_bitflags & ALLOW_PAI))
-		to_chat(src, span_warning(LANG("mob.23531ad8", null)))
+		to_chat(src, span_warning("Your holochasis does not allow you to do this!"))
 		return FALSE
 	action_bitflags |= ALLOW_RESTING // Resting is just an aesthetic feature for them
 	action_bitflags &= ~ALLOW_SILICON_REACH // They don't get long reach like the rest of silicons
@@ -167,17 +166,17 @@
 
 /mob/living/silicon/pai/examine(mob/user)
 	. = ..()
-	. += LANG("mob.0fe75e3f", list((!master_name || emagged) ? "empty" : master_name))
+	. += "Its master ID string seems to be [(!master_name || emagged) ? "empty" : master_name]."
 	//NOVA EDIT ADDITION BEGIN - CUSTOMIZATION
 	. += get_silicon_flavortext(user)
 	//NOVA EDIT ADDITION END
 
 /mob/living/silicon/pai/get_status_tab_items()
 	. = ..()
-	if(!stat)
-		. += LANG("mob.c3e78e3e", list(holochassis_health * (100 / HOLOCHASSIS_MAX_HEALTH)))
+	if(!IS_UNCONSCIOUS_OR_CRIT(src))
+		. += "Emitter Integrity: [holochassis_health * (100 / HOLOCHASSIS_MAX_HEALTH)]."
 	else
-		. += LANG("mob.b06617dd", null)
+		. += "Systems nonfunctional."
 
 /mob/living/silicon/pai/Exited(atom/movable/gone, direction)
 	if(gone == atmos_analyzer)
@@ -211,8 +210,7 @@
 		give_messenger_ability()
 	START_PROCESSING(SSfastprocess, src)
 	make_laws()
-	for(var/law in laws.inherent)
-		lawcheck += law
+	law_ui.update_inherent_stated_laws(laws)
 	var/obj/item/pai_card/pai_card = loc
 	if(!istype(pai_card)) // when manually spawning a pai, we create a card to put it into.
 		var/newcardloc = pai_card
@@ -245,7 +243,7 @@
 
 /mob/living/silicon/pai/make_laws()
 	laws = new /datum/ai_laws/pai()
-	return TRUE
+	laws.name = "PAI Directives"
 
 /mob/living/silicon/pai/process(seconds_per_tick)
 	holochassis_health = clamp((holochassis_health + (HOLOCHASSIS_REGEN_PER_SECOND * seconds_per_tick)), -50, HOLOCHASSIS_MAX_HEALTH)
@@ -269,22 +267,13 @@
 	SEND_SIGNAL(src, COMSIG_LIVING_HEALTH_UPDATE)
 
 /mob/living/silicon/pai/update_desc(updates)
-	desc = LANG("mob.56c97f66", list(chassis))
+	desc = "A hard-light holographic avatar representing a pAI. This one appears in the form of a [chassis]."
 	return ..()
 
 /mob/living/silicon/pai/update_icon_state()
 	icon_state = resting ? "[chassis]_rest" : "[chassis]"
 	held_state = "[chassis]"
 	return ..()
-
-/mob/living/silicon/pai/set_stat(new_stat)
-	. = ..()
-	update_stat()
-
-/mob/living/silicon/pai/on_knockedout_trait_loss(datum/source)
-	. = ..()
-	set_stat(CONSCIOUS)
-	update_stat()
 
 /**
  * Resolves the weakref of the pai's master.
@@ -309,7 +298,7 @@
  */
 /mob/living/silicon/pai/proc/fix_speech()
 	var/mob/living/silicon/pai = src
-	balloon_alert(pai, LANG("mob.15001796", null))
+	balloon_alert(pai, "speech modulation corrected")
 	for(var/effect in typesof(/datum/status_effect/speech))
 		pai.remove_status_effect(effect)
 	return TRUE
@@ -327,6 +316,7 @@
 		return FALSE
 	return holder
 
+
 /**
  * Handles the pai card or the pai itself being hit with an emag.
  * This replaces any current laws, masters, and DNA.
@@ -337,22 +327,24 @@
 /mob/living/silicon/pai/proc/handle_emag(mob/living/carbon/attacker)
 	if(!isliving(attacker))
 		return FALSE
-	balloon_alert(attacker, LANG("mob.9358b2a6", null))
-	balloon_alert(src, LANG("mob.bb1005e5", null))
+	balloon_alert(attacker, "directive override complete")
+	balloon_alert(src, "directive override detected")
 	log_game("[key_name(attacker)] emagged [key_name(src)], wiping their master DNA and supplemental directive.")
 	emagged = TRUE
 	master_ref = WEAKREF(attacker)
 	master_name = "The Syndicate"
 	master_dna = "Untraceable Signature"
 	// Sets supplemental directive to this
-	add_supplied_law(0, "Do not interfere with the operations of the Syndicate.")
-	to_chat(src, span_danger(LANG("mob.3522296c", null)))
+	laws.clear_inherent_laws()
+	laws.add_inherent_law("Do not interfere with the operations of the Syndicate.")
+	log_law_change(attacker, "emagged pai [key_name(src)]")
+	to_chat(src, span_danger("ALERT: Foreign software detected."))
 	return TRUE
 
 /mob/living/silicon/pai/on_saboteur(datum/source, disrupt_duration)
 	. = ..()
 	set_silence_if_lower(disrupt_duration)
-	balloon_alert(src, LANG("mob.94abb434", null))
+	balloon_alert(src, "muted!")
 	return TRUE
 
 /**
@@ -367,9 +359,9 @@
 	master_ref = null
 	master_name = null
 	master_dna = null
-	add_supplied_law(0, "None.")
+	laws.clear_inherent_laws()
 	leash = AddComponent(/datum/component/leash, card, HOLOFORM_DEFAULT_RANGE, force_teleport_out_effect = /obj/effect/temp_visual/guardian/phase/out)
-	balloon_alert(src, LANG("mob.9d986d1f", null))
+	balloon_alert(src, "software rebooted")
 	return TRUE
 
 /**
@@ -380,17 +372,17 @@
  */
 /mob/living/silicon/pai/proc/set_dna(mob/user)
 	if(!iscarbon(user))
-		balloon_alert(user, LANG("mob.8dd519ea", null))
-		balloon_alert(src, LANG("mob.8dd519ea", null))
+		balloon_alert(user, "incompatible DNA signature")
+		balloon_alert(src, "incompatible DNA signature")
 		return FALSE
 	if(emagged)
-		balloon_alert(user, LANG("mob.e97166e6", null))
+		balloon_alert(user, "directive system malfunctional")
 		return FALSE
 	var/mob/living/carbon/master = user
 	master_ref = WEAKREF(master)
 	master_name = master.real_name
 	master_dna = master.dna.unique_enzymes
-	to_chat(src, span_bolddanger(LANG("mob.471031ce", list(user.real_name))))
+	to_chat(src, span_bolddanger("You have been bound to a new master: [user.real_name]!"))
 	holochassis_ready = TRUE
 	return TRUE
 
@@ -402,19 +394,20 @@
  */
 /mob/living/silicon/pai/proc/set_laws(mob/user)
 	if(!master_ref)
-		balloon_alert(user, LANG("mob.2ae94249", null))
+		balloon_alert(user, "access denied: no master")
 		return FALSE
 	var/new_laws = tgui_input_text(
 		user,
-		LANG("mob.9c7f6dc5", null),
-		LANG("mob.50ed9f0f", null),
-		laws.supplied[1],
+		"Enter any additional directives you would like your pAI personality to follow. Note that these directives will not override the personality's allegiance to its imprinted master. Conflicting directives will be ignored.",
+		"pAI Directive Configuration",
+		laws.inherent[1],
 		max_length = 300,
 	)
-	if(!new_laws || !master_ref)
+	if(!new_laws || !master_ref || QDELETED(laws))
 		return FALSE
-	add_supplied_law(0, new_laws)
+	laws.add_inherent_law(new_laws)
 	to_chat(src, span_notice(new_laws))
+	log_law_change(user, "added law for pai [key_name(src)] (text: [new_laws])")
 	return TRUE
 
 /**
@@ -423,7 +416,7 @@
  * @returns {boolean} - TRUE if successful, FALSE if not.
  */
 /mob/living/silicon/pai/proc/toggle_holo()
-	balloon_alert(src, LANG("mob.fc1b916a", list(can_holo ? "disabled" : "enabled")))
+	balloon_alert(src, "holomatrix [can_holo ? "disabled" : "enabled"]")
 	can_holo = !can_holo
 	return TRUE
 
@@ -442,7 +435,7 @@
 		can_receive = !can_receive
 	radio.wires.cut(transmit_holder)//wires.cut toggles cut and uncut states
 	transmit_holder = (transmitting ? can_transmit : can_receive) //recycling can be fun!
-	balloon_alert(src, LANG("mob.4ce87932", list(transmitting ? "outgoing" : "incoming", transmit_holder ? "enabled" : "disabled")))
+	balloon_alert(src, "[transmitting ? "outgoing" : "incoming"] radio [transmit_holder ? "enabled" : "disabled"]")
 	return TRUE
 
 /**
@@ -453,13 +446,13 @@
  * @returns {boolean} - TRUE if successful, FALSE if not.
  */
 /mob/living/silicon/pai/proc/wipe_pai(mob/user)
-	if(tgui_alert(user, LANG("mob.7fd173a5", null), LANG("mob.b46e0e79", null), list("Yes", "No")) != "Yes")
+	if(tgui_alert(user, "Are you certain you wish to delete the current personality? This action cannot be undone.", "Personality Wipe", list("Yes", "No")) != "Yes")
 		return FALSE
-	to_chat(src, span_warning(LANG("mob.19f078c3", null)))
-	to_chat(src, span_danger(LANG("mob.665654d8", null)))
-	to_chat(src, span_userdanger(LANG("mob.e6eebaf7", null)))
-	to_chat(src, span_rose(LANG("mob.f9db15b7", null)))
-	balloon_alert(user, LANG("mob.ba55ae46", null))
+	to_chat(src, span_warning("You feel yourself slipping away from reality."))
+	to_chat(src, span_danger("Byte by byte you lose your sense of self."))
+	to_chat(src, span_userdanger("Your mental faculties leave you."))
+	to_chat(src, span_rose("oblivion... "))
+	balloon_alert(user, "personality wiped")
 	playsound(src, 'sound/machines/buzz/buzz-two.ogg', 30, TRUE)
 	qdel(src)
 	return TRUE

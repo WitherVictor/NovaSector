@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 /obj/item/reagent_containers/spray/waterflower/lube
 	name = "water flower"
 	desc = "A seemingly innocent sunflower...with a twist. A <i>slippery</i> twist."
@@ -63,18 +62,22 @@
 		var/datum/component/slippery/slipper = GetComponent(/datum/component/slippery)
 		slipper.Slip(src, hit_atom)
 
-/obj/item/melee/energy/sword/bananium/attackby(obj/item/weapon, mob/living/user, list/modifiers, list/attack_modifiers)
-	if(COOLDOWN_FINISHED(src, next_trombone_allowed) && istype(weapon, /obj/item/melee/energy/sword/bananium))
-		COOLDOWN_START(src, next_trombone_allowed, 5 SECONDS)
-		to_chat(user, span_warning(LANG("obj.ac83dad3", null)))
-		playsound(src, 'sound/misc/sadtrombone.ogg', 50)
-		return TRUE
-	return ..()
+/obj/item/melee/energy/sword/bananium/item_interaction(mob/living/user, obj/item/tool, list/modifiers)
+	if(!istype(tool, /obj/item/melee/energy/sword/bananium))
+		return ..()
+
+	if(!COOLDOWN_FINISHED(src, next_trombone_allowed))
+		return ITEM_INTERACT_BLOCKING
+
+	COOLDOWN_START(src, next_trombone_allowed, 5 SECONDS)
+	to_chat(user, span_warning("You slap the two swords together. Sadly, they do not seem to fit!"))
+	playsound(src, 'sound/misc/sadtrombone.ogg', 50)
+	return ITEM_INTERACT_SUCCESS
 
 /obj/item/melee/energy/sword/bananium/suicide_act(mob/living/user)
 	if(!HAS_TRAIT(src, TRAIT_TRANSFORM_ACTIVE))
 		attack_self(user)
-	user.visible_message(span_suicide(LANG("obj.8f0522c6", list(user, pick("slitting [user.p_their()] stomach open with", "falling on"), src, user.p_theyre(), user.p_them()))))
+	user.visible_message(span_suicide("[user] is [pick("slitting [user.p_their()] stomach open with", "falling on")] [src]! It looks like [user.p_theyre()] trying to commit seppuku, but the blade slips off of [user.p_them()] harmlessly!"))
 	var/datum/component/slippery/slipper = GetComponent(/datum/component/slippery)
 	slipper.Slip(src, user)
 	return SHAME
@@ -169,7 +172,7 @@
 
 	var/potential_user = null
 	if(iscarbon(loc))
-		to_chat(loc, span_danger(LANG("obj.8404dd67", list(src))))
+		to_chat(loc, span_danger("[src] begins to beep."))
 		potential_user = loc // just for fingerprint diagnosis in explosion logging, the on_consumed proc will have provided the necessary context already
 
 	bomb.arm_grenade(potential_user, msg = FALSE)
@@ -179,7 +182,7 @@
 	QDEL_NULL(bomb)
 
 /obj/item/grown/bananapeel/bombanana/suicide_act(mob/living/user)
-	user.visible_message(span_suicide(LANG("obj.acd0ba8d", list(user, src))))
+	user.visible_message(span_suicide("[user] is deliberately slipping on \the [src]! It looks like \he's trying to commit suicide."))
 	playsound(loc, 'sound/misc/slip.ogg', 50, TRUE, -1)
 	bomb.arm_grenade(user, 0, FALSE)
 	return BRUTELOSS

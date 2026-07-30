@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 /datum/action/cooldown/spell/jaunt/mirror_walk
 	name = "Mirror Walk"
 	desc = "Allows you to traverse invisibly and freely across the station within the realm of the mirror. \
@@ -41,12 +40,12 @@
 	var/turf/owner_turf = get_turf(owner)
 	if(!is_reflection_nearby(get_turf(owner_turf)))
 		if(feedback)
-			to_chat(owner, span_warning(LANG("datum.7573a259", list(we_are_phasing ? "exit":"enter"))))
+			to_chat(owner, span_warning("There are no reflective surfaces nearby to [we_are_phasing ? "exit":"enter"] the mirror's realm here!"))
 		return FALSE
 
 	if(owner_turf.is_blocked_turf(exclude_mobs = TRUE))
 		if(feedback)
-			to_chat(owner, span_warning(LANG("datum.2cdabca1", list(we_are_phasing ? "exiting":"entering"))))
+			to_chat(owner, span_warning("Something is blocking you from [we_are_phasing ? "exiting":"entering"] the mirror's realm here!"))
 		return FALSE
 
 	return TRUE
@@ -61,18 +60,18 @@
 /datum/action/cooldown/spell/jaunt/mirror_walk/enter_jaunt(mob/living/jaunter, turf/loc_override)
 	var/atom/nearby_reflection = is_reflection_nearby(jaunter)
 	if(!nearby_reflection)
-		to_chat(jaunter, span_warning(LANG("datum.7179240f", null)))
+		to_chat(jaunter, span_warning("There are no reflective surfaces nearby to enter the mirror's realm!"))
 		return
 
 	jaunter.Beam(nearby_reflection, icon_state = "light_beam", time = phase_out_time)
-	nearby_reflection.visible_message(span_warning(LANG("datum.61260e4c", list(nearby_reflection))))
-	if(!do_after(jaunter, phase_out_time, nearby_reflection, IGNORE_USER_LOC_CHANGE|IGNORE_INCAPACITATED, hidden = TRUE))
+	nearby_reflection.visible_message(span_warning("[nearby_reflection] begins to shimmer and shake slightly!"))
+	if(!do_after(jaunter, phase_out_time, nearby_reflection, IGNORE_USER_LOC_CHANGE|IGNORE_INCAPACITATED, cog_icon = null))
 		return
 
 	playsound(jaunter, 'sound/effects/magic/ethereal_enter.ogg', 50, TRUE, -1)
 	jaunter.visible_message(
-		span_boldwarning(LANG("datum.2416af78", list(jaunter))),
-		span_notice(LANG("datum.e72bbad5", list(nearby_reflection))),
+		span_boldwarning("[jaunter] phases out of reality, vanishing before your very eyes!"),
+		span_notice("You jump into the reflection coming off of [nearby_reflection], entering the mirror's realm."),
 	)
 
 	// Pass the turf of the nearby reflection to the parent call
@@ -87,18 +86,18 @@
 	var/turf/phase_turf = get_turf(unjaunter)
 	var/atom/nearby_reflection = is_reflection_nearby(phase_turf)
 	if(!nearby_reflection)
-		to_chat(unjaunter, span_warning(LANG("datum.9edb62b1", null)))
+		to_chat(unjaunter, span_warning("There are no reflective surfaces nearby to exit from the mirror's realm!"))
 		return FALSE
 
 	// It would likely be a bad idea to teleport into an ai monitored area (ai sat)
 	var/area/phase_area = get_area(phase_turf)
 	if(phase_area.motion_monitored)
-		to_chat(unjaunter, span_warning(LANG("datum.9ab1e507", null)))
+		to_chat(unjaunter, span_warning("It's probably not a very wise idea to exit the mirror's realm here."))
 		return FALSE
 
 	nearby_reflection.Beam(phase_turf, icon_state = "light_beam", time = phase_in_time)
-	nearby_reflection.visible_message(span_warning(LANG("datum.61260e4c", list(nearby_reflection))))
-	if(!do_after(unjaunter, phase_in_time, nearby_reflection, hidden = TRUE))
+	nearby_reflection.visible_message(span_warning("[nearby_reflection] begins to shimmer and shake slightly!"))
+	if(!do_after(unjaunter, phase_in_time, nearby_reflection, cog_icon = null))
 		return FALSE
 
 	// We can move around while phasing in, but we'll always end up where we started it.
@@ -120,8 +119,8 @@
 	if (!nearby_reflection) // Should only be true if you're forced out somehow, like by having the spell removed
 		return
 	unjaunter.visible_message(
-		span_boldwarning(LANG("datum.9223d186", list(unjaunter))),
-		span_notice(LANG("datum.2fda469e", list(nearby_reflection))),
+		span_boldwarning("[unjaunter] phases into reality before your very eyes!"),
+		span_notice("You jump out of the reflection coming off of [nearby_reflection], exiting the mirror's realm."),
 	)
 
 /**

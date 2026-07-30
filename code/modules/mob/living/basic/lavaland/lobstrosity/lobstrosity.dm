@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 /// Cowardly mob with a charging attack
 /mob/living/basic/mining/lobstrosity
 	name = "arctic lobstrosity"
@@ -232,10 +231,7 @@
 	return isturf(loc)
 
 /mob/living/basic/mining/lobstrosity/juvenile/proc/grow_up()
-	// NOVA EDIT CHANGE - i18n: name is reverse-localized at Initialize so it never == the english initial(name), which
-	// made a default-named juvenile "look custom-named" and keep the juvenile name after growing. Also accept the
-	// un-reversed form, and reverse-localize the grown caste name. no-op on en. - ORIGINAL: name == initial(name) ? grow_type::name : name
-	var/name_to_use = (name == initial(name) || lang_unreverse_text(name) == initial(name)) ? lang_reverse_text(grow_type::name) : name
+	var/name_to_use = name == initial(name) ? grow_type::name : name
 	var/mob/living/basic/mining/lobstrosity/grown = change_mob_type(grow_type, get_turf(src), name_to_use)
 	if(HAS_TRAIT(src, TRAIT_TAMED))
 		grown.tamed()
@@ -274,16 +270,14 @@
 	command_feedback = "growl"
 	pointed_reaction = "and growls"
 	pet_ability_key = BB_TARGETED_ACTION
-	ability_behavior = /datum/ai_behavior/pet_use_ability/then_attack/long_ranged
 
 /datum/pet_command/use_ability/lob_charge/set_command_target(mob/living/parent, atom/target)
 	if (!target)
 		return FALSE
 	var/datum/targeting_strategy/targeter = GET_TARGETING_STRATEGY(parent.ai_controller.blackboard[targeting_strategy_key])
-	if(!targeter?.can_attack(parent, target))
-		parent.balloon_alert_to_viewers(LANG("datum.04da7f9f", null))
+	if(!targeter?.is_valid_target(parent, target))
+		parent.balloon_alert_to_viewers("shakes head!")
 		return FALSE
 	return ..()
 
 /datum/pet_command/use_ability/lob_charge/shrimp
-	ability_behavior = /datum/ai_behavior/pet_use_ability/then_attack/short_ranged

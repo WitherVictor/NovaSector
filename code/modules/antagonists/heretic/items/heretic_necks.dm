@@ -1,19 +1,45 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 /obj/item/clothing/neck/heretic_focus
 	name = "amber focus"
-	desc = "An amber focusing glass that provides a link to the world beyond. The necklace seems to twitch, but only when you look at it from the corner of your eye."
+	desc = "An amber focusing glass that provides a link to the world beyond. \
+		The necklace seems to twitch, but only when you look at it from the corner of your eye."
 	icon_state = "eldritch_necklace"
 	w_class = WEIGHT_CLASS_SMALL
 	resistance_flags = FIRE_PROOF
+	/// Cooldown between attempts to recharge spells
+	var/cooldown_period = 3 MINUTES
+	COOLDOWN_DECLARE(spell_recharge_cd)
 
-/obj/item/clothing/neck/heretic_focus/Initialize(mapload)
+/obj/item/clothing/neck/heretic_focus/equipped(mob/living/user, slot)
 	. = ..()
-	AddElement(/datum/element/heretic_focus)
+	if(!(slot & ITEM_SLOT_NECK) || !IS_HERETIC(user))
+		return
+	START_PROCESSING(SSobj, src)
+	COOLDOWN_START(src, spell_recharge_cd, cooldown_period)
+
+/obj/item/clothing/neck/heretic_focus/dropped(mob/living/user)
+	. = ..()
+	STOP_PROCESSING(SSobj, src)
+
+/obj/item/clothing/neck/heretic_focus/process(seconds_per_tick)
+	if(!COOLDOWN_FINISHED(src, spell_recharge_cd))
+		return
+
+	var/mob/living/wearer = loc
+	if(!istype(wearer) || !IS_HERETIC(wearer))
+		return PROCESS_KILL
+
+	var/datum/antagonist/heretic/our_heretic = GET_HERETIC(wearer)
+	for(var/datum/heretic_knowledge/spell/spell in our_heretic?.get_researched_knowledge())
+		spell.add_charges(ceil(spell.max_charges * spell.focus_recharge_amount))
+
+	COOLDOWN_START(src, spell_recharge_cd, cooldown_period)
 
 /obj/item/clothing/neck/heretic_focus/crimson_medallion
 	name = "crimson medallion"
-	desc = "A blood-red focusing glass that provides a link to the world beyond, and worse. Its eye is constantly twitching and gazing in all directions. It almost seems to be silently screaming..."
+	desc = "A blood-red focusing glass that provides a link to the world beyond, and worse. \
+		Its eye is constantly twitching and gazing in all directions. It almost seems to be silently screaming..."
 	icon_state = "crimson_medallion"
+	cooldown_period = 1 MINUTES
 	/// The aura healing component. Used to delete it when taken off.
 	var/datum/component/component
 	/// If active or not, used to add and remove its cult and heretic buffs.
@@ -38,7 +64,7 @@
 		team_color = pick(COLOR_CULT_RED, COLOR_GREEN)
 
 	user.add_traits(list(TRAIT_MANSUS_TOUCHED, TRAIT_BLOOD_FOUNTAIN), REF(src))
-	to_chat(user, span_alert(LANG("obj.eaa13bd8", null)))
+	to_chat(user, span_alert("Your heart takes on a strange yet soothing irregular rhythm, and your blood feels significantly less viscous than it used to be. You're not sure if that's a good thing."))
 	component = user.AddComponent( \
 		/datum/component/aura_healing, \
 		range = 3, \
@@ -59,7 +85,7 @@
 		return
 
 	if(HAS_TRAIT_FROM(user, TRAIT_MANSUS_TOUCHED, REF(src)))
-		to_chat(user, span_notice(LANG("obj.eaeb2777", null)))
+		to_chat(user, span_notice("Your heart and blood return to their regular old rhythm and flow."))
 
 	if(IS_HERETIC_OR_MONSTER(user) && active)
 		for(var/datum/action/cooldown/spell/spell_action in user.actions)
@@ -78,10 +104,10 @@
 
 /obj/item/clothing/neck/heretic_focus/crimson_medallion/attack_self(mob/living/user, modifiers)
 	. = ..()
-	to_chat(user, span_danger(LANG("obj.a1ac525b", list(src))))
+	to_chat(user, span_danger("You start tightly squeezing [src]..."))
 	if(!do_after(user, 1.25 SECONDS, src))
 		return
-	to_chat(user, span_danger(LANG("obj.8120c7ec", list(src))))
+	to_chat(user, span_danger("[src] explodes into a shower of gore and blood, drenching your arm. You can feel the blood seeping into your skin. You inmediately feel better, but soon, the feeling turns hollow as your veins itch."))
 	new /obj/effect/gibspawner/generic(get_turf(src))
 	var/heal_amt = user.adjust_brute_loss(-50)
 	user.adjust_fire_loss( -(50 - abs(heal_amt)) ) // no double dipping
@@ -96,28 +122,24 @@
 
 	var/magic_dude
 	if(IS_CULTIST(user))
-		. += span_cult_bold(LANG("obj.a8dda446", null))
+		. += span_cult_bold("This focus will allow you to store one extra spell and halve the empowering time, alongside providing a small regenerative effect.")
 		magic_dude = TRUE
 	if(IS_HERETIC_OR_MONSTER(user))
-		. += span_notice(LANG("obj.d8275faf", null))
 		magic_dude = TRUE
 
 	if(magic_dude)
-		. += span_red(LANG("obj.3146792a", null))
+		. += span_red("You can also squeeze it to recover a large amount of health quickly, at a cost...")
 
 /obj/item/clothing/neck/eldritch_amulet
 	name = "warm eldritch medallion"
-	desc = "A strange medallion. Peering through the crystalline surface, the world around you melts away. You see your own beating heart, and the pulsing of a thousand others."
+	desc = "A strange medallion. Peering through the crystalline surface, the world around you melts away. \
+		You see your own beating heart, and the pulsing of a thousand others."
 	icon = 'icons/obj/antags/eldritch.dmi'
 	icon_state = "eye_medalion"
 	w_class = WEIGHT_CLASS_SMALL
 	resistance_flags = FIRE_PROOF | UNACIDABLE | ACID_PROOF
 	/// A secondary clothing trait only applied to heretics.
 	var/heretic_only_trait = TRAIT_THERMAL_VISION
-
-/obj/item/clothing/neck/eldritch_amulet/Initialize(mapload)
-	. = ..()
-	AddElement(/datum/element/heretic_focus)
 
 /obj/item/clothing/neck/eldritch_amulet/equipped(mob/user, slot)
 	. = ..()
@@ -148,7 +170,7 @@
 	w_class = WEIGHT_CLASS_SMALL
 
 // The amulet conversion tool used by moon heretics
-/obj/item/clothing/neck/heretic_focus/moon_amulet
+/obj/item/clothing/neck/moon_amulet
 	name = "moonlight amulet"
 	desc = "A piece of the mind, the soul and the moon. Gazing into it makes your head spin and hear whispers of laughter and joy."
 	icon = 'icons/obj/antags/eldritch.dmi'
@@ -164,12 +186,12 @@
 	var/valid_weapon_type = /obj/item/melee/sickly_blade
 	var/sanity_threshold = SANITY_LEVEL_INSANE
 
-/obj/item/clothing/neck/heretic_focus/moon_amulet/examine(mob/user)
+/obj/item/clothing/neck/moon_amulet/examine(mob/user)
 	. = ..()
 	if(IS_HERETIC(user))
-		. += span_notice(LANG("obj.8b4f8eda", null))
+		. += span_notice("Wearing this amulet increases your healing speed by 50%.")
 
-/obj/item/clothing/neck/heretic_focus/moon_amulet/equipped(mob/living/user, slot)
+/obj/item/clothing/neck/moon_amulet/equipped(mob/living/user, slot)
 	. = ..()
 	if(!IS_HERETIC(user) && (slot_flags & slot))
 		channel_amulet(user)
@@ -180,7 +202,7 @@
 	on_amulet_activate(user)
 
 /// Modifies any blades you hold/pickup/drop when the amulet is enabled
-/obj/item/clothing/neck/heretic_focus/moon_amulet/proc/on_amulet_activate(mob/living/user)
+/obj/item/clothing/neck/moon_amulet/proc/on_amulet_activate(mob/living/user)
 	RegisterSignal(user, COMSIG_HERETIC_BLADE_ATTACK, PROC_REF(blade_channel))
 	RegisterSignal(user, COMSIG_MOB_EQUIPPED_ITEM, PROC_REF(on_equip_item))
 	RegisterSignal(user, COMSIG_MOB_DROPPED_ITEM, PROC_REF(on_dropped_item))
@@ -188,43 +210,41 @@
 	on_equip_item(user, user.get_active_held_item(), ITEM_SLOT_HANDS)
 	on_equip_item(user, user.get_inactive_held_item(), ITEM_SLOT_HANDS)
 	ADD_TRAIT(user, TRAIT_THERMAL_VISION, REF(src))
-	user.update_sight()
 	// If the equipper is a moon heretic, we buff their passive
 	var/datum/status_effect/heretic_passive/moon/moon_passive = user.has_status_effect(/datum/status_effect/heretic_passive/moon)
 	moon_passive?.amulet_equipped = TRUE
 
 /// Modifies any blades you hold/pickup/drop when the amulet is disabled
-/obj/item/clothing/neck/heretic_focus/moon_amulet/proc/on_amulet_deactivate(mob/living/user)
+/obj/item/clothing/neck/moon_amulet/proc/on_amulet_deactivate(mob/living/user)
 	// Make sure to restore the values of any blades we might be holding when our amulet is deactivated
 	on_dropped_item(user, user.get_active_held_item())
 	on_dropped_item(user, user.get_inactive_held_item())
 	UnregisterSignal(user, list(COMSIG_HERETIC_BLADE_ATTACK, COMSIG_MOB_EQUIPPED_ITEM, COMSIG_MOB_DROPPED_ITEM))
 	REMOVE_TRAIT(user, TRAIT_THERMAL_VISION, REF(src))
-	user.update_sight()
 	var/datum/status_effect/heretic_passive/moon/moon_passive = user.has_status_effect(/datum/status_effect/heretic_passive/moon)
 	moon_passive?.amulet_equipped = FALSE
 
-/obj/item/clothing/neck/heretic_focus/moon_amulet/dropped(mob/living/user)
+/obj/item/clothing/neck/moon_amulet/dropped(mob/living/user)
 	on_amulet_deactivate(user)
 	return ..()
 
-/obj/item/clothing/neck/heretic_focus/moon_amulet/attack(mob/living/target, mob/living/user, list/modifiers, list/attack_modifiers)
+/obj/item/clothing/neck/moon_amulet/attack(mob/living/target, mob/living/user, list/modifiers, list/attack_modifiers)
 	if(channel_amulet(user, target))
 		return
 	return ..()
 
-/obj/item/clothing/neck/heretic_focus/moon_amulet/proc/blade_channel(mob/living/attacker, mob/living/victim)
+/obj/item/clothing/neck/moon_amulet/proc/blade_channel(mob/living/attacker, mob/living/victim)
 	SIGNAL_HANDLER
 	channel_amulet(attacker, victim)
 
 /// Makes whoever the target is a bit more insane. If they are insane enough, they will be zombified into a moon zombie
-/obj/item/clothing/neck/heretic_focus/moon_amulet/proc/channel_amulet(mob/user, atom/target)
+/obj/item/clothing/neck/moon_amulet/proc/channel_amulet(mob/user, atom/target)
 
 	if(!isliving(user))
 		return FALSE
 	var/mob/living/living_user = user
 	if(!IS_HERETIC_OR_MONSTER(living_user))
-		living_user.balloon_alert(living_user, LANG("obj.34e18934", null))
+		living_user.balloon_alert(living_user, "you feel a presence watching you")
 		living_user.add_mood_event("Moon Amulet Insanity", /datum/mood_event/amulet_insanity)
 		living_user.mob_mood.adjust_sanity(-50)
 		return FALSE
@@ -237,10 +257,10 @@
 		return TRUE
 	var/mob/living/carbon/human/human_target = target
 	if(IS_HERETIC_OR_MONSTER(human_target))
-		living_user.balloon_alert(living_user, LANG("obj.98b1e538", null))
+		living_user.balloon_alert(living_user, "resists effects!")
 		return FALSE
 	if(human_target.has_status_effect(/datum/status_effect/moon_slept) || human_target.has_status_effect(/datum/status_effect/moon_converted))
-		human_target.balloon_alert(living_user, LANG("obj.19307f15", null))
+		human_target.balloon_alert(living_user, "causing damage!")
 		human_target.adjust_organ_loss(ORGAN_SLOT_BRAIN, 25)
 		return FALSE
 	if(human_target.can_block_magic(MAGIC_RESISTANCE_MOON))
@@ -248,22 +268,23 @@
 	if(!human_target.mob_mood)
 		return FALSE
 	if(human_target.mob_mood.sanity_level < sanity_threshold)
-		human_target.balloon_alert(living_user, LANG("obj.9bfa0589", null))
+		human_target.balloon_alert(living_user, "their mind is too strong!")
 		human_target.add_mood_event("Moon Amulet Insanity", /datum/mood_event/amulet_insanity)
 		human_target.mob_mood.adjust_sanity(-sanity_damage)
 	else
 		if(HAS_TRAIT(target, TRAIT_MINDSHIELD))
-			human_target.balloon_alert(living_user, LANG("obj.7bd4abf9", null))
+			human_target.balloon_alert(living_user, "their mind almost bends but something protects it!")
 			human_target.apply_status_effect(/datum/status_effect/moon_slept)
 			return TRUE
-		human_target.balloon_alert(living_user, LANG("obj.0a493994", null))
+		SEND_SIGNAL(user, COMSIG_MOB_APPLIED_MOONLIGHT_AMULET, target)
+		human_target.balloon_alert(living_user, "their mind bends to see the truth!")
 		human_target.apply_status_effect(/datum/status_effect/moon_converted)
 		living_user.log_message("made [human_target] insane.", LOG_GAME)
 		human_target.log_message("was driven insane by [living_user]", LOG_GAME)
 	return TRUE
 
 /// Modifies any blades that we equip while wearing the amulet
-/obj/item/clothing/neck/heretic_focus/moon_amulet/proc/on_equip_item(mob/user, obj/item/blade, slot)
+/obj/item/clothing/neck/moon_amulet/proc/on_equip_item(mob/user, obj/item/blade, slot)
 	SIGNAL_HANDLER
 	if(!istype(blade, valid_weapon_type))
 		return // We only care about modifying blades
@@ -280,7 +301,7 @@
 	blade.armour_penetration = initial(blade.armour_penetration)
 	UnregisterSignal(blade, COMSIG_SEND_ITEM_ATTACK_MESSAGE_OBJECT)
 
-/obj/item/clothing/neck/heretic_focus/moon_amulet/proc/modify_attack_message(obj/item/weapon, mob/living/victim, mob/living/attacker)
+/obj/item/clothing/neck/moon_amulet/proc/modify_attack_message(obj/item/weapon, mob/living/victim, mob/living/attacker)
 	SIGNAL_HANDLER
 
 	var/list/attack_list = list(
@@ -300,7 +321,7 @@
 	return SIGNAL_MESSAGE_MODIFIED
 
 /// Modifies any blades that we drop while wearing the amulet
-/obj/item/clothing/neck/heretic_focus/moon_amulet/proc/on_dropped_item(mob/user, obj/item/dropped_item)
+/obj/item/clothing/neck/moon_amulet/proc/on_dropped_item(mob/user, obj/item/dropped_item)
 	SIGNAL_HANDLER
 	if(!istype(dropped_item, valid_weapon_type))
 		return // We only care about modifying blades

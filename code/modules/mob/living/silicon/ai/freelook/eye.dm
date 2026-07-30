@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 /mob/eye/camera/ai
 	name = "Inactive AI Eye"
 	icon_state = "ai_camera"
@@ -119,7 +118,7 @@
 /mob/eye/camera/ai/examine(mob/user) //Displays a silicon's laws to ghosts
 	. = ..()
 	if(istype(ai) && ai.laws && isobserver(user))
-		. += LANG("mob.b79bbe52", list(ai))
+		. += "<b>[ai] has the following laws:</b>"
 		for(var/law in ai.laws.get_law_list(include_zeroth = TRUE))
 			. += law
 
@@ -186,7 +185,7 @@
 		ai_tracking_tool.reset_tracking()
 
 	if(isturf(loc) && (QDELETED(eyeobj) || !eyeobj.loc))
-		to_chat(src, LANG("mob.d3aa6a66", null))
+		to_chat(src, "ERROR: Eyeobj not found. Creating new eye...")
 		stack_trace("AI eye object wasn't found! Location: [loc] / Eyeobj: [eyeobj] / QDELETED: [QDELETED(eyeobj)] / Eye loc: [eyeobj?.loc]")
 		QDEL_NULL(eyeobj)
 		create_eye()
@@ -212,14 +211,12 @@
 	else
 		eyeobj.RemoveInvisibility(type)
 
-/mob/living/silicon/ai/verb/toggle_acceleration()
-	set category = "AI Commands"
-	set name = "切换摄像头加速"
+GAME_VERB(/mob/living/silicon/ai, toggle_acceleration, "Toggle Camera Acceleration", "AI Commands")
 
 	if(incapacitated)
 		return
 	acceleration = !acceleration
-	to_chat(usr, LANG("mob.69f73d44", list(acceleration ? "on" : "off")))
+	to_chat(usr, "Camera acceleration has been toggled [acceleration ? "on" : "off"].")
 
 /mob/eye/camera/ai/Hear(atom/movable/speaker, datum/language/message_language, raw_message, radio_freq, radio_freq_name, radio_freq_color, list/spans, list/message_mods = list(), message_range)
 	. = ..()

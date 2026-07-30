@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 /**
  * Machines in the world, such as computers, pipes, and airlocks.
  *
@@ -683,7 +682,7 @@
 
 
 	if((interaction_flags_machine & INTERACT_MACHINE_REQUIRES_SIGHT) && user.is_blind())
-		to_chat(user, span_warning(LANG("obj.b52b5035", null)))
+		to_chat(user, span_warning("This machine requires sight to use."))
 		return FALSE
 
 	// machines have their own lit up display screens and LED buttons so we don't need to check for light
@@ -715,7 +714,7 @@
 	add_fingerprint(user)
 	update_last_used(user)
 	if(isAI(user) && !SScameras.is_visible_by_cameras(get_turf(src))) //We check if they're an AI specifically here, so borgs/adminghosts/human wand can still access off-camera stuff.
-		to_chat(user, span_warning(LANG("obj.c65faf23", null)))
+		to_chat(user, span_warning("You can no longer connect to this device!"))
 		return FALSE
 	return ..()
 
@@ -747,9 +746,9 @@
 			hit_with_what_noun += plural_s(hit_with_what_noun) // hit with "their hands"
 
 	user.visible_message(
-		span_danger(LANG("obj.3d4bf711", list(user, src, user.p_their(), hit_with_what_noun, damage ? "." : ", [no_damage_feedback]!"))),
-		span_danger(LANG("obj.12903554", list(src, hit_with_what_noun, damage ? "." : ", [no_damage_feedback]!"))),
-		span_hear(LANG("obj.cb4c165c", list(damage ? "smash" : "thud"))),
+		span_danger("[user] smashes [src] with [user.p_their()] [hit_with_what_noun][damage ? "." : ", [no_damage_feedback]!"]"),
+		span_danger("You smash [src] with your [hit_with_what_noun][damage ? "." : ", [no_damage_feedback]!"]"),
+		span_hear("You hear a [damage ? "smash" : "thud"]."),
 		COMBAT_MESSAGE_RANGE,
 	)
 	return TRUE
@@ -772,7 +771,7 @@
 		if(user_unbuckle_mob(buckled_mobs[1],user))
 			return TRUE
 
-	var/unbuckled = tgui_input_list(user, LANG("obj.15d59dc6", null), LANG("obj.768fd2d4", null), sort_names(buckled_mobs))
+	var/unbuckled = tgui_input_list(user, "Who do you wish to unbuckle?", "Unbuckle", sort_names(buckled_mobs))
 	if(isnull(unbuckled))
 		return FALSE
 	if(user_unbuckle_mob(unbuckled,user))
@@ -887,7 +886,7 @@
 		return deconstruct_on_fail ? default_deconstruction_crowbar(user, crowbar) : ITEM_INTERACT_BLOCKING
 
 	crowbar.play_tool_sound(src, 50)
-	user.visible_message(span_notice(LANG("obj.13d2a45b", list(user, src))), span_notice(LANG("obj.f68d6a77", list(src))))
+	user.visible_message(span_notice("[user] pries open [src]."), span_notice("You pry open [src]."))
 	open_machine(density_to_set = open_density)
 	if (close_after_pry) //Should it immediately close after prying? (If not, it must be closed elsewhere)
 		close_machine(density_to_set = closed_density)
@@ -1054,7 +1053,7 @@
 
 	screwdriver.play_tool_sound(src, 50)
 	toggle_panel_open()
-	balloon_alert(user, LANG("obj.a6462958", list(panel_open ? "opened" : "closed")))
+	balloon_alert(user, "maintenance hatch [panel_open ? "opened" : "closed"]")
 	return ITEM_INTERACT_SUCCESS
 
 /**
@@ -1074,7 +1073,7 @@
 
 	wrench.play_tool_sound(src, 50)
 	setDir(turn(dir,-90))
-	to_chat(user, span_notice(LANG("obj.21b2b6d1", list(src))))
+	to_chat(user, span_notice("You rotate [src]."))
 	SEND_SIGNAL(src, COMSIG_MACHINERY_DEFAULT_ROTATE_WRENCH, user, wrench)
 	return ITEM_INTERACT_SUCCESS
 
@@ -1103,6 +1102,9 @@
 	var/list/part_list = replacer_tool.get_sorted_parts(ignore_stacks = TRUE)
 	if(!part_list.len)
 		return FALSE
+
+	replacer_tool.atom_storage.block_insert_remove_updates = TRUE
+	var/update_storage = FALSE
 	for(var/primary_part_base in component_parts)
 		//we exchanged all we could time to bail
 		if(!part_list.len)
@@ -1135,41 +1137,48 @@
 				// If it's rigged or corrupted, max the charge. Then explode it.
 				if(checked_cell.try_explode(max_charge = TRUE))
 					break
-			if(secondary_part.get_part_rating() > current_rating)
-				//store name of part incase we qdel it below
-				var/secondary_part_name = secondary_part.name
-				if(replacer_tool.atom_storage.attempt_remove(secondary_part, src))
-					if (istype(primary_part_base, /datum/stock_part))
-						var/stock_part_datum = GLOB.stock_part_datums_per_object[secondary_part.type]
-						if (isnull(stock_part_datum))
-							CRASH("[secondary_part] ([secondary_part.type]) did not have a stock part datum (was trying to find [primary_part_base])")
-						component_parts += stock_part_datum
-						part_list -= secondary_part //have to manually remove cause we are no longer refering replacer_tool.contents
-						qdel(secondary_part)
-					else
-						component_parts += secondary_part
-						secondary_part.forceMove(src)
-						part_list -= secondary_part //have to manually remove cause we are no longer refering replacer_tool.contents
-
-				component_parts -= primary_part_base
-
-				var/obj/physical_part
+			if(secondary_part.get_part_rating() <= current_rating)
+				continue
+			//store name of part incase we qdel it below
+			var/secondary_part_name = secondary_part.name
+			if(replacer_tool.atom_storage.attempt_remove(secondary_part, src, silent = TRUE, visual_updates = FALSE))
+				update_storage = TRUE
 				if (istype(primary_part_base, /datum/stock_part))
-					var/datum/stock_part/stock_part_datum = primary_part_base
-					var/physical_object_type = stock_part_datum.physical_object_type
-					physical_part = new physical_object_type
+					var/stock_part_datum = GLOB.stock_part_datums_per_object[secondary_part.type]
+					if (isnull(stock_part_datum))
+						CRASH("[secondary_part] ([secondary_part.type]) did not have a stock part datum (was trying to find [primary_part_base])")
+					component_parts += stock_part_datum
+					part_list -= secondary_part //have to manually remove cause we are no longer refering replacer_tool.contents
+					qdel(secondary_part)
 				else
-					physical_part = primary_part_base
+					component_parts += secondary_part
+					secondary_part.forceMove(src)
+					part_list -= secondary_part //have to manually remove cause we are no longer refering replacer_tool.contents
 
-				replacer_tool.atom_storage.attempt_insert(physical_part, user, TRUE, force = STORAGE_SOFT_LOCKED)
-				to_chat(user, span_notice(LANG("_machine.part_replaced", list(capitalize(physical_part.name), secondary_part_name)))) // NOVA EDIT - I18N: codemod missed this to_chat (capitalize() in lead slot)
-				shouldplaysound = TRUE //Only play the sound when parts are actually replaced!
-				break
+			component_parts -= primary_part_base
+
+			var/obj/physical_part
+			if (istype(primary_part_base, /datum/stock_part))
+				var/datum/stock_part/stock_part_datum = primary_part_base
+				var/physical_object_type = stock_part_datum.physical_object_type
+				physical_part = new physical_object_type
+			else
+				physical_part = primary_part_base
+
+			replacer_tool.atom_storage.attempt_insert(physical_part, user, override = TRUE, force = STORAGE_SOFT_LOCKED, messages = FALSE)
+			to_chat(user, span_notice("[capitalize(physical_part.name)] replaced with [secondary_part_name]."))
+			shouldplaysound = TRUE //Only play the sound when parts are actually replaced!
+			break
 
 	RefreshParts()
 
 	if(shouldplaysound)
 		replacer_tool.play_rped_effect()
+	if(update_storage)
+		replacer_tool.atom_storage.refresh_views()
+		replacer_tool.update_appearance()
+	replacer_tool.atom_storage.block_insert_remove_updates = FALSE
+
 	return TRUE
 
 /obj/machinery/proc/display_parts(mob/user)
@@ -1207,7 +1216,7 @@
 				part_count[component] = board.req_components[component]
 
 
-	var/text = span_notice(LANG("_machine.contains_parts", null)) // NOVA EDIT - I18N: header (colon-ended, not caught by extraction)
+	var/text = span_notice("It contains the following parts:")
 	for(var/component_part in part_count)
 		var/part_name
 		var/icon/html_icon
@@ -1224,29 +1233,23 @@
 			html_icon = part.icon
 			icon_state = part.icon_state
 		//merge icon & name into text
-		// NOVA EDIT START - I18N: reverse part name; drop \s plural suffix once localized (中文无复数; avoids "物质箱s")
-		var/disp_name = lang_reverse_text(part_name)
-		if(disp_name == part_name)
-			text += span_notice("[icon2html(html_icon, user, icon_state)] [part_count[component_part]] [part_name]\s.")
-		else
-			text += span_notice("[icon2html(html_icon, user, icon_state)] [part_count[component_part]] [disp_name].")
-		// NOVA EDIT END
+		text += span_notice("[icon2html(html_icon, user, icon_state)] [part_count[component_part]] [part_name]\s.")
 
 	return text
 
 /obj/machinery/examine(mob/user)
 	. = ..()
 	if(machine_stat & BROKEN)
-		. += span_notice(LANG("obj.4bd4ac5e", null))
+		. += span_notice("It looks broken and non-functional.")
 	if(!(resistance_flags & INDESTRUCTIBLE))
 		var/healthpercent = (atom_integrity/max_integrity) * 100
 		switch(healthpercent)
 			if(50 to 99)
-				. += LANG("obj.bc3c8a23", null)
+				. += "It looks slightly damaged."
 			if(25 to 50)
-				. += LANG("obj.27d47c4b", null)
+				. += "It appears heavily damaged."
 			if(0 to 25)
-				. += span_warning(LANG("obj.ad6c0cee", null))
+				. += span_warning("It's falling apart!")
 
 /obj/machinery/examine_descriptor(mob/user)
 	return "machine"
@@ -1291,6 +1294,7 @@
 /obj/machinery/rust_heretic_act(rust_strength)
 	var/damage = 500 + rust_strength * 200
 	take_damage(damage, BRUTE, BOMB, 1)
+	return TRUE
 
 /obj/machinery/vv_edit_var(vname, vval)
 	if(vname == NAMEOF(src, occupant))

@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 /*!
  * Contains the eldritch robes for heretics, a suit of armor that they can make via a ritual
  */
@@ -16,7 +15,7 @@
 	transparent_protection = HIDEGLOVES | HIDESUITSTORAGE | HIDEJUMPSUIT | HIDESHOES | HIDENECK
 	cold_protection = FULL_BODY
 	min_cold_protection_temperature = FIRE_SUIT_MIN_TEMP_PROTECT
-	allowed = list(/obj/item/melee/sickly_blade, /obj/item/gun/ballistic/rifle/lionhunter)
+	allowed = list(/obj/item/melee/sickly_blade, /obj/item/gun/ballistic/rifle/lionhunter, /obj/item/flashlight/lantern/heretic)
 	hoodtype = /obj/item/clothing/head/hooded/cult_hoodie/eldritch
 	armor_type = /datum/armor/eldritch_armor
 	clothing_traits = list(TRAIT_HERETIC_AURA_HIDDEN)
@@ -58,16 +57,6 @@
 /obj/item/clothing/suit/hooded/cultrobes/eldritch/on_hood_down(obj/item/clothing/head/hooded/hood)
 	hood_up = FALSE
 
-/obj/item/clothing/suit/hooded/cultrobes/eldritch/examine(mob/user)
-	. = ..()
-	if(!IS_HERETIC(user))
-		return
-	if(hood_up)
-		return
-
-	// Our hood gains the heretic_focus element.
-	. += span_notice(LANG("obj.bdf5da6f", null))
-
 /obj/item/clothing/head/hooded/cult_hoodie/eldritch
 	name = "ominous hood"
 	icon = 'icons/obj/clothing/head/helmet.dmi'
@@ -80,10 +69,6 @@
 	resistance_flags = FIRE_PROOF | UNACIDABLE | ACID_PROOF
 	clothing_flags = THICKMATERIAL | PLASMAMAN_PREVENT_IGNITION | SNUG_FIT
 	armor_type = /datum/armor/eldritch_armor
-
-/obj/item/clothing/head/hooded/cult_hoodie/eldritch/Initialize(mapload)
-	. = ..()
-	AddElement(/datum/element/heretic_focus)
 
 /datum/armor/eldritch_armor
 	melee = 50
@@ -385,10 +370,10 @@
 /obj/item/clothing/suit/hooded/cultrobes/eldritch/cosmic/proc/toggle_gravity(mob/living/user)
 	if(!weightless_enabled)
 		user.add_traits(list(TRAIT_NEGATES_GRAVITY, TRAIT_MOVE_FLYING, TRAIT_FREE_HYPERSPACE_MOVEMENT), REF(src))
-		user.balloon_alert(user, LANG("obj.da50d1c6", null))
+		user.balloon_alert(user, "enabled")
 	else
 		user.remove_traits(list(TRAIT_NEGATES_GRAVITY, TRAIT_MOVE_FLYING, TRAIT_FREE_HYPERSPACE_MOVEMENT), REF(src))
-		user.balloon_alert(user, LANG("obj.0c3e6192", null))
+		user.balloon_alert(user, "disabled")
 	weightless_enabled = !weightless_enabled
 
 /obj/item/clothing/head/hooded/cult_hoodie/eldritch/cosmic
@@ -683,7 +668,7 @@
 		return ..()
 	var/mob/living/carbon/human/wearer = user
 	if(wearer.get_organ_loss(ORGAN_SLOT_BRAIN) > 0)
-		wearer.balloon_alert(user, LANG("obj.ba3f49d9", null))
+		wearer.balloon_alert(user, "can't strip, brain damaged!")
 		return FALSE
 	return ..()
 
@@ -719,7 +704,7 @@
 	var/obj/item/bodypart/head/to_explode = human_wearer.get_bodypart(BODY_ZONE_HEAD)
 	if(!to_explode)
 		return
-	human_wearer.visible_message(span_warning(LANG("obj.b4fa934e", list(human_wearer))), ignored_mobs = list(human_wearer))
+	human_wearer.visible_message(span_warning("[human_wearer]'s head splatters with a sickening crunch!"), ignored_mobs = list(human_wearer))
 	new /obj/effect/gibspawner/generic(get_turf(human_wearer), human_wearer)
 	to_explode.dismember(dam_type = BRUTE, silent = TRUE)
 	to_explode.drop_organs()
@@ -768,7 +753,7 @@
 	braindead = TRUE
 	wearer.set_organ_loss(ORGAN_SLOT_BRAIN, INFINITY)
 	playsound(wearer, 'sound/effects/pope_entry.ogg', 50)
-	to_chat(wearer, span_bold(span_hypnophrase(LANG("obj.6b568e96", null))))
+	to_chat(wearer, span_bold(span_hypnophrase("A terrible fate has befallen you.")))
 	addtimer(CALLBACK(src, PROC_REF(kill_wearer), wearer), 5 SECONDS)
 
 /obj/item/clothing/head/hooded/cult_hoodie/eldritch/moon
@@ -1197,8 +1182,8 @@
 		return
 
 	// Let examiners know this works as a focus only if the hood is down
-	. += span_notice(LANG("obj.6ff98c84", null))
-	. += span_notice(LANG("obj.f4fee012", null))
+	. += span_notice("Allows you to cast heretic spells while the hood is down.")
+	. += span_notice("Is space worthy as long as the hood is down.")
 
 /obj/item/clothing/suit/hooded/cultrobes/void/on_hood_down(obj/item/clothing/head/hooded/hood)
 	make_visible()
@@ -1211,7 +1196,7 @@
 	if(IS_HERETIC_OR_MONSTER(wearer))
 		return TRUE
 
-	loc.balloon_alert(loc, LANG("obj.32262155", null))
+	loc.balloon_alert(loc, "can't get the hood up!")
 	return FALSE
 
 /obj/item/clothing/suit/hooded/cultrobes/void/on_hood_created(obj/item/clothing/head/hooded/hood)
@@ -1221,22 +1206,20 @@
 /// Makes our cloak "invisible". Not the wearer, the cloak itself.
 /obj/item/clothing/suit/hooded/cultrobes/void/proc/make_invisible()
 	add_traits(list(TRAIT_NO_STRIP, TRAIT_EXAMINE_SKIP), REF(src))
-	RemoveElement(/datum/element/heretic_focus)
 	flags_cover |= ALLOW_SURGERY_THROUGH
 
 	if(isliving(loc))
 		loc.remove_traits(list(TRAIT_RESISTLOWPRESSURE, TRAIT_RESISTCOLD), REF(src))
 		REMOVE_TRAIT(loc, TRAIT_RESISTLOWPRESSURE, REF(src))
-		loc.balloon_alert(loc, LANG("obj.3bdb409b", null))
-		loc.visible_message(span_notice(LANG("obj.201b14e9", list(loc))))
+		loc.balloon_alert(loc, "cloak hidden")
+		loc.visible_message(span_notice("Light shifts around [loc], making the cloak around them invisible!"))
 
 /// Makes our cloak "visible" again.
 /obj/item/clothing/suit/hooded/cultrobes/void/proc/make_visible()
 	remove_traits(list(TRAIT_NO_STRIP, TRAIT_EXAMINE_SKIP), REF(src))
-	AddElement(/datum/element/heretic_focus)
 	flags_cover &= ~ALLOW_SURGERY_THROUGH
 
 	if(isliving(loc))
 		loc.add_traits(list(TRAIT_RESISTLOWPRESSURE, TRAIT_RESISTCOLD), REF(src))
-		loc.balloon_alert(loc, LANG("obj.22eedd86", null))
-		loc.visible_message(span_notice(LANG("obj.bf8a7b81", list(loc))))
+		loc.balloon_alert(loc, "cloak revealed")
+		loc.visible_message(span_notice("A kaleidoscope of colours collapses around [loc], a cloak appearing suddenly around their person!"))

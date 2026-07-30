@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 #define OVEN_SMOKE_STATE_NONE 0
 #define OVEN_SMOKE_STATE_GOOD 1
 #define OVEN_SMOKE_STATE_NEUTRAL 2
@@ -106,18 +105,19 @@
 	update_appearance()
 	use_energy(active_power_usage)
 
-/obj/machinery/oven/attackby(obj/item/item, mob/user, list/modifiers, list/attack_modifiers)
-	if(!open || used_tray || !istype(item, /obj/item/plate/oven_tray))
-		return ..()
+/obj/machinery/oven/item_interaction(mob/living/user, obj/item/tool, list/modifiers)
+	if(open && used_tray && tool.atom_storage)
+		return used_tray.item_interaction(user, tool, modifiers)
 
-	if(user.transferItemToLoc(item, src, silent = FALSE))
-		to_chat(user, span_notice(LANG("obj.de7df645", list(item, src))))
-		add_tray_to_oven(item, user)
+	if(!open || used_tray || !istype(tool, /obj/item/plate/oven_tray))
+		return NONE
 
-/obj/machinery/oven/item_interaction(mob/living/user, obj/item/item, list/modifiers)
-	if(open && used_tray && item.atom_storage)
-		return used_tray.item_interaction(user, item, modifiers)
-	return NONE
+	if(!user.transferItemToLoc(tool, src, silent = FALSE))
+		return ITEM_INTERACT_BLOCKING
+
+	to_chat(user, span_notice("You put [tool] in [src]."))
+	add_tray_to_oven(tool, user)
+	return ITEM_INTERACT_SUCCESS
 
 /obj/machinery/oven/item_interaction_secondary(mob/living/user, obj/item/tool, list/modifiers)
 	if(open && used_tray && tool.atom_storage)
@@ -160,13 +160,13 @@
 	if(open)
 		playsound(src, 'sound/machines/oven/oven_open.ogg', 75, TRUE)
 		set_smoke_state(OVEN_SMOKE_STATE_NONE)
-		to_chat(user, span_notice(LANG("obj.89d38f23", list(src))))
+		to_chat(user, span_notice("You open [src]."))
 		end_processing()
 		if(used_tray)
 			used_tray.vis_flags &= ~VIS_HIDE
 	else
 		playsound(src, 'sound/machines/oven/oven_close.ogg', 75, TRUE)
-		to_chat(user, span_notice(LANG("obj.e65ef900", list(src))))
+		to_chat(user, span_notice("You close [src]."))
 		if(used_tray)
 			begin_processing()
 			used_tray.vis_flags |= VIS_HIDE
@@ -185,13 +185,13 @@
 	if(open)
 		playsound(src, 'sound/machines/oven/oven_open.ogg', 75, TRUE)
 		set_smoke_state(OVEN_SMOKE_STATE_NONE)
-		to_chat(user, span_notice(LANG("obj.89d38f23", list(src))))
+		to_chat(user, span_notice("You open [src]."))
 		end_processing()
 		if(used_tray)
 			used_tray.vis_flags &= ~VIS_HIDE
 	else
 		playsound(src, 'sound/machines/oven/oven_close.ogg', 75, TRUE)
-		to_chat(user, span_notice(LANG("obj.e65ef900", list(src))))
+		to_chat(user, span_notice("You close [src]."))
 		if(used_tray)
 			begin_processing()
 			used_tray.vis_flags |= VIS_HIDE
@@ -254,10 +254,6 @@
 
 /obj/machinery/oven/range/Initialize(mapload)
 	. = ..()
-	// NOVA EDIT ADDITION START - I18N - "range" is a common word; the global reverse renders it as 范围 (the math sense). Pick the appliance term locally instead of polluting the shared catalog entry.
-	if(GLOB.i18n_server_locale != DEFAULT_UI_LOCALE)
-		name = "灶台"
-	// NOVA EDIT ADDITION END
 	var/obj/item/reagent_containers/cup/soup_pot/mapload_container
 	if(mapload)
 		mapload_container = new(loc)
@@ -292,12 +288,12 @@
 		return NONE
 
 	if(length(contents) >= max_items)
-		balloon_alert(user, LANG("obj.2cb7d354", null))
+		balloon_alert(user, "it's full!")
 		return ITEM_INTERACT_BLOCKING
 
 	if(!istype(item, /obj/item/storage/bag/tray))
 		// Non-tray dumping requires a do_after
-		to_chat(user, span_notice(LANG("obj.66f69281", list(item, src))))
+		to_chat(user, span_notice("You start dumping out the contents of [item] into [src]..."))
 		if(!do_after(user, 2 SECONDS, target = item))
 			return ITEM_INTERACT_BLOCKING
 
@@ -311,7 +307,7 @@
 			loaded++
 			AddToPlate(tray_item, user)
 	if(loaded)
-		to_chat(user, span_notice(LANG("obj.6732f6a8", list(loaded, src))))
+		to_chat(user, span_notice("You insert [loaded] item\s into [src]."))
 		update_appearance()
 		return ITEM_INTERACT_SUCCESS
 	return ITEM_INTERACT_BLOCKING

@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 /**
  * Datumized Storage
  * Eliminates the need for custom signals specifically for the storage component, and attaches a storage variable (atom_storage) to every atom.
@@ -130,6 +129,8 @@
 	/// Switch this off if you want to handle click_alt in the parent atom
 	var/click_alt_open = TRUE
 
+	/// Stops updates from being called on insert or remove, useful for mass insertions/removals - just don't forget to update it manually afterwards
+	VAR_FINAL/block_insert_remove_updates = FALSE
 
 /datum/storage/New(
 	atom/parent,
@@ -190,11 +191,12 @@
 		return
 
 	arrived.item_flags |= IN_STORAGE
-	refresh_views()
 	arrived.on_enter_storage(src)
 	RegisterSignal(arrived, COMSIG_MOUSEDROPPED_ONTO, PROC_REF(mousedrop_receive))
 	SEND_SIGNAL(arrived, COMSIG_ITEM_STORED, src)
-	parent.update_appearance()
+	if(!block_insert_remove_updates)
+		refresh_views()
+		parent.update_appearance()
 
 /// Automatically ran on all object removals: flag marking and view refreshing.
 /datum/storage/proc/handle_exit(datum/source, obj/item/gone)
@@ -204,11 +206,27 @@
 		return
 
 	gone.item_flags &= ~IN_STORAGE
-	remove_and_refresh(gone)
 	gone.on_exit_storage(src)
 	UnregisterSignal(gone, COMSIG_MOUSEDROPPED_ONTO)
 	SEND_SIGNAL(gone, COMSIG_ITEM_UNSTORED, src)
-	parent.update_appearance()
+
+	// resets relevant variables as it goes
+	for(var/mob/user as anything in is_using)
+		if (user.hud_used?.screen_groups[HUD_GROUP_STORAGE])
+			user.hud_used.screen_groups[HUD_GROUP_STORAGE] -= gone
+
+		user.client?.screen -= gone
+
+	gone.layer = initial(gone.layer)
+	SET_PLANE_IMPLICIT(gone, initial(gone.plane))
+	gone.mouse_opacity = initial(gone.mouse_opacity)
+	gone.screen_loc = null
+	if(numerical_stacking)
+		gone.maptext = ""
+
+	if(!block_insert_remove_updates)
+		refresh_views()
+		parent.update_appearance()
 
 /// Set the passed atom as the parent
 /datum/storage/proc/set_parent(atom/new_parent)
@@ -280,7 +298,7 @@
 		return
 
 	if(href_list["show_valid_pocket_items"])
-		to_chat(user, span_notice(LANG("datum.ba700223", list(source, can_hold_description))))
+		to_chat(user, span_notice("[source] can hold: [can_hold_description]"))
 
 /datum/storage/proc/handle_examination(datum/source, mob/user, list/examine_list)
 	SIGNAL_HANDLER
@@ -288,7 +306,7 @@
 	if(isnull(can_hold_description))
 		return
 
-	examine_list += span_notice(LANG("datum.bdf12796", null))
+	examine_list += span_notice("You can examine this further to check what kind of extra items it can hold.")
 
 /datum/storage/proc/handle_extra_examination(datum/source, mob/user, list/examine_list)
 	SIGNAL_HANDLER
@@ -296,7 +314,7 @@
 	if(isnull(can_hold_description))
 		return
 
-	examine_list += span_notice(LANG("datum.ba700223", list(source, can_hold_description)))
+	examine_list += span_notice("[source] can hold: [can_hold_description]")
 
 /// Almost 100% of the time the lists passed into set_holdable are reused for each instance
 /// Just fucking cache it 4head
@@ -370,15 +388,6 @@ GLOBAL_LIST_EMPTY(cached_storage_typecaches)
 	RegisterSignal(modeswitch_action, COMSIG_ACTION_TRIGGER, PROC_REF(action_trigger))
 	RegisterSignal(modeswitch_action, COMSIG_QDELETING, PROC_REF(action_deleted))
 
-/// Refreshes and item to be put back into the real world, out of storage.
-/datum/storage/proc/reset_item(obj/item/thing)
-	thing.layer = initial(thing.layer)
-	SET_PLANE_IMPLICIT(thing, initial(thing.plane))
-	thing.mouse_opacity = initial(thing.mouse_opacity)
-	thing.screen_loc = null
-	if(numerical_stacking)
-		thing.maptext = ""
-
 /**
  * Checks if an item is capable of being inserted into the storage.
  *
@@ -402,7 +411,7 @@ GLOBAL_LIST_EMPTY(cached_storage_typecaches)
 
 	if(locked > force)
 		if(messages && user)
-			user.balloon_alert(user, LANG("datum.7a1223de", null))
+			user.balloon_alert(user, "closed!")
 		return FALSE
 
 	if((to_insert == parent) || (to_insert == real_location))
@@ -411,21 +420,21 @@ GLOBAL_LIST_EMPTY(cached_storage_typecaches)
 	if(to_insert.w_class > max_specific_storage)
 		if(!is_type_in_typecache(to_insert, exception_hold))
 			if(messages && user)
-				user.balloon_alert(user, LANG("datum.a5e64cbb", null))
+				user.balloon_alert(user, "too big!")
 			return FALSE
 		if(exception_max <= get_exception_count())
 			if(messages && user)
-				user.balloon_alert(user, LANG("datum.ad6c6384", null))
+				user.balloon_alert(user, "no room!")
 			return FALSE
 
 	if(real_location.contents.len >= max_slots)
 		if(messages && user && !silent_for_user)
-			user.balloon_alert(user, LANG("datum.ad6c6384", null))
+			user.balloon_alert(user, "no room!")
 		return FALSE
 
 	if(to_insert.w_class + get_total_weight() > max_total_storage)
 		if(messages && user && !silent_for_user)
-			user.balloon_alert(user, LANG("datum.ad6c6384", null))
+			user.balloon_alert(user, "no room!")
 		return FALSE
 
 	var/can_hold_it = isnull(can_hold) || is_type_in_typecache(to_insert, can_hold) || is_type_in_typecache(to_insert, exception_hold)
@@ -433,19 +442,19 @@ GLOBAL_LIST_EMPTY(cached_storage_typecaches)
 	var/trait_says_no = HAS_TRAIT(to_insert, TRAIT_NO_STORAGE_INSERT)
 	if(!can_hold_it || cant_hold_it || trait_says_no)
 		if(messages && user)
-			user.balloon_alert(user, LANG("datum.60b37357", null))
+			user.balloon_alert(user, "can't hold!")
 		return FALSE
 
 	if(HAS_TRAIT(to_insert, TRAIT_NODROP))
 		if(messages && user)
-			user.balloon_alert(user, LANG("datum.1a93fd1b", null))
+			user.balloon_alert(user, "stuck on your hand!")
 		return FALSE
 
 	// this is valid if the container our location is being held in is a storage item
 	var/datum/storage/bigger_fish = parent.loc.atom_storage
 	if(bigger_fish && bigger_fish.max_specific_storage < max_specific_storage)
 		if(messages && user)
-			user.balloon_alert(user, LANG("datum.f4935eb9", list(LOWER_TEXT(parent.loc.name))))
+			user.balloon_alert(user, "[LOWER_TEXT(parent.loc.name)] is in the way!")
 		return FALSE
 
 	if(isitem(parent))
@@ -453,7 +462,7 @@ GLOBAL_LIST_EMPTY(cached_storage_typecaches)
 		var/datum/storage/smaller_fish = to_insert.atom_storage
 		if(smaller_fish && !allow_big_nesting && to_insert.w_class >= item_parent.w_class)
 			if(messages && user)
-				user.balloon_alert(user, LANG("datum.a5e64cbb", null))
+				user.balloon_alert(user, "too big!")
 			return FALSE
 
 	return TRUE
@@ -504,7 +513,6 @@ GLOBAL_LIST_EMPTY(cached_storage_typecaches)
 		to_insert.do_pickup_animation(real_location, user)
 	if (messages)
 		item_insertion_feedback(user, to_insert, override)
-	parent.update_appearance()
 	return TRUE
 
 /// Since items inside storages ignore transparency for QOL reasons, we're tracking when things are dropped onto them instead of our UI elements
@@ -544,22 +552,28 @@ GLOBAL_LIST_EMPTY(cached_storage_typecaches)
  * * list/success - list with a single element to use as a tracker for the amount of things we picked up
  */
 /datum/storage/proc/handle_mass_pickup(mob/user, pick_up_type, atom/thing_loc, list/rejections, datum/progressbar/progress, list/success)
+	. = FALSE
+	block_insert_remove_updates = TRUE
 	for(var/obj/item/thing in thing_loc)
 		if(!isnull(pick_up_type) && !istype(thing, pick_up_type))
 			continue
 		if(thing.type in rejections) // To limit bag spamming: any given type only complains once
 			continue
-		if(!attempt_insert(thing, user, override = TRUE)) // Note can_be_inserted still makes noise when the answer is no
+		if(!attempt_insert(thing, user, override = TRUE, messages = FALSE)) // Note can_be_inserted still makes noise when the answer is no
 			if(real_location.contents.len >= max_slots)
 				break
 			rejections += thing.type // therefore full bags are still a little spammy
 			continue
 		success[1] += 1
 		if (TICK_CHECK)
-			progress.update(success[1])
-			return TRUE
+			. = TRUE
+			break
+
+	block_insert_remove_updates = FALSE
+	refresh_views()
+	parent.update_appearance()
 	progress.update(success[1])
-	return FALSE
+	return .
 
 /**
  * Provides visual feedback in chat for an item insertion
@@ -583,7 +597,7 @@ GLOBAL_LIST_EMPTY(cached_storage_typecaches)
 		playsound(parent, rustle_sound, 50, rustle_vary, -5)
 
 	if(!silent_for_user)
-		to_chat(user, span_notice(LANG("datum.686a163d", list(thing, insert_preposition, parent))))
+		to_chat(user, span_notice("You put [thing] [insert_preposition]to [parent]."))
 
 	for(var/mob/viewing in oviewers(user))
 		if(in_range(user, viewing) || (thing?.w_class >= WEIGHT_CLASS_NORMAL))
@@ -608,7 +622,6 @@ GLOBAL_LIST_EMPTY(cached_storage_typecaches)
 		thing.dropped(mob_parent, /*silent = */TRUE)
 
 	if(remove_to_loc)
-		reset_item(thing)
 		thing.forceMove(remove_to_loc)
 
 		if(!silent && do_rustle)
@@ -619,12 +632,8 @@ GLOBAL_LIST_EMPTY(cached_storage_typecaches)
 	else
 		thing.moveToNullspace()
 
-	if(visual_updates)
-		if(animated)
-			animate_parent()
-
-		refresh_views()
-		parent.update_appearance()
+	if(visual_updates && animated)
+		animate_parent()
 
 	SEND_SIGNAL(parent, COMSIG_ATOM_REMOVED_ITEM, thing, remove_to_loc, silent)
 	SEND_SIGNAL(src, COMSIG_STORAGE_REMOVED_ITEM, thing, remove_to_loc, silent)
@@ -638,11 +647,19 @@ GLOBAL_LIST_EMPTY(cached_storage_typecaches)
  * * update_storage - should we update the parent to show visual effects
  */
 /datum/storage/proc/remove_all(atom/drop_loc = parent.drop_location(), update_storage = TRUE)
+	block_insert_remove_updates = TRUE
 	for(var/obj/item/thing in real_location)
-		if(!attempt_remove(thing, drop_loc, silent = TRUE, visual_updates = update_storage))
+		if(!attempt_remove(thing, drop_loc, silent = TRUE, visual_updates = FALSE))
 			continue
 		thing.pixel_x = thing.base_pixel_x + rand(-8, 8)
 		thing.pixel_y = thing.base_pixel_y + rand(-8, 8)
+
+	block_insert_remove_updates = FALSE
+	if(update_storage)
+		if(animated)
+			animate_parent()
+		refresh_views()
+		parent.update_appearance()
 
 /**
  * Allows a mob to attempt to remove a single item from the storage
@@ -712,27 +729,6 @@ GLOBAL_LIST_EMPTY(cached_storage_typecaches)
 
 	return ret
 
-/**
- * Resets an object, removes it from our screen, and refreshes the view.
- *
- * @param atom/movable/gone the object leaving our storage
- */
-/datum/storage/proc/remove_and_refresh(atom/movable/gone)
-	SIGNAL_HANDLER
-
-	for(var/mob/user as anything in is_using)
-		if (user.hud_used?.screen_groups[HUD_GROUP_STORAGE])
-			user.hud_used.screen_groups[HUD_GROUP_STORAGE] -= gone
-
-		if(!user.client)
-			continue
-
-		var/client/cuser = user.client
-		cuser.screen -= gone
-
-	reset_item(gone)
-	refresh_views()
-
 /// Signal handler for emp_act to emp all contents
 /datum/storage/proc/on_emp_act(datum/source, severity, protection)
 	SIGNAL_HANDLER
@@ -775,7 +771,7 @@ GLOBAL_LIST_EMPTY(cached_storage_typecaches)
 
 	var/amount = length(pick_up)
 	if(!amount)
-		parent.balloon_alert(user, LANG("datum.8e4b1f61", null))
+		parent.balloon_alert(user, "nothing to pick up!")
 		return
 
 	var/datum/progressbar/progress = new(user, amount, thing.loc)
@@ -790,7 +786,11 @@ GLOBAL_LIST_EMPTY(cached_storage_typecaches)
 
 	progress.end_progress()
 	if(success[1])
-		parent.balloon_alert(user, LANG("datum.c3416f43", null))
+		if(animated)
+			animate_parent()
+		if(do_rustle && rustle_sound)
+			playsound(parent, rustle_sound, 50, TRUE, -5)
+		parent.balloon_alert(user, "picked up")
 
 /// Signal handler for whenever we drag the storage somewhere.
 /datum/storage/proc/on_mousedrop_onto(datum/source, atom/over_object, mob/user)
@@ -851,7 +851,7 @@ GLOBAL_LIST_EMPTY(cached_storage_typecaches)
  */
 /datum/storage/proc/dump_content_at(atom/dest_object, dump_loc, mob/user)
 	if(locked)
-		user.balloon_alert(user, LANG("datum.7a1223de", null))
+		user.balloon_alert(user, "closed!")
 		return
 	if(!parent.IsReachableBy(user) || !dest_object.IsReachableBy(user))
 		return
@@ -861,7 +861,7 @@ GLOBAL_LIST_EMPTY(cached_storage_typecaches)
 
 	// Storage to storage transfer is instant
 	if(dest_object.atom_storage)
-		to_chat(user, span_notice(LANG("datum.1ef6f064", list(parent, dest_object))))
+		to_chat(user, span_notice("You dump the contents of [parent] into [dest_object]."))
 
 		if(do_rustle && rustle_sound)
 			playsound(parent, rustle_sound, 50, TRUE, -5)
@@ -873,7 +873,7 @@ GLOBAL_LIST_EMPTY(cached_storage_typecaches)
 		return
 
 	// Storage to loc transfer requires a do_after
-	to_chat(user, span_notice(LANG("datum.1789fec5", list(parent, dest_object))))
+	to_chat(user, span_notice("You start dumping out the contents of [parent] onto [dest_object]..."))
 	if(!do_after(user, 2 SECONDS, target = dest_object))
 		return
 
@@ -972,7 +972,7 @@ GLOBAL_LIST_EMPTY(cached_storage_typecaches)
 
 	if(locked)
 		if(!silent)
-			parent.balloon_alert(to_show, LANG("datum.7a1223de", null))
+			parent.balloon_alert(to_show, "closed!")
 		return FALSE
 
 	// If we're quickdrawing boys
@@ -985,8 +985,8 @@ GLOBAL_LIST_EMPTY(cached_storage_typecaches)
 			INVOKE_ASYNC(src, PROC_REF(put_in_hands_async), to_show, to_remove)
 			if(!silent)
 				to_show.visible_message(
-					span_warning(LANG("datum.e20111a7", list(to_show, to_remove, parent))),
-					span_notice(LANG("datum.c1811110", list(to_remove, parent))),
+					span_warning("[to_show] draws [to_remove] from [parent]!"),
+					span_notice("You draw [to_remove] from [parent]."),
 				)
 			return TRUE
 
@@ -1007,7 +1007,7 @@ GLOBAL_LIST_EMPTY(cached_storage_typecaches)
 /datum/storage/proc/put_in_hands_async(mob/to_show, obj/item/toremove)
 	if(!to_show.put_in_hands(toremove))
 		if(!silent)
-			toremove.balloon_alert(to_show, LANG("datum.add868e2", null))
+			toremove.balloon_alert(to_show, "fumbled!")
 		return TRUE
 
 /// Signal handler for whenever a mob walks away with us, close if they can't reach us.
@@ -1066,7 +1066,7 @@ GLOBAL_LIST_EMPTY(cached_storage_typecaches)
 	if(!isobserver(to_show) && !display_contents)
 		return FALSE
 
-	if(to_show.active_storage != src && (to_show.stat == CONSCIOUS))
+	if(to_show.active_storage != src && (!IS_UNCONSCIOUS_OR_CRIT(to_show)))
 		for(var/obj/item/thing in real_location)
 			if(thing.on_found(to_show))
 				to_show.active_storage?.hide_contents(to_show)
@@ -1181,11 +1181,11 @@ GLOBAL_LIST_EMPTY(cached_storage_typecaches)
 	collection_mode = (collection_mode + 1) % 3
 	switch(collection_mode)
 		if(COLLECT_SAME)
-			parent.balloon_alert(user, LANG("datum.4d89b307", null))
+			parent.balloon_alert(user, "will now only pick up a single type")
 		if(COLLECT_EVERYTHING)
-			parent.balloon_alert(user, LANG("datum.18c0196d", null))
+			parent.balloon_alert(user, "will now pick up everything")
 		if(COLLECT_ONE)
-			parent.balloon_alert(user, LANG("datum.b253d280", null))
+			parent.balloon_alert(user, "will now pick up one at a time")
 
 /// Gives a spiffy animation to our parent to represent opening and closing.
 /datum/storage/proc/animate_parent()
@@ -1204,7 +1204,7 @@ GLOBAL_LIST_EMPTY(cached_storage_typecaches)
 	if(!attempt_remove(changed, parent.drop_location()))
 		return
 
-	changed.visible_message(span_warning(LANG("datum.64fbe43f", list(changed, parent))), vision_distance = COMBAT_MESSAGE_RANGE)
+	changed.visible_message(span_warning("[changed] falls out of [parent]!"), vision_distance = COMBAT_MESSAGE_RANGE)
 
 ///Assign a new value to the locked variable. If it's higher than NOT_LOCKED, close the UIs and update the appearance of the parent.
 /datum/storage/proc/set_locked(new_locked)

@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 /obj/item/assembly/signaler
 	name = "remote signaling device"
 	desc = "Used to remotely activate devices. Allows for syncing when using a secure signaler on another."
@@ -31,7 +30,7 @@
 	var/range = 0 //Everywhere
 
 /obj/item/assembly/signaler/suicide_act(mob/living/user)
-	user.visible_message(span_suicide(LANG("obj.ff0940e6", list(user, src, user.p_they()))))
+	user.visible_message(span_suicide("[user] eats \the [src]! If it is signaled, [user.p_they()] will die!"))
 	playsound(src, 'sound/items/eatfood.ogg', 50, TRUE)
 	moveToNullspace()
 	suicider = user.mind
@@ -44,7 +43,7 @@
 		return
 	if(suicide_mob != REF(user))
 		return
-	user.visible_message(span_suicide(LANG("obj.f446cfb9", list(user, src, user.p_them()))))
+	user.visible_message(span_suicide("[user]'s [src] receives a signal, killing [user.p_them()] instantly!"))
 	user.set_suicide(TRUE)
 	user.adjust_oxy_loss(200)//it sends an electrical pulse to their heart, killing them. or something.
 	user.death(FALSE)
@@ -100,11 +99,11 @@
 		if("signal")
 			if(cooldown_length > 0)
 				if(TIMER_COOLDOWN_RUNNING(src, COOLDOWN_SIGNALLER_SEND))
-					balloon_alert(ui.user, LANG("obj.ba1fd79a", null))
+					balloon_alert(ui.user, "recharging!")
 					return
 				TIMER_COOLDOWN_START(src, COOLDOWN_SIGNALLER_SEND, cooldown_length)
 			INVOKE_ASYNC(src, PROC_REF(signal))
-			balloon_alert(ui.user, LANG("obj.619d443f", null))
+			balloon_alert(ui.user, "signaled")
 			. = TRUE
 		if("freq")
 			var/new_frequency = sanitize_frequency(unformat_frequency(params["freq"]), TRUE)
@@ -123,14 +122,18 @@
 
 	update_appearance()
 
-/obj/item/assembly/signaler/attackby(obj/item/W, mob/user, list/modifiers, list/attack_modifiers)
-	if(issignaler(W))
-		var/obj/item/assembly/signaler/signaler2 = W
-		if(secured && signaler2.secured)
-			code = signaler2.code
-			set_frequency(signaler2.frequency)
-			to_chat(user, LANG("obj.d95b4f91", list(signaler2.name, name)))
-	..()
+/obj/item/assembly/signaler/item_interaction(mob/living/user, obj/item/tool, list/modifiers)
+	if(!issignaler(tool))
+		return ..()
+
+	var/obj/item/assembly/signaler/sister_signaler = tool
+	if(!secured || !sister_signaler.secured)
+		return ..()
+
+	code = sister_signaler.code
+	set_frequency(sister_signaler.frequency)
+	to_chat(user, "You transfer the frequency and code of \the [sister_signaler.name] to \the [name]")
+	return ITEM_INTERACT_SUCCESS
 
 /obj/item/assembly/signaler/attack_self_secondary(mob/user, modifiers)
 	. = ..()
@@ -139,7 +142,7 @@
 	if(!ishuman(user))
 		return
 	if(TIMER_COOLDOWN_RUNNING(src, COOLDOWN_SIGNALLER_SEND))
-		balloon_alert(user, LANG("obj.e1700ee9", null))
+		balloon_alert(user, "still recharging...")
 		return
 	TIMER_COOLDOWN_START(src, COOLDOWN_SIGNALLER_SEND, 1 SECONDS)
 	INVOKE_ASYNC(src, PROC_REF(signal))
@@ -172,7 +175,7 @@
 	last_receive_signal_log = istype(holder, /obj/item/transfer_valve) ? signal.logging_data : null
 
 	pulse()
-	audible_message(span_infoplain(LANG("obj.a31e2378", list(icon2html(src, hearers(src))))), null, hearing_range)
+	audible_message(span_infoplain("[icon2html(src, hearers(src))] *beep* *beep* *beep*"), null, hearing_range)
 	for(var/mob/hearing_mob in get_hearers_in_view(hearing_range, src))
 		hearing_mob.playsound_local(get_turf(src), 'sound/machines/beep/triple_beep.ogg', ASSEMBLY_BEEP_VOLUME, TRUE)
 	return TRUE
@@ -185,16 +188,17 @@
 
 /obj/item/assembly/signaler/proc/on_mail_unwrap(atom/source, mob/user, obj/item/mail/traitor/letter)
 	SIGNAL_HANDLER
-	to_chat(user, span_danger(LANG("obj.7595c084", list(letter, src))))
+	to_chat(user, span_danger("As you open [letter], you accidentally press a button on [src]!"))
 	INVOKE_ASYNC(src, PROC_REF(signal)) // No need to check for cooldown, the cooldown is shorter than the do_after for opening mail
 	return NONE //don't return handled, we want in hands and open ui
 
 /obj/item/assembly/signaler/cyborg
 
-/obj/item/assembly/signaler/cyborg/attackby(obj/item/W, mob/user, list/modifiers, list/attack_modifiers)
-	return
+/obj/item/assembly/signaler/cyborg/item_interaction(mob/living/user, obj/item/tool, list/modifiers)
+	return ITEM_INTERACT_BLOCKING
+
 /obj/item/assembly/signaler/cyborg/screwdriver_act(mob/living/user, obj/item/I)
-	return
+	return ITEM_INTERACT_BLOCKING
 
 /obj/item/assembly/signaler/internal
 	name = "internal remote signaling device"
@@ -202,11 +206,11 @@
 /obj/item/assembly/signaler/internal/ui_state(mob/user)
 	return GLOB.inventory_state
 
-/obj/item/assembly/signaler/internal/attackby(obj/item/W, mob/user, list/modifiers, list/attack_modifiers)
-	return
+/obj/item/assembly/signaler/internal/item_interaction(mob/living/user, obj/item/tool, list/modifiers)
+	return ITEM_INTERACT_BLOCKING
 
 /obj/item/assembly/signaler/internal/screwdriver_act(mob/living/user, obj/item/I)
-	return
+	return ITEM_INTERACT_BLOCKING
 
 /obj/item/assembly/signaler/internal/can_interact(mob/user)
 	if(ispAI(user))

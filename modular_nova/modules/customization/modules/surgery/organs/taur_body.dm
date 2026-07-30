@@ -118,7 +118,7 @@
 		desc = initial(desc)
 	else
 		name = "Mermaid Transform"
-		desc = LANG("datum.45e09b35", null)
+		desc = "Return to your mermaid form."
 	return ..()
 
 /datum/action/cooldown/spell/mermaid_toggle/apply_button_icon(atom/movable/screen/movable/action_button/current_button, force = FALSE)
@@ -317,7 +317,7 @@
 
 	var/datum/bodypart_overlay/mutant/taur_body/overlay = bodypart_overlay
 	if(overlay.can_lay_down)
-		add_verb(receiver, /obj/item/organ/taur_body/proc/toggle_laying)
+		ASSIGN_GAME_VERB(receiver, /obj/item/organ/taur_body, toggle_laying)
 
 	if(hardened_soles)
 		owner_blocked_feet_before_insert = (receiver.dna.species.no_equip_flags & ITEM_SLOT_FEET)
@@ -360,7 +360,7 @@
 	old_right_leg = null
 
 	// We don't call `synchronize_bodytypes()` here, because it's already going to get called in the parent because `external_bodyshapes` has a value.
-	remove_verb(organ_owner, /obj/item/organ/taur_body/proc/toggle_laying)
+	UNASSIGN_GAME_VERB(organ_owner, /obj/item/organ/taur_body, toggle_laying)
 
 	if(hardened_soles)
 		if(!owner_blocked_feet_before_insert)
@@ -406,10 +406,7 @@
 // Only works if the owner is a human with a valid taur body organ. This also can only be triggered if the taur body overlay supports laying down.
 // This prevents laying down if the owner is already resting, IE: Prone. Manages the mob's density and adds in a specific sound if laying within gravity.
 
-/obj/item/organ/taur_body/proc/toggle_laying()
-	set category = "IC"
-	set name = "（半人马）切换趴卧"
-
+GAME_VERB_PROC(/obj/item/organ/taur_body, toggle_laying, "(Taur) Toggle Laying Down", "IC")
 	var/mob/living/carbon/human/owner = src
 	if(!istype(owner))
 		return
@@ -423,10 +420,10 @@
 	if(!overlay.can_lay_down)
 		return
 	if(owner.resting)
-		to_chat(owner, span_notice(LANG("obj.4e342753", null)))
+		to_chat(owner, span_notice("You have to be standing up in order to lay down properly!"))
 	if(overlay.laying_down)
 		// Rising up
-		to_chat(owner, span_notice(LANG("obj.37e7b54a", null)))
+		to_chat(owner, span_notice("You start lifting your body up."))
 		if(!do_after(owner, LAYDOWN_COOLDOWN))
 			return
 		if(!overlay.laying_down) // Prevent multiple standups at once
@@ -438,7 +435,7 @@
 
 		owner.SetImmobilized(0, TRUE)
 		REMOVE_TRAIT(owner, TRAIT_UNDENSE, TRAIT_TAUR_LOAF)
-		to_chat(owner, span_notice(LANG("obj.0f313ebe", null)))
+		to_chat(owner, span_notice("You stand up."))
 	else
 		// And laying back down
 		overlay.laying_down = TRUE
@@ -448,7 +445,7 @@
 
 		owner.Immobilize(INFINITY, TRUE)
 		ADD_TRAIT(owner, TRAIT_UNDENSE, TRAIT_TAUR_LOAF)
-		to_chat(owner, span_notice(LANG("obj.69b6e0d0", null)))
+		to_chat(owner, span_notice("You lay down."))
 		if(owner.has_gravity())
 			playsound(owner, "bodyfall", 50, TRUE)
 

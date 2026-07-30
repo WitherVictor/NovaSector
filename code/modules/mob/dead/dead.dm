@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 //Dead mobs can exist whenever. This is needful
 
 INITIALIZE_IMMEDIATE(/mob/dead)
@@ -23,7 +22,7 @@ INITIALIZE_IMMEDIATE(/mob/dead)
 	prepare_huds()
 
 	if(length(CONFIG_GET(keyed_list/cross_server)))
-		add_verb(src, /mob/dead/proc/server_hop)
+		ASSIGN_GAME_VERB(src, /mob/dead, server_hop)
 	set_focus(src)
 	become_hearing_sensitive()
 	log_mob_tag("TAG: [tag] CREATED: [key_name(src)] \[[src.type]\]")
@@ -34,10 +33,7 @@ INITIALIZE_IMMEDIATE(/mob/dead)
 
 #define SERVER_HOPPER_TRAIT "server_hopper"
 
-/mob/dead/proc/server_hop()
-	set category = "OOC"
-	set name = "服务器跳转"
-	set desc= "Jump to the other server"
+GAME_VERB_PROC_DESC(/mob/dead, server_hop, "Server Hop", "Jump to the other server", "OOC")
 	if(HAS_TRAIT(src, TRAIT_NO_TRANSFORM)) // in case the round is ending and a cinematic is already playing we don't wanna clash with that (yes i know)
 		return
 	var/list/our_id = CONFIG_GET(string/cross_comms_name)
@@ -45,23 +41,23 @@ INITIALIZE_IMMEDIATE(/mob/dead)
 	var/pick
 	switch(length(csa))
 		if(0)
-			remove_verb(src, /mob/dead/proc/server_hop)
-			to_chat(src, span_notice(LANG("mob.65c6c56e", null)))
+			UNASSIGN_GAME_VERB(src, /mob/dead, server_hop)
+			to_chat(src, span_notice("Server Hop has been disabled."))
 		if(1)
 			pick = csa[1]
 		else
-			pick = tgui_input_list(src, LANG("mob.17bb19eb", null), LANG("mob.b8fb2a34", null), csa)
+			pick = tgui_input_list(src, "Server to jump to", "Server Hop", csa)
 
 	if(isnull(pick))
 		return
 
 	var/addr = csa[pick]
 
-	if(tgui_alert(usr, LANG("mob.cb56e410", list(pick, addr)), LANG("mob.b8fb2a34", null), list("Yes", "No")) != "Yes")
+	if(tgui_alert(usr, "Jump to server [pick] ([addr])?", "Server Hop", list("Yes", "No")) != "Yes")
 		return
 
 	var/client/hopper = client
-	to_chat(hopper, span_notice(LANG("mob.4cf0422f", list(pick))))
+	to_chat(hopper, span_notice("Sending you to [pick]."))
 	var/atom/movable/screen/splash/fade_in = new(null, null, hopper, FALSE)
 	fade_in.fade(FALSE)
 

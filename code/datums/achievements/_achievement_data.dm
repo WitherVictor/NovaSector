@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 ///Datum that handles
 /datum/achievement_data
 	///Ckey of this achievement data's owner
@@ -130,9 +129,6 @@
 			continue
 		.["highscores"] += list(list("name" = score.name, "scores" = score.high_scores))
 
-/client/verb/checkachievements()
-	set category = "OOC"
-	set name = "查看成就"
-	set desc = "See all of your achievements!"
+GAME_VERB_DESC(/client, checkachievements, "Check achievements", "See all of your achievements!", "OOC")
 
 	persistent_client.achievements.ui_interact(usr)

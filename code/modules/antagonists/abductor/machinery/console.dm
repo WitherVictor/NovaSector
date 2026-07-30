@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 /proc/get_abductor_console(team_number)
 	for(var/obj/machinery/abductor/console/C as anything in SSmachines.get_machines_by_type_and_subtypes(/obj/machinery/abductor/console))
 		if(C.team_number == team_number)
@@ -68,7 +67,7 @@
 	if(.)
 		return
 	if(!HAS_MIND_TRAIT(user, TRAIT_ABDUCTOR_TRAINING))
-		to_chat(user, span_warning(LANG("obj.78dbc753", null)))
+		to_chat(user, span_warning("You start mashing alien buttons at random!"))
 		if(do_after(user,100, target = src))
 			TeleporterSend()
 
@@ -201,12 +200,12 @@
 
 /obj/machinery/abductor/console/proc/SetDroppoint(turf/open/location,user)
 	if(!istype(location))
-		to_chat(user, span_warning(LANG("obj.a98b920a", null)))
+		to_chat(user, span_warning("That place is not safe for the specimen."))
 		return
 
 	if(pad)
 		pad.teleport_target = location
-		to_chat(user, span_notice(LANG("obj.b4d86696", null)))
+		to_chat(user, span_notice("Location marked as test subject release point."))
 
 /obj/machinery/abductor/console/post_machine_initialize()
 	. = ..()
@@ -231,7 +230,7 @@
 
 /obj/machinery/abductor/console/proc/AddSnapshot(mob/living/carbon/human/target)
 	if(target.can_block_magic(MAGIC_RESISTANCE_MIND, charge_cost = 0))
-		say(LANG("obj.abaff1e4", list(target)))
+		say("Unable to get a proper scan of subject! Something is shielding [target]'s mind!")
 		return
 	var/datum/icon_snapshot/entry = new
 	entry.name = target.name
@@ -267,18 +266,21 @@
 	vest = V
 	return TRUE
 
-/obj/machinery/abductor/console/attackby(obj/O, mob/user, list/modifiers, list/attack_modifiers)
-	if(istype(O, /obj/item/abductor/gizmo) && AddGizmo(O))
-		to_chat(user, span_notice(LANG("obj.dbad3c59", null)))
-	else if(istype(O, /obj/item/clothing/suit/armor/abductor/vest) && AddVest(O))
-		to_chat(user, span_notice(LANG("obj.2d16967c", null)))
-	else
-		return ..()
+/obj/machinery/abductor/console/item_interaction(mob/living/user, obj/item/tool, list/modifiers)
+	if(istype(tool, /obj/item/abductor/gizmo) && AddGizmo(tool))
+		to_chat(user, span_notice("You link the tool to the console."))
+		return ITEM_INTERACT_SUCCESS
+
+	if(istype(tool, /obj/item/clothing/suit/armor/abductor/vest) && AddVest(tool))
+		to_chat(user, span_notice("You link the vest to the console."))
+		return ITEM_INTERACT_SUCCESS
+
+	return NONE
 
 /obj/machinery/abductor/console/proc/Dispense(items_list, cost=1)
 	if(experiment && experiment.credits >= cost)
 		experiment.credits -=cost
-		say(LANG("obj.5a0ab961", null))
+		say("Incoming supply!")
 		var/drop_location = loc
 		if(pad)
 			flick("alien-pad", pad)
@@ -287,4 +289,4 @@
 			for(var/i in 1 to items_list[each_item])
 				new each_item(drop_location)
 	else
-		say(LANG("obj.b153bfe8", null))
+		say("Insufficent data!")

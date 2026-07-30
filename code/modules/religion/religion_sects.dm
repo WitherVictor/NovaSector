@@ -626,7 +626,7 @@
 			to_chat(chap, span_cyan(LANG("datum.7ae5976b", list(GLOB.deity, target))))
 		return result
 
-	if(target.stat == UNCONSCIOUS)
+	if(IS_UNCONSCIOUS(target))
 		if(iscarbon(target))
 			var/mob/living/carbon/sleeper = target
 			sleeper.dream()

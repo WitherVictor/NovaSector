@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 /*CONTENTS
 Buildable pipes
 Buildable meters
@@ -218,9 +217,7 @@ Buildable meters
 	if(ispath(pipe_type,/obj/machinery/atmospherics/pipe/heat_exchanging))
 		resistance_flags |= FIRE_PROOF | LAVA_PROOF
 
-/obj/item/pipe/verb/flip()
-	set name = "反转管道"
-	set src in view(1)
+GAME_VERB_SRC(/obj/item/pipe, flip, view(1), "Invert Pipe", null)
 
 	if ( usr.incapacitated )
 		return
@@ -308,9 +305,9 @@ Buildable meters
 
 	wrench.play_tool_sound(src)
 	user.visible_message( \
-		span_notice(LANG("obj.78b56604", list(user, src))), \
-		span_notice(LANG("obj.09ea7751", list(src))), \
-		span_hear(LANG("obj.706a8c3e", null)))
+		span_notice("[user] fastens \the [src]."), \
+		span_notice("You fasten \the [src]."), \
+		span_hear("You hear ratcheting."))
 
 	qdel(src)
 
@@ -325,9 +322,9 @@ Buildable meters
 	if(welder.use_tool(src, user, 2 SECONDS, volume=2))
 		new /obj/item/sliced_pipe(drop_location())
 		user.visible_message( \
-			LANG("obj.e5ff7242", list(user, src)), \
-			span_notice(LANG("obj.de170f33", list(src))), \
-			span_hear(LANG("obj.1aa82fa3", null)))
+			"[user] welds \the [src] in two.", \
+			span_notice("You weld \the [src] in two."), \
+			span_hear("You hear welding."))
 
 		qdel(src)
 
@@ -422,7 +419,7 @@ Buildable meters
 	T.flipped = flipped
 
 /obj/item/pipe/suicide_act(mob/living/user)
-	user.visible_message(span_suicide(LANG("obj.01606d69", list(user, src, user.p_their(), user.p_theyre()))))
+	user.visible_message(span_suicide("[user] shoves [src] in [user.p_their()] mouth and turns it on! It looks like [user.p_theyre()] trying to commit suicide!"))
 	if(iscarbon(user))
 		var/mob/living/carbon/C = user
 		for(var/i in 1 to 20)
@@ -435,8 +432,8 @@ Buildable meters
 
 /obj/item/pipe/examine(mob/user)
 	. = ..()
-	. += span_notice(LANG("obj.1dbff2af", list(piping_layer)))
-	. += span_notice(LANG("obj.4e24506d", null))
+	. += span_notice("The pipe layer is set to [piping_layer].")
+	. += span_notice("You can change the pipe layer by Right-Clicking the device.")
 
 /obj/item/pipe/attack_hand_secondary(mob/user, list/modifiers)
 	. = ..()
@@ -444,20 +441,20 @@ Buildable meters
 		return
 	var/layer_to_set = (piping_layer >= PIPING_LAYER_MAX) ? PIPING_LAYER_MIN : (piping_layer + 1)
 	set_piping_layer(layer_to_set)
-	balloon_alert(user, LANG("obj.6ec5da5e", list(piping_layer)))
+	balloon_alert(user, "pipe layer set to [piping_layer]")
 	return SECONDARY_ATTACK_CANCEL_ATTACK_CHAIN
 
 
 /obj/item/pipe/trinary/flippable/examine(mob/user)
 	. = ..()
-	. += span_notice(LANG("obj.6cd9d125", null))
+	. += span_notice("You can flip the device by Right-Clicking it.")
 
 /obj/item/pipe/trinary/flippable/attack_hand_secondary(mob/user, list/modifiers)
 	. = ..()
 	if(. == SECONDARY_ATTACK_CANCEL_ATTACK_CHAIN)
 		return
 	do_a_flip()
-	balloon_alert(user, LANG("obj.8890f816", null))
+	balloon_alert(user, "pipe was flipped")
 	return SECONDARY_ATTACK_CANCEL_ATTACK_CHAIN
 
 /obj/item/pipe_meter
@@ -477,11 +474,11 @@ Buildable meters
 			pipe = P
 			break
 	if(!pipe)
-		to_chat(user, span_warning(LANG("obj.74479136", null)))
+		to_chat(user, span_warning("You need to fasten it to a pipe!"))
 		return TRUE
 	new /obj/machinery/meter(loc, piping_layer)
 	W.play_tool_sound(src)
-	to_chat(user, span_notice(LANG("obj.dfb66755", null)))
+	to_chat(user, span_notice("You fasten the meter to the pipe."))
 	qdel(src)
 
 /obj/item/pipe_meter/screwdriver_act(mob/living/user, obj/item/S)
@@ -490,12 +487,12 @@ Buildable meters
 		return TRUE
 
 	if(!isturf(loc))
-		to_chat(user, span_warning(LANG("obj.063958e7", null)))
+		to_chat(user, span_warning("You need to fasten it to the floor!"))
 		return TRUE
 
 	new /obj/machinery/meter/turf(loc, piping_layer)
 	S.play_tool_sound(src)
-	to_chat(user, span_notice(LANG("obj.b62a38d9", list(loc))))
+	to_chat(user, span_notice("You fasten the meter to \the [loc]."))
 	qdel(src)
 
 /obj/item/pipe_meter/dropped()

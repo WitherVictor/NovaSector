@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 /datum/status_effect/incapacitating/stamcrit
 	id = "stamcrit"
 	status_type = STATUS_EFFECT_UNIQUE
@@ -37,8 +36,8 @@
 	if(!.)
 		return .
 
-	if(owner.stat == CONSCIOUS)
-		to_chat(owner, span_notice(LANG("datum.ef858651", null)))
+	if(!IS_UNCONSCIOUS_OR_CRIT(owner))
+		to_chat(owner, span_notice("You're too exhausted to keep going..."))
 	owner.add_traits(list(TRAIT_INCAPACITATED, TRAIT_IMMOBILIZED, TRAIT_FLOORED), STAMINA)
 	return .
 
@@ -66,9 +65,9 @@
 	if(mod_amount > 0)
 		return NONE
 
-	if(COOLDOWN_FINISHED(src, warn_cd) && owner.stat == CONSCIOUS)
-		to_chat(owner, span_notice(LANG("datum.e2cc0c22", null)))
-		owner.visible_message(span_warning(LANG("datum.eb815f68", list(owner))), ignored_mobs = owner)
+	if(COOLDOWN_FINISHED(src, warn_cd) && !IS_UNCONSCIOUS_OR_CRIT(owner))
+		to_chat(owner, span_notice("You start to recover from the exhaustion!"))
+		owner.visible_message(span_warning("[owner] starts to recover from the exhaustion!"), ignored_mobs = owner)
 		COOLDOWN_START(src, warn_cd, 2.5 SECONDS)
 
 	return COMPONENT_IGNORE_CHANGE

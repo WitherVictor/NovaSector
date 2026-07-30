@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 /mob/living/basic/mouse
 	name = "mouse"
 	desc = "This cute little guy just loves the taste of insulated electrical cables. Isn't he adorable?"
@@ -99,15 +98,15 @@
 	var/sameside = user.faction_check_atom(src, exact_match = TRUE)
 	if(isregalrat(user))
 		if(sameside)
-			. += span_notice(LANG("mob.363d4897", null))
+			. += span_notice("This rat serves under you.")
 		else
-			. += span_warning(LANG("mob.e4d451c1", list(p_them())))
+			. += span_warning("This peasant serves a different king! Strike [p_them()] down!")
 
 	else if(user != src && ismouse(user))
 		if(sameside)
-			. += span_notice(LANG("mob.a1923a25", null))
+			. += span_notice("You both serve the same king.")
 		else
-			. += span_warning(LANG("mob.81765dd7", null))
+			. += span_warning("This fool serves a different king!")
 
 /// Kills the rat and changes its icon state to be splatted (bloody).
 /mob/living/basic/mouse/proc/splat()
@@ -122,7 +121,8 @@
 	var/aheal_included = full_heal_flags & HEAL_ADMIN
 	var/cap = CONFIG_GET(number/ratcap)
 	if(!aheal_included && !ckey && length(SSmobs.cheeserats) >= cap)
-		visible_message(span_warning(LANG("mob.fd945595", list(src))))
+		visible_message(span_warning("[src] twitches, but does not continue moving \
+			due to the overwhelming rodent population on the station!"))
 		return
 
 	. = ..()
@@ -190,8 +190,8 @@
 /mob/living/basic/mouse/proc/on_entered(datum/source, atom/movable/entered)
 	SIGNAL_HANDLER
 
-	if(ishuman(entered) && stat == CONSCIOUS)
-		to_chat(entered, span_notice(LANG("mob.d5ec22f9", list(icon2html(src, entered)))))
+	if(ishuman(entered) && !IS_UNCONSCIOUS_OR_CRIT(src))
+		to_chat(entered, span_notice("[icon2html(src, entered)] Squeak!"))
 
 /// Called when a mouse is hand-fed some cheese, it will stop being afraid of humans
 /mob/living/basic/mouse/tamed(mob/living/tamer, obj/item/food/cheese/cheese)
@@ -199,15 +199,15 @@
 	new /obj/effect/temp_visual/heart(loc)
 	add_faction(FACTION_NEUTRAL)
 	try_consume_cheese(cheese)
-	ai_controller.CancelActions() // Interrupt any current fleeing
+	ai_controller.cancel_current_plan() // Interrupt any current fleeing
 
 /// Attempts to consume a piece of cheese, causing a few effects.
 /mob/living/basic/mouse/proc/try_consume_cheese(obj/item/food/cheese/cheese)
 	// Royal cheese will evolve us into a regal rat
 	if(istype(cheese, /obj/item/food/cheese/royal))
 		visible_message(
-			span_warning(LANG("mob.5053436d", list(src, cheese))),
-			span_notice(LANG("mob.49a5e2d8", list(cheese))),
+			span_warning("[src] devours [cheese]! They morph into something... greater!"),
+			span_notice("You devour [cheese], and start morphing into something... greater!"),
 		)
 		evolve_into_regal_rat()
 		qdel(cheese)
@@ -217,8 +217,8 @@
 	// Normal cheese will either heal us
 	if(prob(90) || health < maxHealth)
 		visible_message(
-			span_notice(LANG("mob.1d80a1fc", list(src, cheese))),
-			span_notice(LANG("mob.59847589", list(cheese, health < maxHealth ? ", restoring your health" : "")))
+			span_notice("[src] nibbles [cheese]."),
+			span_notice("You nibble [cheese][health < maxHealth ? ", restoring your health" : ""].")
 		)
 		adjust_health(-maxHealth)
 
@@ -226,13 +226,13 @@
 	// ...if the rat cap allows us, that is
 	else if(length(SSmobs.cheeserats) >= cap)
 		visible_message(
-			span_warning(LANG("mob.55d15327", list(src, cheese, cap))),
-			span_notice(LANG("mob.e42460dd", list(cheese, cap)))
+			span_warning("[src] carefully eats [cheese], hiding it from the [cap] mice on the station!"),
+			span_notice("You carefully nibble [cheese], hiding it from the [cap] other mice on board the station.")
 		)
 	else
 		visible_message(
-			span_notice(LANG("mob.d9acbf49", list(src, cheese))),
-			span_notice(LANG("mob.f59d729a", list(cheese)))
+			span_notice("[src] nibbles through [cheese], attracting another mouse!"),
+			span_notice("You nibble through [cheese], attracting another mouse!")
 		)
 		create_a_new_rat()
 
@@ -253,9 +253,9 @@
 /mob/living/basic/mouse/proc/try_bite_cable(obj/structure/cable/cable)
 	if(cable.avail() && !HAS_TRAIT(src, TRAIT_SHOCKIMMUNE) && prob(cable_zap_prob))
 		visible_message(
-			span_warning(LANG("mob.82786ff9", list(src, cable))),
-			span_userdanger(LANG("mob.bef9236c", list(cable))),
-			span_hear(LANG("mob.a1b757b9", null)),
+			span_warning("[src] chews through \the [cable]. It's toast!"),
+			span_userdanger("As you bite deeply into [cable], you suddenly realize this may have been a bad idea."),
+			span_hear("You hear electricity crack."),
 		)
 		// Finely toasted
 		ADD_TRAIT(src, TRAIT_BEING_SHOCKED, TRAIT_GENERIC)
@@ -266,8 +266,8 @@
 
 	else
 		visible_message(
-			span_warning(LANG("mob.02b2e21a", list(src, cable))),
-			span_notice(LANG("mob.ed9e7127", list(cable))),
+			span_warning("[src] chews through \the [cable]."),
+			span_notice("You chew through \the [cable]."),
 		)
 
 	playsound(cable, 'sound/effects/sparks/sparks2.ogg', 100, TRUE)
@@ -366,13 +366,13 @@
 /obj/item/food/deadmouse/examine(mob/user)
 	. = ..()
 	if (reagents?.has_reagent(/datum/reagent/yuck) || reagents?.has_reagent(/datum/reagent/fuel))
-		. += span_warning(LANG("obj.ff0cf2a8", list(p_Theyre())))
+		. += span_warning("[p_Theyre()] dripping with fuel and smells terrible.")
 
 ///Spawn a new mouse from this dead mouse item when hit by a lazarus injector and conditions are met.
 /obj/item/food/deadmouse/proc/use_lazarus(datum/source, obj/item/lazarus_injector/injector, mob/user)
 	SIGNAL_HANDLER
 	if(injector.revive_type != SENTIENCE_ORGANIC)
-		balloon_alert(user, LANG("obj.1c85036c", null))
+		balloon_alert(user, "invalid creature!")
 		return
 	var/mob/living/basic/mouse/revived_critter = new critter_type (drop_location(), FALSE, body_color)
 	revived_critter.name = name
@@ -385,15 +385,15 @@
 	if(!tool.get_sharpness() || !user.combat_mode)
 		return NONE
 	if(!isturf(loc))
-		balloon_alert(user, LANG("obj.4a10807f", null))
+		balloon_alert(user, "can't butcher here!")
 		return ITEM_INTERACT_BLOCKING
 
-	balloon_alert(user, LANG("obj.9e9eb694", null))
+	balloon_alert(user, "butchering...")
 	if(!do_after(user, 0.75 SECONDS, src))
-		balloon_alert(user, LANG("obj.c67b5d27", null))
+		balloon_alert(user, "interrupted!")
 		return ITEM_INTERACT_BLOCKING
 
-	loc.balloon_alert(user, LANG("obj.6fa9faa1", null))
+	loc.balloon_alert(user, "butchered")
 	new /obj/item/food/meat/slab/mouse(loc)
 	qdel(src)
 	return ITEM_INTERACT_SUCCESS
@@ -406,7 +406,7 @@
 	var/datum/reagents/target_reagents = interacting_with.reagents
 	var/trans_amount = reagents.maximum_volume - reagents.total_volume * (4 / 3)
 	if(target_reagents.has_reagent(/datum/reagent/fuel) && target_reagents.trans_to(src, trans_amount))
-		to_chat(user, span_notice(LANG("obj.e5de8a2f", list(src, interacting_with))))
+		to_chat(user, span_notice("You dip [src] into [interacting_with]."))
 		return ITEM_INTERACT_SUCCESS
 
 /obj/item/food/deadmouse/moldy
@@ -422,6 +422,7 @@
 
 /// The mouse AI controller
 /datum/ai_controller/basic_controller/mouse
+	behavior_tree_json = "code/modules/mob/living/basic/vermin/mouse.bt.json"
 	blackboard = list( // Always cowardly
 		BB_TARGETING_STRATEGY = /datum/targeting_strategy/basic, // Use this to find people to run away from
 		BB_PET_TARGETING_STRATEGY = /datum/targeting_strategy/basic/not_friends,
@@ -431,41 +432,14 @@
 
 	ai_traits = PASSIVE_AI_FLAGS
 	ai_movement = /datum/ai_movement/basic_avoidance
-	idle_behavior = /datum/idle_behavior/idle_random_walk
-	planning_subtrees = list(
-		// Try to speak, because it's cute
-		/datum/ai_planning_subtree/random_speech/mouse,
-		// Follow the boss's orders
-		/datum/ai_planning_subtree/pet_planning,
-		// Look for and execute hunts for cheese even if someone is looking at us
-		/datum/ai_planning_subtree/find_and_hunt_target/look_for_cheese,
-		// Next priority is to try and appreoach a keyboard
-		/datum/ai_planning_subtree/approach_synthesizer,
-		// And play it if we are near it
-		/datum/ai_planning_subtree/generic_play_instrument/end_planning,
-		// Next priority is see if anyone is looking at us
-		/datum/ai_planning_subtree/simple_find_nearest_target_to_flee,
-		// Skedaddle
-		/datum/ai_planning_subtree/flee_target/mouse,
-		// Otherwise, look for and execute hunts for cabling
-		/datum/ai_planning_subtree/find_and_hunt_target/look_for_cables,
-	)
-
-/// Don't look for anything to run away from if you are distracted by being adjacent to cheese
-/datum/ai_planning_subtree/flee_target/mouse
-
-/datum/ai_planning_subtree/flee_target/mouse/SelectBehaviors(datum/ai_controller/controller, seconds_per_tick)
-	var/atom/hunted_cheese = controller.blackboard[BB_CURRENT_HUNTING_TARGET]
-	if (!isnull(hunted_cheese))
-		return // We see some cheese, which is more important than our life
-	return ..()
 
 /// AI controller for rats, slightly more complex than mice becuase they attack people
 /datum/ai_controller/basic_controller/mouse/rat
+	behavior_tree_json = "code/modules/mob/living/basic/vermin/mouse_rat.bt.json"
 	blackboard = list(
 		BB_TARGETING_STRATEGY = /datum/targeting_strategy/basic,
 		BB_PET_TARGETING_STRATEGY = /datum/targeting_strategy/basic/not_friends,
-		BB_BASIC_MOB_CURRENT_TARGET = null, // heathen
+		BB_CURRENT_TARGET = null, // heathen
 		BB_CURRENT_HUNTING_TARGET = null, // cheese
 		BB_LOW_PRIORITY_HUNTING_TARGET = null, // cable
 		BB_OWNER_SELF_HARM_RESPONSES = list(
@@ -477,14 +451,15 @@
 
 	ai_traits = DEFAULT_AI_FLAGS | STOP_MOVING_WHEN_PULLED
 	ai_movement = /datum/ai_movement/basic_avoidance
-	idle_behavior = /datum/idle_behavior/idle_random_walk
-	planning_subtrees = list(
-		/datum/ai_planning_subtree/escape_captivity,
-		/datum/ai_planning_subtree/pet_planning,
-		/datum/ai_planning_subtree/simple_find_target,
-		/datum/ai_planning_subtree/attack_obstacle_in_path,
-		/datum/ai_planning_subtree/basic_melee_attack_subtree,
-		/datum/ai_planning_subtree/find_and_hunt_target/look_for_cheese,
-		/datum/ai_planning_subtree/random_speech/mouse,
-		/datum/ai_planning_subtree/find_and_hunt_target/look_for_cables,
-	)
+
+
+
+
+/datum/bt_node/subtree/eat_cable
+	behavior_tree_json = "code/modules/mob/living/basic/vermin/eat_cable.bt.json"
+
+/datum/bt_node/subtree/eat_cheese
+	behavior_tree_json = "code/modules/mob/living/basic/vermin/eat_cheese.bt.json"
+
+/datum/bt_node/subtree/play_instrument_on_floor
+	behavior_tree_json = "code/modules/mob/living/basic/vermin/play_instrument_on_floor.bt.json"

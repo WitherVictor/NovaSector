@@ -1,17 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
-
-/mob/living/silicon/ai/attackby(obj/item/W, mob/user, list/modifiers, list/attack_modifiers)
-	if(istype(W, /obj/item/ai_module))
-		var/obj/item/ai_module/MOD = W
-		disconnect_shell()
-		if(!mind) //A player mind is required for law procs to run antag checks.
-			to_chat(user, span_warning(LANG("mob.6a991425", list(src))))
-			return
-		MOD.install(laws, user) //Proc includes a success mesage so we don't need another one
-		return
-
-	return ..()
-
 /mob/living/silicon/ai/blob_act(obj/structure/blob/B)
 	if (stat != DEAD)
 		adjust_brute_loss(60)
@@ -51,9 +37,9 @@
 /mob/living/silicon/ai/emag_act(mob/user, obj/item/card/emag/emag_card) ///emags access panel lock, so you can crowbar it without robotics access or consent
 	. = ..()
 	if(emagged)
-		balloon_alert(user, LANG("mob.1c2ac6ac", null))
+		balloon_alert(user, "access panel lock already shorted!")
 		return
-	balloon_alert(user, LANG("mob.6cc6b666", null))
+	balloon_alert(user, "access panel lock shorted")
 	var/message = (user ? "[user] shorts out your access panel lock!" : "Your access panel lock was short circuited!")
 	to_chat(src, span_warning(message))
 	do_sparks(3, FALSE, src) // just a bit of extra "oh shit" to the ai - might grab its attention
@@ -61,20 +47,17 @@
 	return TRUE
 
 /mob/living/silicon/ai/wrench_act(mob/living/user, obj/item/tool)
-	. = ..()
-	if(user.combat_mode)
-		return
-	if(stat != DEAD && !incapacitated && (client || deployed_shell?.client))
+	if(!incapacitated && (client || deployed_shell?.client))
 		// alive and well AIs control their floor bolts
-		balloon_alert(user, LANG("mob.f2f96a49", null))
-		return ITEM_INTERACT_SUCCESS
-	balloon_alert(user, LANG("mob.e643c62a", list(!is_anchored ? "tightening" : "loosening")))
-	balloon_alert(src, LANG("mob.62722c28", list(!is_anchored ? "tightened" : "loosened")))
+		balloon_alert(user, "the AI's bolt motors resist!")
+		return ITEM_INTERACT_BLOCKING
+	balloon_alert(user, "[!is_anchored ? "tightening" : "loosening"] bolts...")
+	balloon_alert(src, "bolts being [!is_anchored ? "tightened" : "loosened"]...")
 	if(!tool.use_tool(src, user, 4 SECONDS))
 		return ITEM_INTERACT_SUCCESS
 	flip_anchored()
-	balloon_alert(user, LANG("mob.6cf64da4", list(is_anchored ? "tightened" : "loosened")))
-	balloon_alert(src, LANG("mob.6cf64da4", list(is_anchored ? "tightened" : "loosened")))
+	balloon_alert(user, "bolts [is_anchored ? "tightened" : "loosened"]")
+	balloon_alert(src, "bolts [is_anchored ? "tightened" : "loosened"]")
 	return ITEM_INTERACT_SUCCESS
 
 /mob/living/silicon/ai/crowbar_act(mob/living/user, obj/item/tool)
@@ -82,22 +65,22 @@
 	if(user.combat_mode)
 		return
 	if(!is_anchored)
-		balloon_alert(user, LANG("mob.8ae26cfd", null))
+		balloon_alert(user, "bolt it down first!")
 		return ITEM_INTERACT_SUCCESS
 	if(opened)
 		if(emagged)
-			balloon_alert(user, LANG("mob.762b69cf", null))
+			balloon_alert(user, "access panel lock damaged!")
 			return ITEM_INTERACT_SUCCESS
-		balloon_alert(user, LANG("mob.e7a5e1a4", null))
-		balloon_alert(src, LANG("mob.0517ba2f", null))
+		balloon_alert(user, "closing access panel...")
+		balloon_alert(src, "access panel being closed...")
 		if(!tool.use_tool(src, user, 5 SECONDS))
 			return ITEM_INTERACT_SUCCESS
-		balloon_alert(src, LANG("mob.4eda5d6f", null))
-		balloon_alert(user, LANG("mob.4eda5d6f", null))
+		balloon_alert(src, "access panel closed")
+		balloon_alert(user, "access panel closed")
 		opened = FALSE
 		return ITEM_INTERACT_SUCCESS
 	if(stat == DEAD)
-		to_chat(user, span_warning(LANG("mob.64b6a373", null)))
+		to_chat(user, span_warning("The access panel looks damaged, you try dislodging the cover."))
 	else
 		var/consent
 		var/consent_override = FALSE
@@ -108,25 +91,25 @@
 				if(ACCESS_ROBOTICS in access)
 					consent_override = TRUE
 		if(mind)
-			consent = tgui_alert(src, LANG("mob.8f134fed", list(user)), LANG("mob.2e10dbce", null), list("Yes", "No"))
+			consent = tgui_alert(src, "[user] is attempting to open your access panel, unlock the cover?", "AI Access Panel", list("Yes", "No"))
 			if(consent == "No" && !consent_override && !emagged)
-				to_chat(user, span_notice(LANG("mob.b967804b", list(src))))
+				to_chat(user, span_notice("[src] refuses to unlock its access panel."))
 				return ITEM_INTERACT_SUCCESS
 			if(consent != "Yes" && (consent_override || emagged))
-				to_chat(user, span_warning(LANG("mob.3a70c8c6", list(src, !emagged ? " swipe your ID and " : " "))))
+				to_chat(user, span_warning("[src] refuses to unlock its access panel...so you[!emagged ? " swipe your ID and " : " "]open it anyway!"))
 		else
 			if(!consent_override && !emagged)
-				to_chat(user, span_notice(LANG("mob.a667fe3c", list(src))))
+				to_chat(user, span_notice("[src] did not respond to your request to unlock its access panel cover lock."))
 				return ITEM_INTERACT_SUCCESS
 			else
-				to_chat(user, span_notice(LANG("mob.f03bc398", list(src, !emagged ? " swipe your ID and " : " "))))
+				to_chat(user, span_notice("[src] did not respond to your request to unlock its access panel cover lock. You[!emagged ? " swipe your ID and " : " "]open it anyway."))
 
-	balloon_alert(user, LANG("mob.c231d56f", null))
-	balloon_alert(src, LANG("mob.5ba414b7", null))
+	balloon_alert(user, "prying open access panel...")
+	balloon_alert(src, "access panel being pried open...")
 	if(!tool.use_tool(src, user, (stat == DEAD ? 40 SECONDS : 5 SECONDS)))
 		return ITEM_INTERACT_SUCCESS
-	balloon_alert(src, LANG("mob.a40e8325", null))
-	balloon_alert(user, LANG("mob.a40e8325", null))
+	balloon_alert(src, "access panel opened")
+	balloon_alert(user, "access panel opened")
 	opened = TRUE
 	return ITEM_INTERACT_SUCCESS
 
@@ -135,23 +118,23 @@
 	if(user.combat_mode)
 		return
 	if(!is_anchored)
-		balloon_alert(user, LANG("mob.8ae26cfd", null))
+		balloon_alert(user, "bolt it down first!")
 		return ITEM_INTERACT_SUCCESS
 	if(!opened)
-		balloon_alert(user, LANG("mob.1a4ca155", null))
+		balloon_alert(user, "open the access panel first!")
 		return ITEM_INTERACT_SUCCESS
-	balloon_alert(src, LANG("mob.7f600c65", null))
-	balloon_alert(user, LANG("mob.bb03127e", null))
+	balloon_alert(src, "neural network being disconnected...")
+	balloon_alert(user, "disconnecting neural network...")
 	if(!tool.use_tool(src, user, (stat == DEAD ? 5 SECONDS : 40 SECONDS)))
 		return ITEM_INTERACT_SUCCESS
 	if(IS_MALF_AI(src))
-		to_chat(user, span_userdanger(LANG("mob.64996f9f", null)))
+		to_chat(user, span_userdanger("The voltage inside the wires rises dramatically!"))
 		user.electrocute_act(120, src)
 		opened = FALSE
 		return ITEM_INTERACT_SUCCESS
-	to_chat(src, span_danger(LANG("mob.776c94cf", null)))
+	to_chat(src, span_danger("You feel incredibly confused and disorientated."))
 	var/atom/ai_structure = ai_mob_to_structure()
-	ai_structure.balloon_alert(user, LANG("mob.41cde090", null))
+	ai_structure.balloon_alert(user, "disconnected neural network")
 	return ITEM_INTERACT_SUCCESS
 
 /mob/living/silicon/ai/attack_effects(damage_done, hit_zone, armor_block, obj/item/attacking_item, mob/living/attacker)

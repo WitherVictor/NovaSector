@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 
 ///////////////////////////////////////////////////////////////////////////////
 /obj/machinery/hydroponics/soil //Not actually hydroponics at all! Honk!
@@ -31,15 +30,17 @@
 /obj/machinery/hydroponics/soil/update_status_light_overlays()
 	return // Has no lights
 
-/obj/machinery/hydroponics/soil/attackby_secondary(obj/item/weapon, mob/user, list/modifiers, list/attack_modifiers)
-	if(weapon.tool_behaviour != TOOL_SHOVEL) //Spades can still uproot plants on left click
-		return SECONDARY_ATTACK_CANCEL_ATTACK_CHAIN
-	balloon_alert(user, LANG("obj.f5aeb9c3", null))
-	if(weapon.use_tool(src, user, 3 SECONDS, volume=50))
-		balloon_alert(user, LANG("obj.5dc4c873", null))
-		new sack_type(loc, src) //The bag handles sucking up the soil, stopping processing and setting relevants stats.
+/obj/machinery/hydroponics/soil/item_interaction_secondary(mob/living/user, obj/item/tool, list/modifiers)
+	if(tool.tool_behaviour != TOOL_SHOVEL) //Spades can still uproot plants on left click
+		return ..()
 
-	return SECONDARY_ATTACK_CANCEL_ATTACK_CHAIN
+	balloon_alert(user, "digging up soil...")
+	if(!tool.use_tool(src, user, 3 SECONDS, volume = 50))
+		return ITEM_INTERACT_BLOCKING
+
+	balloon_alert(user, "bagged")
+	new sack_type(loc, src) //The bag handles sucking up the soil, stopping processing and setting relevants stats.
+	return ITEM_INTERACT_SUCCESS
 
 /obj/machinery/hydroponics/soil/click_ctrl(mob/user)
 	return CLICK_ACTION_BLOCKING //Soil has no electricity.
@@ -162,7 +163,7 @@
 		return ..()
 
 	if(locate(/obj/machinery/hydroponics/soil) in interacting_with)
-		to_chat(user, span_alert(LANG("obj.c7d08249", null)))
+		to_chat(user, span_alert("There is already a bed of soil there!"))
 		return ITEM_INTERACT_BLOCKING
 
 	if(!do_after(user, 1 SECONDS, interacting_with))

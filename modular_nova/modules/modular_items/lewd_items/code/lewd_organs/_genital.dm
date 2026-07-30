@@ -337,7 +337,7 @@ GLOBAL_LIST_INIT(genital_arousal_options, list(
 
 /datum/genital_layering_panel/ui_status(mob/user, datum/ui_state/state)
 	// Self-service only, conscious only, and close if every genital vanished.
-	if(QDELETED(owner) || user != owner || user.stat != CONSCIOUS || !length(eligible_genitals()))
+	if(QDELETED(owner) || user != owner || IS_UNCONSCIOUS_OR_CRIT(user) || !length(eligible_genitals()))
 		return UI_CLOSE
 	return UI_INTERACTIVE
 
@@ -388,21 +388,17 @@ GLOBAL_LIST_INIT(genital_arousal_options, list(
 		if("set_visibility")
 			if(!selected_organ.apply_visibility_label(params["option"]))
 				return
-			ui.user.balloon_alert(ui.user, LANG("datum.eca63fb3", list(selected_organ.name, LOWER_TEXT(params["option"]))))
+			ui.user.balloon_alert(ui.user, "[selected_organ.name] set to [LOWER_TEXT(params["option"])]")
 			return TRUE
 		if("set_layering")
 			if(!selected_organ.apply_layering_label(params["option"]))
 				return
-			ui.user.balloon_alert(ui.user, LANG("datum.95b2be64", list(selected_organ.name, LOWER_TEXT(params["option"]))))
+			ui.user.balloon_alert(ui.user, "[selected_organ.name] layering set to [LOWER_TEXT(params["option"])]")
 			return TRUE
 
-/mob/living/carbon/human/verb/toggle_genitals()
-	set category = "IC"
-	set name = "显示/隐藏生殖器"
-	set desc = "Change which genitals show through clothes and how they layer."
-
-	if(stat != CONSCIOUS)
-		to_chat(usr, span_warning(LANG("mob.9d652d0e", null)))
+GAME_VERB_DESC(/mob/living/carbon/human, toggle_genitals, "Expose/Hide genitals", "Change which genitals show through clothes and how they layer.", "IC")
+	if(IS_UNCONSCIOUS_OR_CRIT(src))
+		to_chat(usr, span_warning("You can't toggle genitals visibility right now..."))
 		return
 
 	if(isnull(genital_layering_panel))
@@ -414,13 +410,9 @@ GLOBAL_LIST_INIT(genital_arousal_options, list(
 
 	genital_layering_panel.ui_interact(src)
 
-/mob/living/carbon/human/verb/toggle_arousal()
-	set category = "IC"
-	set name = "切换性唤起"
-	set desc = "Allows you to toggle how aroused your private parts are."
-
-	if(stat != CONSCIOUS)
-		to_chat(usr, span_warning(LANG("mob.320c55f3", null)))
+GAME_VERB_DESC(/mob/living/carbon/human, toggle_arousal, "Toggle Arousal", "Allows you to toggle how aroused your private parts are.", "IC")
+	if(IS_UNCONSCIOUS_OR_CRIT(src))
+		to_chat(usr, span_warning("You can't toggle arousal right now..."))
 		return
 
 	var/list/genital_list = list()
@@ -431,7 +423,7 @@ GLOBAL_LIST_INIT(genital_arousal_options, list(
 	if(!length(genital_list)) //There is nothing to modify.
 		return
 
-	var/obj/item/organ/genital/picked_organ = tgui_input_list(src, LANG("mob.0bd22500", null), LANG("mob.dfba591a", null), genital_list)
+	var/obj/item/organ/genital/picked_organ = tgui_input_list(src, "Choose which genitalia to the change arousal of", "Expose/Hide genitals", genital_list)
 
 	if(!picked_organ || !(picked_organ in organs))
 		return
@@ -442,12 +434,12 @@ GLOBAL_LIST_INIT(genital_arousal_options, list(
 		"Very aroused" = AROUSAL_FULL,
 	)
 
-	var/picked_arousal = tgui_input_list(src, LANG("mob.f7ed617f", null), LANG("mob.963596b1", null), gen_arous_trans)
+	var/picked_arousal = tgui_input_list(src, "Choose arousal", "Toggle Arousal", gen_arous_trans)
 
 	if(!picked_arousal || !picked_organ || !(picked_organ in organs))
 		return
 
 	picked_organ.aroused = gen_arous_trans[picked_arousal]
 	picked_organ.update_sprite_suffix()
-	balloon_alert(src, LANG("mob.28f94138", list(LOWER_TEXT(picked_arousal))))
+	balloon_alert(src, "set to [LOWER_TEXT(picked_arousal)]")
 	update_body()

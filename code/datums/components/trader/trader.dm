@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 #define TRADER_RADIAL_BUY "TRADER_RADIAL_BUY"
 #define TRADER_RADIAL_SELL "TRADER_RADIAL_SELL"
 #define TRADER_RADIAL_TALK "TRADER_RADIAL_TALK"
@@ -151,7 +150,7 @@ Can accept both a type path, and an instance of a datum. Type path has priority.
 /datum/component/trader/proc/check_menu(mob/customer)
 	if(!istype(customer))
 		return FALSE
-	if(IS_DEAD_OR_INCAP(customer) || !customer.Adjacent(parent))
+	if(customer.incapacitated || !customer.Adjacent(parent))
 		return FALSE
 	return TRUE
 
@@ -195,10 +194,10 @@ Can accept both a type path, and an instance of a datum. Type path has priority.
 	product_info = products[item_to_buy]
 
 	if(!product_info[TRADER_PRODUCT_INFO_QUANTITY])
-		trader.say(LANG("datum.2ec4b2ed", list(initial(item_to_buy.name))))
+		trader.say("[initial(item_to_buy.name)] appears to be out of stock.")
 		return
 
-	trader.say(LANG("datum.5afdb657", list(product_info[TRADER_PRODUCT_INFO_PRICE], trader_data.currency_name, initial(item_to_buy.name))))
+	trader.say("It will cost you [product_info[TRADER_PRODUCT_INFO_PRICE]] [trader_data.currency_name] to buy \the [initial(item_to_buy.name)]. Are you sure you want to buy it?")
 	var/list/npc_options = list(
 		TRADER_OPTION_YES = radial_icons_cache[TRADER_RADIAL_YES],
 		TRADER_OPTION_NO = radial_icons_cache[TRADER_RADIAL_NO],
@@ -292,7 +291,7 @@ Can accept both a type path, and an instance of a datum. Type path has priority.
 		return FALSE
 
 	trader.say(trader_data.return_trader_phrase(INTERESTED_PHRASE))
-	trader.say(LANG("datum.47c58a30", list(cost, trader_data.currency_name, selling)))
+	trader.say("You will receive [cost] [trader_data.currency_name] for the [selling].")
 	var/list/npc_options = list(
 		TRADER_OPTION_YES = radial_icons_cache[TRADER_RADIAL_YES],
 		TRADER_OPTION_NO = radial_icons_cache[TRADER_RADIAL_NO],
@@ -428,10 +427,10 @@ Can accept both a type path, and an instance of a datum. Type path has priority.
 /datum/component/trader/proc/can_trade(mob/customer)
 	var/mob/living/trader = parent
 	if(trader.combat_mode)
-		trader.balloon_alert(customer, LANG("datum.7a8aba0c", null))
+		trader.balloon_alert(customer, "in combat!")
 		return FALSE
-	if(IS_DEAD_OR_INCAP(trader))
-		trader.balloon_alert(customer, LANG("datum.3cf2692c", null))
+	if(trader.incapacitated)
+		trader.balloon_alert(customer, "indisposed!")
 		return FALSE
 	return TRUE
 

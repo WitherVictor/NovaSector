@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 /atom/movable
 	abstract_type = /atom/movable
 	layer = OBJ_LAYER
@@ -364,8 +363,8 @@
 	SHOULD_CALL_PARENT(TRUE)
 	if(!(impact_flags & ZIMPACT_NO_MESSAGE))
 		visible_message(
-			span_danger(LANG("atom.fcbe80cf", list(src, impacted_turf))),
-			span_userdanger(LANG("atom.2cc513b8", list(impacted_turf))),
+			span_danger("[src] crashes into [impacted_turf]!"),
+			span_userdanger("You crash into [impacted_turf]!"),
 		)
 	if(!(impact_flags & ZIMPACT_NO_SPIN))
 		INVOKE_ASYNC(src, PROC_REF(SpinAnimation), 5, 2)
@@ -463,7 +462,7 @@
 		destination = get_step_multiz(start, direction)
 		if(!destination)
 			if(z_move_flags & ZMOVE_FEEDBACK)
-				to_chat(rider || src, span_warning(LANG("atom.155ea236", null)))
+				to_chat(rider || src, span_warning("There's nowhere to go in that direction!"))
 			return FALSE
 	if(SEND_SIGNAL(src, COMSIG_CAN_Z_MOVE, start, destination) & COMPONENT_CANT_Z_MOVE)
 		return FALSE
@@ -472,13 +471,13 @@
 	if(z_move_flags & ZMOVE_CAN_FLY_CHECKS && !(movement_type & (FLYING|FLOATING)) && has_gravity(start))
 		if(z_move_flags & ZMOVE_FEEDBACK)
 			if(rider)
-				to_chat(rider, span_warning(LANG("atom.dfeb7b3f", list(src, p_are()))))
+				to_chat(rider, span_warning("[src] [p_are()] incapable of flight."))
 			else
-				to_chat(src, span_warning(LANG("atom.6a843d08", null)))
+				to_chat(src, span_warning("You are not Superman."))
 		return FALSE
 	if((!(z_move_flags & ZMOVE_IGNORE_OBSTACLES) && !(start.zPassOut(direction) && destination.zPassIn(direction))) || (!(z_move_flags & ZMOVE_ALLOW_ANCHORED) && anchored))
 		if(z_move_flags & ZMOVE_FEEDBACK)
-			to_chat(rider || src, span_warning(LANG("atom.64c8f4e4", null)))
+			to_chat(rider || src, span_warning("You can't move there!"))
 		return FALSE
 	return destination //used by some child types checks and zMove()
 
@@ -563,27 +562,66 @@
 	if(pulled_atom.pulledby)
 		log_combat(pulled_atom, pulled_atom.pulledby, "pulled from", src)
 		pulled_atom.pulledby.stop_pulling() //an object can't be pulled by two mobs at once.
-	pulling = pulled_atom
-	pulled_atom.set_pulledby(src)
+	set_pulling(pulled_atom)
 	SEND_SIGNAL(src, COMSIG_ATOM_START_PULL, pulled_atom, state, force)
 	setGrabState(state)
 	if(ismob(pulled_atom))
 		var/mob/pulled_mob = pulled_atom
-		log_combat(src, pulled_mob, "grabbed", addition="passive grab")
+		log_combat(src, pulled_mob, "grabbed", addition = "passive grab")
 		if(!supress_message)
-			pulled_mob.visible_message(span_warning(LANG("atom.d559fa95", list(src, pulled_mob))), \
-				span_danger(LANG("atom.87ceb956", list(src))))
+			pulled_mob.visible_message(
+				span_warning("[src] grabs [pulled_mob] passively."),
+				span_danger("[src] grabs you passively."),
+			)
+
+
 	return TRUE
 
 /atom/movable/proc/stop_pulling()
 	if(!pulling)
 		return
-	pulling.set_pulledby(null)
-	setGrabState(GRAB_PASSIVE)
-	var/atom/movable/old_pulling = pulling
-	pulling = null
+	var/atom/movable/old_pulling = set_pulling(null)
 	SEND_SIGNAL(old_pulling, COMSIG_ATOM_NO_LONGER_PULLED, src)
 	SEND_SIGNAL(src, COMSIG_ATOM_NO_LONGER_PULLING, old_pulling)
+
+#define PULLED_WHILE_CRIT_TRAIT "pulled_while_softcrit"
+
+/atom/movable/proc/pulled_mob_stat_change(mob/living/pulled_mob, new_stat, ...)
+	SIGNAL_HANDLER
+
+	if(new_stat >= SOFT_CRIT)
+		ADD_TRAIT(pulled_mob, TRAIT_IMMOBILIZED, PULLED_WHILE_CRIT_TRAIT)
+	else
+		REMOVE_TRAIT(pulled_mob, TRAIT_IMMOBILIZED, PULLED_WHILE_CRIT_TRAIT)
+
+/atom/movable/proc/set_pulling(new_pulling)
+	if(new_pulling == pulling)
+		return FALSE //null signals there was a change, be sure to return FALSE if none happened here.
+
+	if(isnull(new_pulling))
+		setGrabState(GRAB_PASSIVE)
+
+	. = pulling
+	pulling = new_pulling
+
+	if(ismovable(.))
+		var/atom/movable/was_pulling = .
+		was_pulling.set_pulledby(null)
+
+	if(ismovable(new_pulling))
+		var/atom/movable/pulled_thing = new_pulling
+		pulled_thing.set_pulledby(src)
+
+	if(ismob(.))
+		var/mob/was_pulled_mob = .
+		UnregisterSignal(was_pulled_mob, COMSIG_MOB_STATCHANGE)
+		REMOVE_TRAIT(was_pulled_mob, TRAIT_IMMOBILIZED, PULLED_WHILE_CRIT_TRAIT)
+
+	if(ismob(pulling))
+		var/mob/pulled_mob = pulling
+		RegisterSignal(pulling, COMSIG_MOB_STATCHANGE, PROC_REF(pulled_mob_stat_change))
+		if(pulled_mob.stat >= SOFT_CRIT)
+			ADD_TRAIT(pulled_mob, TRAIT_IMMOBILIZED, PULLED_WHILE_CRIT_TRAIT)
 
 ///Reports the event of the change in value of the pulledby variable.
 /atom/movable/proc/set_pulledby(new_pulledby)
@@ -592,6 +630,7 @@
 	. = pulledby
 	pulledby = new_pulledby
 
+#undef PULLED_WHILE_CRIT_TRAIT
 
 /atom/movable/proc/Move_Pulled(atom/moving_atom)
 	if(!pulling)
@@ -1466,12 +1505,12 @@
 /atom/movable/proc/force_push(atom/movable/pushed_atom, force = move_force, direction, silent = FALSE)
 	. = pushed_atom.force_pushed(src, force, direction)
 	if(!silent && .)
-		visible_message(span_warning(LANG("atom.f874b314", list(src, pushed_atom))), span_warning(LANG("atom.d5b20130", list(pushed_atom))))
+		visible_message(span_warning("[src] forcefully pushes against [pushed_atom]!"), span_warning("You forcefully push against [pushed_atom]!"))
 
 /atom/movable/proc/move_crush(atom/movable/crushed_atom, force = move_force, direction, silent = FALSE)
 	. = crushed_atom.move_crushed(src, force, direction)
 	if(!silent && .)
-		visible_message(span_danger(LANG("atom.816eb3fb", list(src, crushed_atom))), span_danger(LANG("atom.e79ecc98", list(crushed_atom))))
+		visible_message(span_danger("[src] crushes past [crushed_atom]!"), span_danger("You crush [crushed_atom]!"))
 
 /atom/movable/proc/move_crushed(atom/movable/pusher, force = MOVE_FORCE_DEFAULT, direction)
 	return FALSE
@@ -1793,7 +1832,7 @@
 			return
 		if(edit_faction(usr))
 			var/list/factions_printout = faction_to_text()
-			to_chat(usr, span_notice(LANG("atom.6f4c6195", list(src, factions_printout))))
+			to_chat(usr, span_notice("Factions updated for [src]:[factions_printout]"))
 
 	if(href_list[VV_HK_GET_FACTIONS])
 		if(!check_rights(R_ADMIN))
@@ -1801,7 +1840,7 @@
 		if(QDELETED(src))
 			return
 		var/list/factions_printout = faction_to_text()
-		to_chat(usr, span_notice(span_notice(LANG("atom.00568a3a", list(src, factions_printout)))))
+		to_chat(usr, span_notice(span_notice("Factions for [src]:[factions_printout]")))
 
 	if(href_list[VV_HK_EDIT_PARTICLES])
 		var/client/C = usr.client
@@ -1810,21 +1849,21 @@
 	if(href_list[VV_HK_DEADCHAT_PLAYS])
 		if(!check_rights(R_FUN))
 			return
-		if(tgui_alert(usr, LANG("atom.40a4f92b", list(src)), LANG("atom.6203ef2d", list(src)), list("Allow", "Cancel")) != "Allow")
+		if(tgui_alert(usr, "Allow deadchat to control [src] via chat commands?", "Deadchat Plays [src]", list("Allow", "Cancel")) != "Allow")
 			return
 		// Alert is async, so quick sanity check to make sure we should still be doing this.
 		if(QDELETED(src))
 			return
 		// This should never happen, but if it does it should not be silent.
 		if(deadchat_plays() == COMPONENT_INCOMPATIBLE)
-			to_chat(usr, span_warning(LANG("atom.e8cfd23a", list(src))))
+			to_chat(usr, span_warning("Deadchat control not compatible with [src]."))
 			CRASH("deadchat_control component incompatible with object of type: [type]")
-		to_chat(usr, span_notice(LANG("atom.d0a17c59", list(src))))
+		to_chat(usr, span_notice("Deadchat now control [src]."))
 		log_admin("[key_name(usr)] has added deadchat control to [src]")
 		message_admins(span_notice("[key_name(usr)] has added deadchat control to [src]"))
 
 	if(href_list[VV_HK_SET_TTS_VOICE])
-		var/chosen_voice = tgui_input_list(usr, LANG("atom.4cfe3617", null), LANG("atom.a1cc028f", null), SStts.available_speakers)
+		var/chosen_voice = tgui_input_list(usr, "Choose a voice to use.", "Choose a voice.", SStts.available_speakers)
 		if(!chosen_voice)
 			return
 		voice = chosen_voice
@@ -2039,12 +2078,12 @@
  * Opens the modify faction ui.
  */
 /atom/movable/proc/edit_faction(mob/user)
-	var/prompt = tgui_alert(usr, LANG("atom.c9cc9531", null), LANG("atom.8d04ee3a", null), list("Add", "Remove"))
+	var/prompt = tgui_alert(usr, "Would you like to Add or Remove faction?", "Add/Remove?", list("Add", "Remove"))
 	if (isnull(prompt))
 		return FALSE
 
 	if (prompt == "Add")
-		var/faction_to_add = tgui_input_text(user, LANG("atom.92170e86", null), LANG("atom.3302b0ca", null), max_length = MAX_NAME_LEN)
+		var/faction_to_add = tgui_input_text(user, "Enter a faction name to add.", "Add Faction", max_length = MAX_NAME_LEN)
 		if(isnull(faction_to_add))
 			return FALSE
 
@@ -2053,12 +2092,12 @@
 	else if (prompt == "Remove")
 		var/list/current_factions = LAZYLISTDUPLICATE(faction)
 		if(!LAZYLEN(current_factions))
-			to_chat(user, span_warning(LANG("atom.1cd95bfe", list(src))))
+			to_chat(user, span_warning("[src] has no factions left to remove!"))
 			return FALSE
 
 		current_factions = sort_list(current_factions, GLOBAL_PROC_REF(cmp_text_asc)) // sort alphabetically
 
-		var/faction_to_remove = tgui_input_list(user, LANG("atom.db3f1c38", null), LANG("atom.792966e7", null), current_factions)
+		var/faction_to_remove = tgui_input_list(user, "Select a faction to remove.", "Remove faction", current_factions)
 		if(isnull(faction_to_remove))
 			return FALSE
 

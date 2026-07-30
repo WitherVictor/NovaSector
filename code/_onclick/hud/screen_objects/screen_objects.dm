@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 INITIALIZE_IMMEDIATE(/atom/movable/screen) // I hate this place
 /*
 	Screen objects
@@ -161,7 +160,7 @@ INITIALIZE_IMMEDIATE(/atom/movable/screen) // I hate this place
 		return TRUE
 	var/area/A = get_area(usr)
 	if(!A.outdoors)
-		to_chat(usr, span_warning(LANG("atom.3c2f6fc6", null)))
+		to_chat(usr, span_warning("There is already a defined structure here."))
 		return TRUE
 	create_area(usr)
 
@@ -336,7 +335,7 @@ INITIALIZE_IMMEDIATE(/atom/movable/screen) // I hate this place
 	mouse_over_pointer = MOUSE_HAND_POINTER
 
 /atom/movable/screen/drop/Click()
-	if(usr.stat == CONSCIOUS)
+	if(!IS_UNCONSCIOUS_OR_CRIT(usr))
 		usr.dropItemToGround(usr.get_active_held_item())
 
 /atom/movable/screen/combattoggle
@@ -601,14 +600,14 @@ INITIALIZE_IMMEDIATE(/atom/movable/screen) // I hate this place
 	SetInvisibility(INVISIBILITY_ABSTRACT, INVISIBILITY_SOURCE_SLEEP_HUD_BUTTON)
 
 /atom/movable/screen/sleep/Click()
-	if(!isliving(usr) || HAS_TRAIT(usr, TRAIT_KNOCKEDOUT))
+	if(!isliving(usr) || IS_UNCONSCIOUS(usr))
 		return
 	if(!usr.client?.prefs.read_preference(/datum/preference/toggle/remove_double_click))
 		flick("[base_icon_state]_flick", src)
 		return
 
-	var/tgui_answer = tgui_alert(usr, LANG("atom.a08c61e6", null), LANG("atom.de5aa820", null), list("Yes", "No"))
-	if(tgui_answer == "Yes" && !HAS_TRAIT(usr, TRAIT_KNOCKEDOUT))
+	var/tgui_answer = tgui_alert(usr, "You sure you want to sleep for a while?", "Sleeping", list("Yes", "No"))
+	if(tgui_answer == "Yes" && !IS_UNCONSCIOUS(usr))
 		var/mob/living/L = usr
 		L.Sleeping(400)
 

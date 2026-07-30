@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 /datum/action/cooldown/mob_cooldown/resurface
 	name = "Resurface"
 	desc = "Burrow underground, and then move to a new location near your target. Must spew bile to refresh."
@@ -27,10 +26,10 @@
 /datum/action/cooldown/mob_cooldown/resurface/proc/burrow(mob/living/burrower, atom/target, force = FALSE)
 	var/turf/unburrow_turf = get_unburrow_turf(burrower, target)
 	if (!unburrow_turf) // means all the turfs nearby are station turfs or something, not lavaland
-		to_chat(burrower, span_warning(LANG("datum.3503e05c", null)))
+		to_chat(burrower, span_warning("Couldn't burrow anywhere near the target!"))
 		if(burrower.ai_controller?.ai_status == AI_STATUS_ON)
 			//this is a valid reason to give up on a target
-			burrower.ai_controller.clear_blackboard_key(BB_BASIC_MOB_CURRENT_TARGET)
+			burrower.ai_controller.clear_blackboard_key(BB_CURRENT_TARGET)
 		return
 
 	if (istype(burrower, /mob/living/basic/mining/bileworm) && !force)
@@ -51,7 +50,7 @@
 		jump_damaged = FALSE
 		RegisterSignal(worm, COMSIG_ATOM_WAS_ATTACKED, PROC_REF(on_attacked))
 		// Not in an if check direclty to reduce duplicate code
-		var/jump_result = do_after(worm, jump_length, worm, hidden = TRUE, extra_checks = CALLBACK(src, PROC_REF(damage_check)))
+		var/jump_result = do_after(worm, jump_length, worm, cog_icon = null, extra_checks = CALLBACK(src, PROC_REF(damage_check)))
 		UnregisterSignal(worm, COMSIG_ATOM_WAS_ATTACKED)
 		if (worm.icon_state == null)
 			worm.icon_state = old_icon_state
@@ -82,7 +81,7 @@
 #undef BILEWORM_JUMP_FRAMES
 
 /datum/action/cooldown/mob_cooldown/resurface/proc/burrow_again(mob/living/burrower, atom/target)
-	if (!QDELETED(burrower) && !burrower.stat)
+	if (!QDELETED(burrower) && !IS_UNCONSCIOUS_OR_CRIT(burrower))
 		// Burrow immediatelly after being stunned out of the first jump to avoid chainstuns
 		burrow(burrower, target, force = TRUE)
 
@@ -270,21 +269,21 @@
 
 /datum/action/cooldown/mob_cooldown/devour/Activate(atom/target_atom)
 	if(target_atom == owner)
-		to_chat(owner, span_warning(LANG("datum.ba014ab7", null)))
+		to_chat(owner, span_warning("You can't eat yourself!"))
 		return
 	if(!isliving(target_atom))
-		to_chat(owner, span_warning(LANG("datum.6fb636e1", null)))
+		to_chat(owner, span_warning("That's not food!"))
 		return
 	var/mob/living/living_target = target_atom
-	if(living_target.stat < UNCONSCIOUS)
-		to_chat(owner, span_warning(LANG("datum.c04e4681", null)))
+	if(!IS_UNCONSCIOUS(living_target))
+		to_chat(owner, span_warning("No way you're eating that while it's still kicking! It should at least be unconscious first."))
 		return
 	burrow_and_devour(owner, living_target)
 
 /datum/action/cooldown/mob_cooldown/devour/proc/burrow_and_devour(mob/living/devourer, mob/living/target)
 	var/turf/devour_turf = get_turf(target)
 	if(!istype(devour_turf, /turf/open/misc)) // means all the turfs nearby are station turfs or something, not lavaland
-		to_chat(devourer, span_warning(LANG("datum.11169ac9", null)))
+		to_chat(devourer, span_warning("Your target is on something you can't burrow through!"))
 		return //this will give up on devouring the target which is fine by me
 	playsound(devourer, 'sound/effects/break_stone.ogg', 50, TRUE)
 	new /obj/effect/temp_visual/mook_dust(get_turf(devourer))
@@ -298,10 +297,10 @@
 	REMOVE_TRAIT(devourer, TRAIT_GODMODE, REF(src))
 	devourer.RemoveInvisibility(type)
 	if(!(target in devour_turf))
-		to_chat(devourer, span_warning(LANG("datum.b7811aa5", null)))
+		to_chat(devourer, span_warning("Someone stole your dinner!"))
 		return
-	to_chat(target, span_userdanger(LANG("datum.b17b4d8a", list(devourer))))
-	devourer.visible_message(span_warning(LANG("datum.5b0a8f33", list(devourer, target))))
+	to_chat(target, span_userdanger("You are consumed by [devourer]!"))
+	devourer.visible_message(span_warning("[devourer] consumes [target]!"))
 	devourer.fully_heal()
 	playsound(devourer, 'sound/effects/splat.ogg', 50, TRUE)
 	//to be received on death

@@ -1,20 +1,12 @@
-/client/verb/looc(msg as text)
-	set name = "LOOC"
-	set desc = "Local OOC, seen only by those in view."
-	set category = "OOC"
-
+GAME_VERB_DESC(/client, looc, "LOOC", "Local OOC, seen only by those in view.", "OOC", msg as text)
 	looc_message(msg)
 
-/client/verb/looc_wallpierce(msg as text)
-	set name = "LOOC (穿墙)"
-	set desc = "Local OOC, seen by anyone within 7 tiles of you."
-	set category = "OOC"
-
+GAME_VERB_DESC(/client, looc_wallpierce, "LOOC(Wallpierce)", "Local OOC, seen by anyone within 7 tiles of you.", "OOC", msg as text)
 	looc_message(msg, TRUE)
 
 /client/proc/looc_message(msg, wall_pierce)
 	if(GLOB.say_disabled)
-		to_chat(usr, span_danger(LANG("client.b79ad8a3", null)))
+		to_chat(usr, span_danger("Speech is currently admin-disabled."))
 		return
 
 	if(!mob)
@@ -26,25 +18,25 @@
 
 	if(!holder)
 		if(!GLOB.looc_allowed)
-			to_chat(src, span_danger(LANG("client.0ac8d871", null)))
+			to_chat(src, span_danger("LOOC is globally muted."))
 			return
 		if(handle_spam_prevention(msg, MUTE_OOC))
 			return
 		if(findtext(msg, "byond://"))
-			to_chat(src, span_boldannounce(LANG("client.79757764", null)))
+			to_chat(src, span_boldannounce("<B>Advertising other servers is not allowed.</B>"))
 			log_admin("[key_name(src)] has attempted to advertise in LOOC: [msg]")
 			return
 		if(prefs.muted & MUTE_LOOC)
-			to_chat(src, span_danger(LANG("client.ef695a82", null)))
+			to_chat(src, span_danger("You cannot use LOOC (muted)."))
 			return
 		if(is_banned_from(ckey, BAN_LOOC))
-			to_chat(src, span_warning(LANG("client.a65462e3", null)))
+			to_chat(src, span_warning("You are LOOC banned!"))
 			return
 		if(mob.stat == DEAD)
-			to_chat(src, span_danger(LANG("client.ccffee2a", null)))
+			to_chat(src, span_danger("You cannot use LOOC while dead."))
 			return
 		if(istype(mob, /mob/dead))
-			to_chat(src, span_danger(LANG("client.a156ab3b", null)))
+			to_chat(src, span_danger("You cannot use LOOC while ghosting."))
 			return
 
 	msg = emoji_parse(msg)
@@ -89,10 +81,10 @@
 		if (is_holder)
 			continue //admins are handled afterwards
 
-		to_chat(hearing_client, span_looc(span_prefix("LOOC[wall_pierce ? " (WALL PIERCE)" : ""]:</span> <EM>[src.mob.name]:</EM> <span class='message'>[msg]")), avoid_highlighting = (hearing_client == src), skip_i18n_fallback = TRUE)
+		to_chat(hearing_client, span_looc(span_prefix("LOOC[wall_pierce ? " (WALL PIERCE)" : ""]:</span> <EM>[src.mob.name]:</EM> <span class='message'>[msg]")), avoid_highlighting = (hearing_client == src))
 
 	for(var/client/cli_client as anything in GLOB.admins)
 		if (admin_seen[cli_client])
-			to_chat(cli_client, span_looc("[ADMIN_FLW(usr)] <span class='prefix'>LOOC[wall_pierce ? " (WALL PIERCE)" : ""]:</span> <EM>[src.key]/[src.mob.name]:</EM> <span class='message'>[msg]</span>"), avoid_highlighting = (cli_client == src), skip_i18n_fallback = TRUE)
+			to_chat(cli_client, span_looc("[ADMIN_FLW(usr)] <span class='prefix'>LOOC[wall_pierce ? " (WALL PIERCE)" : ""]:</span> <EM>[src.key]/[src.mob.name]:</EM> <span class='message'>[msg]</span>"), avoid_highlighting = (cli_client == src))
 		else if (cli_client.prefs.read_preference(/datum/preference/toggle/admin/see_looc))
-			to_chat(cli_client, span_rlooc("[ADMIN_FLW(usr)] <span class='prefix'>(R)LOOC[wall_pierce ? " (WALL PIERCE)" : ""]:</span> <EM>[src.key]/[src.mob.name]:</EM> <span class='message'>[msg]</span>"), avoid_highlighting = (cli_client == src), skip_i18n_fallback = TRUE)
+			to_chat(cli_client, span_rlooc("[ADMIN_FLW(usr)] <span class='prefix'>(R)LOOC[wall_pierce ? " (WALL PIERCE)" : ""]:</span> <EM>[src.key]/[src.mob.name]:</EM> <span class='message'>[msg]</span>"), avoid_highlighting = (cli_client == src))

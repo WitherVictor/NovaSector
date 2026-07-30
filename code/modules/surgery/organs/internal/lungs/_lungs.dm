@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 /obj/item/organ/lungs
 	name = "lungs"
 	icon_state = "lungs"
@@ -253,7 +252,7 @@
 
 	breathe_gas_volume(breath, /datum/gas/oxygen, /datum/gas/carbon_dioxide)
 	// Heal mob if not in crit.
-	if(breather.stat != SOFT_CRIT && breather.stat != HARD_CRIT && breather.get_oxy_loss())
+	if(breather.stat == STABLE && breather.get_oxy_loss())
 		breather.adjust_oxy_loss(-5)
 
 /// Maximum Oxygen effects. "Too much O2!"
@@ -390,12 +389,12 @@
 	if (freon_pp > gas_stimulation_min)
 		breather.reagents.add_reagent(/datum/reagent/freon, 1)
 	if (prob(freon_pp))
-		to_chat(breather, span_alert(LANG("obj.dde4d571", null)))
+		to_chat(breather, span_alert("Your mouth feels like it's burning!"))
 	if (freon_pp > 40)
 		breather.emote("gasp")
 		breather.adjust_fire_loss(15)
 		if (prob(freon_pp / 2))
-			to_chat(breather, span_alert(LANG("obj.fdeef8ec", null)))
+			to_chat(breather, span_alert("Your throat closes up!"))
 			breather.set_silence_if_lower(6 SECONDS)
 	else
 		breather.adjust_fire_loss(freon_pp / 4)
@@ -415,7 +414,7 @@
 	// Euphoria side-effect.
 	if(healium_pp > gas_stimulation_min)
 		if(prob(15))
-			to_chat(breather, span_alert(LANG("obj.4fda1284", null)))
+			to_chat(breather, span_alert("Your head starts spinning and your lungs burn!"))
 			healium_euphoria = EUPHORIA_ACTIVE
 			breather.emote("gasp")
 	else
@@ -469,22 +468,22 @@
 			// At lower pp, give out a little warning
 			breather.clear_mood_event("smell")
 			if(prob(5))
-				to_chat(breather, span_notice(LANG("obj.bdb286ee", null)))
+				to_chat(breather, span_notice("There is an unpleasant smell in the air."))
 		if(5 to 15)
 			//At somewhat higher pp, warning becomes more obvious
 			if(prob(15))
-				to_chat(breather, span_warning(LANG("obj.31657472", null)))
+				to_chat(breather, span_warning("You smell something horribly decayed inside this room."))
 				breather.add_mood_event("smell", /datum/mood_event/disgust/bad_smell)
 		if(15 to 30)
 			//Small chance to vomit. By now, people have internals on anyway
 			if(prob(5))
-				to_chat(breather, span_warning(LANG("obj.591c0f7c", null)))
+				to_chat(breather, span_warning("The stench of rotting carcasses is unbearable!"))
 				breather.add_mood_event("smell", /datum/mood_event/disgust/nauseating_stench)
 				breather.vomit(VOMIT_CATEGORY_DEFAULT)
 		if(30 to INFINITY)
 			//Higher chance to vomit. Let the horror start
 			if(prob(15))
-				to_chat(breather, span_warning(LANG("obj.591c0f7c", null)))
+				to_chat(breather, span_warning("The stench of rotting carcasses is unbearable!"))
 				breather.add_mood_event("smell", /datum/mood_event/disgust/nauseating_stench)
 				breather.vomit(VOMIT_CATEGORY_DEFAULT)
 		else
@@ -547,7 +546,7 @@
 	if((prob(nitrium_pp) && (nitrium_pp > 15)))
 		// Nitrium side-effect.
 		breather.adjust_organ_loss(ORGAN_SLOT_LUNGS, nitrium_pp * 0.1)
-		to_chat(breather, span_notice(LANG("obj.f17e8542", null)))
+		to_chat(breather, span_notice("You feel a burning sensation in your chest"))
 	// Metabolize to reagents.
 	if (nitrium_pp > 5)
 		var/existing = breather.reagents.get_reagent_amount(/datum/reagent/nitrium_low_metabolization)
@@ -618,8 +617,9 @@
 	if(has_moles)
 		// Breath has more than 0 moles of gas.
 		// Route gases through mask filter if breather is wearing one.
-		if(istype(breather.wear_mask) && (breather.wear_mask.clothing_flags & GAS_FILTERING) && breather.wear_mask.has_filter)
-			breath = breather.wear_mask.consume_filter(breath)
+		var/obj/item/clothing/mask/worn_mask = breather.get_item_by_slot(ITEM_SLOT_MASK)
+		if(istype(worn_mask) && (worn_mask.clothing_flags & GAS_FILTERING) && worn_mask.has_filter)
+			breath = worn_mask.consume_filter(breath)
 	// Breath has 0 moles of gas, and we can breathe space
 	else if(HAS_TRAIT(breather, TRAIT_NO_BREATHLESS_DAMAGE))
 		// The lungs can breathe anyways. What are you? Some bottom-feeding, scum-sucking algae eater?
@@ -769,7 +769,7 @@
 			breath_effect_prob = 25
 		if(breath_temperature < cold_level_1_threshold)
 			if(prob(sqrt(breath_effect_prob) * 4))
-				to_chat(breather, span_warning(LANG("obj.9c838501", list(cold_message, name))))
+				to_chat(breather, span_warning("You feel [cold_message] in your [name]!"))
 				if(prob(50))
 					breather.emote("shiver")
 			if(prob(breath_effect_prob))
@@ -795,7 +795,7 @@
 			heat_message_prob = 25
 		if(breath_temperature > heat_level_1_threshold)
 			if(prob(sqrt(heat_message_prob) * 4))
-				to_chat(breather, span_warning(LANG("obj.9c838501", list(hot_message, name))))
+				to_chat(breather, span_warning("You feel [hot_message] in your [name]!"))
 
 	// The air you breathe out should match your body temperature
 	breath.temperature = breather.bodytemperature
@@ -845,8 +845,8 @@
 		var/do_i_cough = SPT_PROB((damage < high_threshold) ? 2.5 : 5, seconds_per_tick) // between : past high
 		if(do_i_cough)
 			owner.emote("cough")
-	if(organ_flags & ORGAN_FAILING && owner.stat == CONSCIOUS)
-		owner.visible_message(span_danger(LANG("obj.c094df16", list(owner, owner.p_their()))), span_userdanger(LANG("obj.d062df62", null)))
+	if(organ_flags & ORGAN_FAILING && !IS_UNCONSCIOUS_OR_CRIT(owner))
+		owner.visible_message(span_danger("[owner] grabs [owner.p_their()] throat, struggling for breath!"), span_userdanger("You suddenly feel like you can't breathe!"))
 		failed = TRUE
 
 /obj/item/organ/lungs/get_availability(datum/species/owner_species, mob/living/owner_mob)

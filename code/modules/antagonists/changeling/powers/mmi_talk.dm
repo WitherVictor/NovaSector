@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 /datum/action/changeling/mmi_talk
 	name = "MMI Talk"
 	desc = "Our decoy brain has been implanted into a Man-Machine Interface. \
@@ -115,8 +114,8 @@
 		return FALSE
 
 	var/obj/item/mmi/mmi = brain_ref.loc
-	if(mmi.brainmob.stat != CONSCIOUS)
-		to_chat(usr, span_warning(LANG("datum.5d107a2d", null)))
+	if(IS_UNCONSCIOUS_OR_CRIT(mmi.brainmob))
+		to_chat(usr, span_warning("Our decoy brain is too damaged to speak."))
 	else
 		// Say will perform input sanitization and such for us
 		mmi.brainmob.say(params["message"], sanitize = TRUE)

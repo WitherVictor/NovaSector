@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 /**
  * # Action system
  *
@@ -60,11 +59,6 @@
 
 /datum/action/New(Target)
 	link_to(Target)
-	// NOVA EDIT ADDITION START - i18n - 全服中文时反查技能/法术 name/desc
-	if(GLOB.i18n_server_locale != DEFAULT_UI_LOCALE)
-		name = lang_reverse_text(name)
-		desc = lang_reverse_text(desc)
-	// NOVA EDIT ADDITION END
 
 /// Links the passed target to our action, registering any relevant signals
 /datum/action/proc/link_to(Target)
@@ -185,41 +179,40 @@
 		return FALSE
 	if(action_disabled)
 		return FALSE
-	if((check_flags & AB_CHECK_CONSCIOUS) && owner.stat != CONSCIOUS)
+	if((check_flags & AB_CHECK_CONSCIOUS) && IS_UNCONSCIOUS_OR_CRIT(owner))
 		if (feedback)
-			switch(owner.stat)
-				if(SOFT_CRIT)
-					owner.balloon_alert(owner, LANG("datum.762b74d4", null))
-				if(DEAD)
-					owner.balloon_alert(owner, LANG("datum.1bf49ad4", null))
-				else
-					owner.balloon_alert(owner, LANG("datum.dc8b5a42", null))
+			if(owner.stat == DEAD)
+				owner.balloon_alert(owner, "dead!")
+			else if(IS_UNCONSCIOUS(owner))
+				owner.balloon_alert(owner, "unconscious!")
+			else
+				owner.balloon_alert(owner, "in critical!")
 		return FALSE
 	if((check_flags & AB_CHECK_HANDS_BLOCKED) && HAS_TRAIT(owner, TRAIT_HANDS_BLOCKED))
 		if (feedback)
-			owner.balloon_alert(owner, LANG("datum.d1507825", null))
+			owner.balloon_alert(owner, "hands blocked!")
 		return FALSE
 	if((check_flags & AB_CHECK_IMMOBILE) && HAS_TRAIT(owner, TRAIT_IMMOBILIZED))
 		if (feedback)
-			owner.balloon_alert(owner, LANG("datum.b5c8ce04", null))
+			owner.balloon_alert(owner, "can't move!")
 		return FALSE
 	if((check_flags & AB_CHECK_INCAPACITATED) && HAS_TRAIT(owner, TRAIT_INCAPACITATED))
 		if (feedback)
-			owner.balloon_alert(owner, LANG("datum.7ac2788b", null))
+			owner.balloon_alert(owner, "incapacitated!")
 		return FALSE
 	if((check_flags & AB_CHECK_LYING) && isliving(owner))
 		var/mob/living/action_owner = owner
 		if(action_owner.body_position == LYING_DOWN)
 			if (feedback)
-				owner.balloon_alert(owner, LANG("datum.70b816d0", null))
+				owner.balloon_alert(owner, "must stand up!")
 			return FALSE
 	if((check_flags & AB_CHECK_PHASED) && HAS_TRAIT(owner, TRAIT_MAGICALLY_PHASED))
 		if (feedback)
-			owner.balloon_alert(owner, LANG("datum.1919c2bc", null))
+			owner.balloon_alert(owner, "incorporeal!")
 		return FALSE
 	if((check_flags & AB_CHECK_OPEN_TURF) && !isopenturf(owner.loc))
 		if (feedback)
-			owner.balloon_alert(owner, LANG("datum.5f5397de", null))
+			owner.balloon_alert(owner, "not enough space!")
 		return FALSE
 	return TRUE
 
@@ -348,6 +341,7 @@
 		current_button.color = rgb(255,255,255,255)
 	else
 		current_button.color = transparent_when_unavailable ? rgb(128,0,0,128) : rgb(128,0,0)
+	SEND_SIGNAL(src, COMSIG_ACTION_STATUS_UPDATE, current_button, force)
 
 /// Gives our action to the passed viewer.
 /// Puts our action in their actions list and shows them the button.

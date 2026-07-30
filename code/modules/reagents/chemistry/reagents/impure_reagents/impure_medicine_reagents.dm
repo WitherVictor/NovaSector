@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 //Reagents produced by metabolising/reacting fermichems suboptimally these specifically are for medicines
 //Inverse = Splitting
 //Invert = Whole conversion
@@ -68,7 +67,7 @@
 //Warns you about the impenting hands
 /datum/reagent/inverse/helgrasp/on_mob_add(mob/living/affected_mob, amount)
 	. = ..()
-	to_chat(affected_mob, span_hierophant(LANG("datum.3d8e57aa", null)))
+	to_chat(affected_mob, span_hierophant("You hear laughter as malevolent hands apparate before you, eager to drag you down to hell...! Look out!"))
 	playsound(affected_mob.loc, 'sound/effects/chemistry/ahaha.ogg', 80, TRUE, -1) //Very obvious tell so people can be ready
 
 //Sends hands after you for your hubris
@@ -311,7 +310,7 @@ Basically, we fill the time between now and 2s from now with hands based off the
 /datum/reagent/inverse/healing/tirimol/on_mob_delete(mob/living/affected_mob)
 	. = ..()
 	if(affected_mob.IsSleeping())
-		affected_mob.visible_message(span_notice(LANG("datum.1e29c11f", list(icon2html(affected_mob, viewers(DEFAULT_MESSAGE_RANGE, src)), affected_mob))))//small way of letting people know the supersnooze is ended
+		affected_mob.visible_message(span_notice("[icon2html(affected_mob, viewers(DEFAULT_MESSAGE_RANGE, src))] [affected_mob] lets out a hearty snore!"))//small way of letting people know the supersnooze is ended
 	for(var/datum/reagent/reagent as anything in cached_reagent_list)
 		if(!reagent)
 			continue
@@ -482,7 +481,7 @@ Basically, we fill the time between now and 2s from now with hands based off the
 	self_consuming = TRUE //No pesky liver shenanigans
 	chemical_flags = REAGENT_DEAD_PROCESS
 	affected_organ_flags = NONE
-	///If we brought someone back from the dead
+	/// If we brought someone back from the dead
 	var/back_from_the_dead = FALSE
 	/// List of trait buffs to give to the affected mob, and remove as needed.
 	var/static/list/trait_buffs = list(
@@ -504,15 +503,11 @@ Basically, we fill the time between now and 2s from now with hands based off the
 		return
 	metabolization_rate = 0.5 * REAGENTS_METABOLISM
 	affected_mob.add_traits(trait_buffs, type)
-	affected_mob.set_stat(CONSCIOUS) //This doesn't touch knocked out
-	affected_mob.updatehealth()
-	affected_mob.update_sight()
-	REMOVE_TRAIT(affected_mob, TRAIT_KNOCKEDOUT, STAT_TRAIT)
-	REMOVE_TRAIT(affected_mob, TRAIT_KNOCKEDOUT, CRIT_HEALTH_TRAIT) //Because these are normally updated using set_health() - but we don't want to adjust health, and the addition of NOHARDCRIT blocks it being added after, but doesn't remove it if it was added before
-	REMOVE_TRAIT(affected_mob, TRAIT_KNOCKEDOUT, OXYLOSS_TRAIT) //As above, removes unconsciousness if it was added before the reagent was administered
-	affected_mob.set_resting(FALSE) //Please get up, no one wants a deaththrows juggernaught that lies on the floor all the time
-	affected_mob.SetAllImmobility(0)
-	affected_mob.grab_ghost(force = FALSE) //Shoves them back into their freshly reanimated corpse.
+	if(!affected_mob.revive(force_grab_ghost = TRUE))
+		return
+
+	affected_mob.set_resting(FALSE, TRUE) // Please get up, no one wants a deaththrows juggernaught that lies on the floor all the time
+	affected_mob.SetAllImmobility(0 SECONDS)
 	back_from_the_dead = TRUE
 	affected_mob.emote("gasp")
 	affected_mob.playsound_local(affected_mob, 'sound/effects/health/fastbeat.ogg', 65)
@@ -523,19 +518,17 @@ Basically, we fill the time between now and 2s from now with hands based off the
 		return
 	//Following is for those brought back from the dead only
 	var/creation_impurity = 1 - creation_purity
-	REMOVE_TRAIT(affected_mob, TRAIT_KNOCKEDOUT, CRIT_HEALTH_TRAIT)
-	REMOVE_TRAIT(affected_mob, TRAIT_KNOCKEDOUT, OXYLOSS_TRAIT)
 	for(var/datum/wound/iter_wound as anything in affected_mob.all_wounds)
 		iter_wound.adjust_blood_flow(4 * creation_impurity * metabolization_ratio * seconds_per_tick)
 	var/need_mob_update
-	need_mob_update = affected_mob.adjust_brute_loss(20 * creation_impurity * metabolization_ratio * seconds_per_tick, required_bodytype = affected_bodytype)
+	need_mob_update += affected_mob.adjust_brute_loss(20 * creation_impurity * metabolization_ratio * seconds_per_tick, required_bodytype = affected_bodytype)
 	need_mob_update += affected_mob.adjust_organ_loss(ORGAN_SLOT_HEART, 4 * ((1 + creation_impurity) * metabolization_ratio * seconds_per_tick), required_organ_flag = affected_organ_flags)
 	if(affected_mob.health < HEALTH_THRESHOLD_CRIT)
 		affected_mob.add_movespeed_modifier(/datum/movespeed_modifier/reagent/nooartrium)
 	if(affected_mob.health < HEALTH_THRESHOLD_FULLCRIT)
 		affected_mob.add_actionspeed_modifier(/datum/actionspeed_modifier/nooartrium)
 	var/obj/item/organ/heart/heart = affected_mob.get_organ_slot(ORGAN_SLOT_HEART)
-	if(!heart || heart.organ_flags & ORGAN_FAILING)
+	if(isnull(heart) || (heart.organ_flags & ORGAN_FAILING))
 		remove_buffs(affected_mob)
 	if(need_mob_update)
 		return UPDATE_MOB_HEALTH
@@ -544,30 +537,28 @@ Basically, we fill the time between now and 2s from now with hands based off the
 	. = ..()
 	remove_buffs(affected_mob)
 	var/obj/item/organ/heart/heart = affected_mob.get_organ_slot(ORGAN_SLOT_HEART)
-	if(affected_mob.health < -500 || heart.organ_flags & ORGAN_FAILING)//Honestly commendable if you get -500
+	if(affected_mob.health < (5 * HEALTH_THRESHOLD_DEAD) || (heart?.organ_flags & ORGAN_FAILING)) // Honestly commendable if you get -500
 		explosion(affected_mob, light_impact_range = 1, explosion_cause = src)
+		affected_mob.visible_message(span_boldwarning("[affected_mob]'s heart explodes!"))
 		qdel(heart)
-		affected_mob.visible_message(span_boldwarning(LANG("datum.a754247c", list(affected_mob))))
 
 /datum/reagent/inverse/penthrite/overdose_start(mob/living/carbon/affected_mob, metabolization_ratio)
-	. = ..()
 	if(!back_from_the_dead)
 		return ..()
+
 	var/obj/item/organ/heart/heart = affected_mob.get_organ_slot(ORGAN_SLOT_HEART)
-	if(!heart) //No heart? No life!
+	if(isnull(heart)) // No heart? No life!
 		REMOVE_TRAIT(affected_mob, TRAIT_NODEATH, type)
-		affected_mob.stat = DEAD
-		return ..()
-	explosion(affected_mob, light_impact_range = 1, explosion_cause = src)
-	qdel(heart)
-	affected_mob.visible_message(span_boldwarning(LANG("datum.a754247c", list(affected_mob))))
+	else
+		explosion(affected_mob, light_impact_range = 1, explosion_cause = src)
+		affected_mob.visible_message(span_boldwarning("[affected_mob]'s heart explodes!"))
+		qdel(heart)
 	return..()
 
 /datum/reagent/inverse/penthrite/proc/remove_buffs(mob/living/carbon/affected_mob)
 	affected_mob.remove_traits(trait_buffs, type)
 	affected_mob.remove_movespeed_modifier(/datum/movespeed_modifier/reagent/nooartrium)
 	affected_mob.remove_actionspeed_modifier(/datum/actionspeed_modifier/nooartrium)
-	affected_mob.update_sight()
 
 /*				Non c2 medicines 				*/
 
@@ -745,14 +736,14 @@ Basically, we fill the time between now and 2s from now with hands based off the
 		return ..()
 	if(SPT_PROB(100 * creation_purity, seconds_per_tick))
 		affected_mob.become_blind(IMPURE_OCULINE)
-		to_chat(affected_mob, span_danger(LANG("datum.3e87027b", null)))
+		to_chat(affected_mob, span_danger("You suddenly develop a pounding headache as your vision fluxuates."))
 		headache = TRUE
 
 /datum/reagent/inverse/oculine/on_mob_end_metabolize(mob/living/affected_mob)
 	. = ..()
 	affected_mob.cure_blind(IMPURE_OCULINE)
 	if(headache)
-		to_chat(affected_mob, span_notice(LANG("datum.4ee2910e", null)))
+		to_chat(affected_mob, span_notice("Your headache clears up!"))
 
 /datum/reagent/impurity/inacusiate
 	name = "Tinacusiate"
@@ -770,12 +761,12 @@ Basically, we fill the time between now and 2s from now with hands based off the
 	. = ..()
 	random_span = pick("clown", "small", "big", "hypnophrase", "alien", "cult", "alert", "danger", "emote", "yell", "brass", "sans", "papyrus", "robot", "his_grace", "phobia")
 	RegisterSignal(affected_mob, COMSIG_MOVABLE_HEAR, PROC_REF(owner_hear))
-	to_chat(affected_mob, span_warning(LANG("datum.88be5a01", list(!HAS_TRAIT(affected_mob, TRAIT_DEAF) ? "!" : " - wait, that's normal."))))
+	to_chat(affected_mob, span_warning("Your hearing seems to be a bit off[!HAS_TRAIT(affected_mob, TRAIT_DEAF) ? "!" : " - wait, that's normal."]"))
 
 /datum/reagent/impurity/inacusiate/on_mob_end_metabolize(mob/living/affected_mob)
 	. = ..()
 	UnregisterSignal(affected_mob, COMSIG_MOVABLE_HEAR)
-	to_chat(affected_mob, span_notice(LANG("datum.cbcea42b", list(!HAS_TRAIT(affected_mob, TRAIT_DEAF) ? "" : " - no, wait, no you don't"))))
+	to_chat(affected_mob, span_notice("You start hearing things normally again[!HAS_TRAIT(affected_mob, TRAIT_DEAF) ? "" : " - no, wait, no you don't"]."))
 
 /datum/reagent/impurity/inacusiate/proc/owner_hear(mob/living/owner, list/hearing_args)
 	SIGNAL_HANDLER
@@ -861,7 +852,7 @@ Basically, we fill the time between now and 2s from now with hands based off the
 		affected_mob.set_jitter_if_lower(10 SECONDS)
 		affected_mob.adjust_disgust(2.4 * metabolization_ratio * seconds_per_tick)
 		if(SPT_PROB(2.5, seconds_per_tick))
-			to_chat(affected_mob, span_warning(LANG("datum.cee3960b", null)))
+			to_chat(affected_mob, span_warning("A horrible ache spreads in your insides!"))
 			affected_mob.adjust_confusion_up_to(10 SECONDS, 15 SECONDS)
 
 /datum/reagent/inverse/atropine
@@ -967,10 +958,10 @@ Basically, we fill the time between now and 2s from now with hands based off the
 	if(SPT_PROB(10, seconds_per_tick))
 		affected_mob.emote("drool")
 	if(SPT_PROB(5, seconds_per_tick))
-		to_chat(affected_mob, span_warning(LANG("datum.ad02dd2e", null)))
+		to_chat(affected_mob, span_warning("You briefly lose control of your legs!"))
 		affected_mob.Knockdown(5 SECONDS)
 	if(SPT_PROB(5, seconds_per_tick))
-		to_chat(affected_mob, span_warning(LANG("datum.e38fc8ad", null)))
+		to_chat(affected_mob, span_warning("The muscles in your arms give out!"))
 		affected_mob.drop_all_held_items()
 
 /datum/reagent/inverse/bath_salts
@@ -1047,43 +1038,43 @@ Basically, we fill the time between now and 2s from now with hands based off the
 
 	switch(current_cycle)
 		if(10)
-			to_chat(affected_mob, span_warning(LANG("datum.fb445db5", null)))
+			to_chat(affected_mob, span_warning("You feel a migraine coming on..."))
 			affected_mob.adjust_eye_blur(0.16 SECONDS * metabolization_ratio * seconds_per_tick)
 
 		if(15 to 30)
 			if(SPT_PROB(5, seconds_per_tick))
-				to_chat(affected_mob, span_warning(LANG("datum.c80b8c7f", null)))
+				to_chat(affected_mob, span_warning("Your head aches as your vision blurs."))
 				affected_mob.adjust_eye_blur(4 SECONDS * metabolization_ratio)
 			if(SPT_PROB(5, seconds_per_tick))
-				to_chat(affected_mob, span_warning(LANG("datum.d67d66ad", null)))
+				to_chat(affected_mob, span_warning("Your face contorts as a sudden pain forms in your head."))
 				affected_mob.Stun(1 SECONDS)
 
 		if(31 to 45)
 			if(SPT_PROB(5, seconds_per_tick))
-				to_chat(affected_mob, span_warning(LANG("datum.f9e9e073", null)))
+				to_chat(affected_mob, span_warning("Intense pressure forms in your head, you can barely see!"))
 				affected_mob.adjust_eye_blur(8 SECONDS * metabolization_ratio)
 				affected_mob.adjust_confusion_up_to(5 SECONDS, 20 SECONDS)
 				affected_mob.adjust_hallucinations(10 SECONDS)
 			if(SPT_PROB(5, seconds_per_tick))
-				to_chat(affected_mob, span_warning(LANG("datum.6c8c0db3", null)))
+				to_chat(affected_mob, span_warning("You lose focus and stare ahead."))
 				affected_mob.Stun(3 SECONDS)
 				affected_mob.emote(pick("stare","drool","moan","look"))
 			if(SPT_PROB(5, seconds_per_tick))
-				to_chat(affected_mob, span_warning(LANG("datum.25445565", null)))
+				to_chat(affected_mob, span_warning("Your inhaling becomes more stressed, it's getting harder to breathe!"))
 				holder.add_reagent(/datum/reagent/toxin/histamine, 3.2 * metabolization_ratio)
 
 		if(46 to INFINITY)
 			if(SPT_PROB(5, seconds_per_tick))
-				to_chat(affected_mob, span_warning(LANG("datum.d593de5d", null)))
+				to_chat(affected_mob, span_warning("It feels like your head is going to implode!"))
 				affected_mob.adjust_eye_blur(8 SECONDS * metabolization_ratio)
 				affected_mob.adjust_confusion_up_to(10 SECONDS, 20 SECONDS)
 				affected_mob.adjust_hallucinations(30 SECONDS)
 			if(SPT_PROB(5, seconds_per_tick))
-				to_chat(affected_mob, span_warning(LANG("datum.7a04674d", null)))
+				to_chat(affected_mob, span_warning("You can't bring yourself to focus at all!"))
 				affected_mob.Stun(5 SECONDS)
 				affected_mob.emote(pick("stare","drool","tremble","shake"))
 			if(SPT_PROB(5, seconds_per_tick))
-				to_chat(affected_mob, span_warning(LANG("datum.7fcff853", null)))
+				to_chat(affected_mob, span_warning("Your breathing becomes weak and raspy, you can barely stay conscious!"))
 				holder.add_reagent(/datum/reagent/toxin/histamine, 4.8 * metabolization_ratio)
 				affected_mob.losebreath += 3
 
@@ -1091,16 +1082,16 @@ Basically, we fill the time between now and 2s from now with hands based off the
 	. = ..()
 	var/need_mob_update
 	if(SPT_PROB(10, seconds_per_tick))
-		to_chat(affected_mob, span_warning(LANG("datum.d593de5d", null)))
+		to_chat(affected_mob, span_warning("It feels like your head is going to implode!"))
 		affected_mob.adjust_eye_blur(8 SECONDS * metabolization_ratio)
 		affected_mob.adjust_confusion_up_to(10 SECONDS, 20 SECONDS)
 		affected_mob.adjust_hallucinations(30 SECONDS)
 	if(SPT_PROB(10, seconds_per_tick))
-		to_chat(affected_mob, span_warning(LANG("datum.7a04674d", null)))
+		to_chat(affected_mob, span_warning("You can't bring yourself to focus at all!"))
 		affected_mob.Stun(50)
 		affected_mob.emote(pick("stare","drool","tremble","shake"))
 	if(SPT_PROB(10, seconds_per_tick))
-		to_chat(affected_mob, span_warning(LANG("datum.7fcff853", null)))
+		to_chat(affected_mob, span_warning("Your breathing becomes weak and raspy, you can barely stay conscious!"))
 		holder.add_reagent(/datum/reagent/toxin/histamine, 4.8 * metabolization_ratio)
 		affected_mob.losebreath += 3
 		need_mob_update = TRUE
@@ -1122,7 +1113,7 @@ Basically, we fill the time between now and 2s from now with hands based off the
 	affected_mob.add_mood_event("sadness_inverse", /datum/mood_event/sadness_inverse)
 	switch(volume)
 		if(1 to INFINITY) // prevents microdosing from repeating this line
-			affected_mob.say(LANG("datum.095917e8", null), forced = type)
+			affected_mob.say("What?? No... NO...", forced = type)
 
 /datum/reagent/inverse/happiness/on_mob_end_metabolize(mob/living/carbon/affected_mob)
 	. = ..()
@@ -1162,15 +1153,15 @@ Basically, we fill the time between now and 2s from now with hands based off the
 /datum/reagent/inverse/baldium/on_mob_metabolize(mob/living/carbon/affected_mob)
 	. = ..()
 	affected_mob.add_shared_particles(/particles/smoke/steam/mald)
-	affected_mob.manual_emote(LANG("datum.3df4eb0e", null))
-	to_chat(affected_mob, span_warning(LANG("datum.00721a9a", null)))
+	affected_mob.manual_emote("inhales sharply.")
+	to_chat(affected_mob, span_warning("You can't help but find everything more irritating."))
 
 /datum/reagent/inverse/baldium/on_mob_end_metabolize(mob/living/carbon/affected_mob)
 	. = ..()
 	affected_mob.remove_atom_colour(TEMPORARY_COLOUR_PRIORITY, "#fe0000")
 	affected_mob.remove_shared_particles(/particles/smoke/steam/mald)
-	affected_mob.manual_emote(LANG("datum.313f4145", null))
-	to_chat(affected_mob, span_warning(LANG("datum.0b652637", null)))
+	affected_mob.manual_emote("exhales sharply.")
+	to_chat(affected_mob, span_warning("You feel an intense burning sensation as your anger subsides!"))
 
 /datum/reagent/inverse/baldium/on_mob_life(mob/living/carbon/affected_mob, seconds_per_tick, metabolization_ratio)
 	. = ..()
@@ -1185,11 +1176,11 @@ Basically, we fill the time between now and 2s from now with hands based off the
 			if(!HAS_TRAIT(affected_mob, TRAIT_PACIFISM))
 				var/turf/angery_blast = get_turf(affected_mob)
 				goonchem_vortex(angery_blast, 1, 4)
-				to_chat(affected_mob, span_warning(LANG("datum.95fc08a6", null)))
+				to_chat(affected_mob, span_warning("You can't control yourself as you yell out ANGRILY!!"))
 				affected_mob.emote("scream")
 				affected_mob.say(pick("RAGE!! UNLEASH THE RAGE!!","I'M SO ANGRY!!","WHY I OUGHTA...","AAARRRGGHH!!"), forced = type)
 			else
-				to_chat(affected_mob, span_warning(LANG("datum.480e7c4b", null)))
+				to_chat(affected_mob, span_warning("You calmly yet firmly state your discontent."))
 				affected_mob.say(pick("Aaahhhh...","Rage, woo yeah...","I'm slightly upset...",), forced = type)
 
 		if(6 to INFINITY)
@@ -1324,17 +1315,17 @@ Basically, we fill the time between now and 2s from now with hands based off the
 		if(10)
 			for(var/obj/item/bodypart/leg/leg in affected_mob.get_bodyparts())
 				affected_mob.cause_wound_of_type_and_severity(WOUND_BLUNT, leg, WOUND_SEVERITY_MODERATE)
-			to_chat(affected_mob, span_warning(LANG("datum.0f416738", null)))
+			to_chat(affected_mob, span_warning("Your legs start to cave in to your overwhelming gravity!"))
 
 		if(20)
 			for(var/obj/item/bodypart/leg/leg in affected_mob.get_bodyparts())
 				affected_mob.cause_wound_of_type_and_severity(WOUND_BLUNT, leg, WOUND_SEVERITY_SEVERE)
-			to_chat(affected_mob, span_warning(LANG("datum.987e2be1", null)))
+			to_chat(affected_mob, span_warning("Your bones fragment horribly as the gravity pounds on you!"))
 
 		if(30)
 			for(var/obj/item/bodypart/leg/leg in affected_mob.get_bodyparts())
 				affected_mob.cause_wound_of_type_and_severity(WOUND_BLUNT, leg, WOUND_SEVERITY_CRITICAL)
-			to_chat(affected_mob, span_warning(LANG("datum.e2b75fb5", null)))
+			to_chat(affected_mob, span_warning("The gravity of this situation makes your bones snap like popsicle sticks!"))
 
 /datum/reagent/inverse/gravitum/overdose_start(mob/living/carbon/affected_mob, metabolization_ratio)
 	. = ..()

@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 /*Vorpal Scythe, or the implant null rod that isn't as strong as other null rods up until you use it to behead someone with the special death knell attack.
 If the scythe isn't empowered when you sheath it, you take a heap of damage and probably a wound!*/
 
@@ -24,7 +23,7 @@ If the scythe isn't empowered when you sheath it, you take a heap of damage and 
 	if(scythe.empowerment >= SCYTHE_SATED)
 		return ..()
 
-	to_chat(owner, span_userdanger(LANG("obj.0b0a5a72", list(scythe))))
+	to_chat(owner, span_userdanger("[scythe] tears into you for your unworthy display of arrogance!"))
 	playsound(owner, 'sound/effects/magic/demon_attack1.ogg', 50, TRUE)
 	owner.apply_damage(25, BRUTE, hand, wound_bonus = 10, sharpness = SHARP_EDGED)
 	return ..()
@@ -65,17 +64,17 @@ If the scythe isn't empowered when you sheath it, you take a heap of damage and 
 
 /obj/item/vorpalscythe/examine(mob/user)
 	. = ..()
-	. += span_notice(LANG("obj.2b6ae28f", list(src, src)))
-	. += span_notice(LANG("obj.ab1bfea7", list(src)))
+	. += span_notice("You can perform a death knell using [src] on a human with Right-Click. If they were sentient (whether currently or at some point), [src] is empowered on a successful death knell.")
+	. += span_notice("[src] seems to have quite a bit of reach. You might be able to hit things from further away.")
 
 	var/current_empowerment = empowerment
 	switch(current_empowerment)
 		if(SCYTHE_EMPOWERED)
-			. += span_notice(LANG("obj.144db259", list(src)))
+			. += span_notice("[src] is empowered and humming with energy.")
 		if(SCYTHE_SATED)
-			. += span_notice(LANG("obj.d44873ee", list(src)))
+			. += span_notice("[src] is sated, but still demands more. Perform the death knell!")
 		else
-			. += span_notice(LANG("obj.8a7d6391", list(src)))
+			. += span_notice("[src] is still. Anticipating the strike. Best not anger it by denying it the opportuntiy to taste blood.")
 
 /obj/item/vorpalscythe/Initialize(mapload)
 	. = ..()
@@ -88,7 +87,7 @@ If the scythe isn't empowered when you sheath it, you take a heap of damage and 
 	if(ismonkey(target) && !target.mind) //Don't empower from hitting monkeys. Hit a corgi or something, I don't know.
 		return ..()
 
-	if(target.stat < DEAD && target != user)
+	if(target.stat != DEAD && target != user)
 		scythe_empowerment(SCYTHE_SATED)
 
 	return ..()
@@ -110,7 +109,7 @@ If the scythe isn't empowered when you sheath it, you take a heap of damage and 
 	var/mob/living/carbon/potential_reaping = victim
 
 	if(HAS_TRAIT(potential_reaping, TRAIT_NODISMEMBER))
-		to_chat(user, span_warning(LANG("obj.081e6e4f", null)))
+		to_chat(user, span_warning("You do not think you can behead this creature..."))
 		return SECONDARY_ATTACK_CANCEL_ATTACK_CHAIN
 
 	var/head_name
@@ -118,7 +117,7 @@ If the scythe isn't empowered when you sheath it, you take a heap of damage and 
 
 	reaped_head = potential_reaping.get_bodypart(check_zone(user.zone_selected))
 	if(!reaped_head)
-		to_chat(user, span_warning(LANG("obj.e81af7bf", null)))
+		to_chat(user, span_warning("There is no head to reap."))
 		return SECONDARY_ATTACK_CANCEL_ATTACK_CHAIN
 	head_name = reaped_head.name
 
@@ -127,16 +126,16 @@ If the scythe isn't empowered when you sheath it, you take a heap of damage and 
 
 	if(!potential_reaping.mind) //We put this here juuuust in case there is something funky with ling checks
 		if(ismonkey(potential_reaping))
-			to_chat(user, span_warning(LANG("obj.3a6a363a", null)))
+			to_chat(user, span_warning("A pointless existence. You'll get no benefit from this death knell beyond the satisfaction of beheading this foul thing."))
 			potential_empowerment = SCYTHE_WEAK
 		else
-			to_chat(user, span_warning(LANG("obj.a2c5f7d4", list(src))))
+			to_chat(user, span_warning("This soul is almost nonexistent. But [src] can still gain something from this sacrifice. A puppet."))
 			potential_empowerment = SCYTHE_SATED
 
 	var/death_knell_speed_mod = 1
 
-	potential_reaping.visible_message(span_danger(LANG("obj.9b83bdbf", list(user, src, potential_reaping, head_name))), span_userdanger(LANG("obj.eafb0de5", list(user, src, head_name))))
-	if(potential_reaping.stat >= UNCONSCIOUS || HAS_TRAIT(potential_reaping, TRAIT_INCAPACITATED)) //if the victim is incapacitated (due to paralysis, a stun, being in staminacrit, etc.), critted, unconscious, or dead, it's much easier to properly behead
+	potential_reaping.visible_message(span_danger("[user] begins to raise [src] above [potential_reaping]'s [head_name]."), span_userdanger("[user] begins to raise [src], aiming to slice off your [head_name]!"))
+	if(IS_UNCONSCIOUS(potential_reaping) || HAS_TRAIT(potential_reaping, TRAIT_INCAPACITATED)) //if the victim is incapacitated (due to paralysis, a stun, being in staminacrit, etc.), critted, unconscious, or dead, it's much easier to properly behead
 		death_knell_speed_mod *= 0.5
 	if(potential_reaping.stat != DEAD && potential_reaping.has_status_effect(/datum/status_effect/jitter)) //jittering will make it harder to perform the death knell, even if they're still
 		death_knell_speed_mod *= 1.5 //Staminacritting someone who's jittering (from, say, a stun baton) won't give you enough time to slice their head off, but staminacritting someone who isn't jittering will
@@ -150,7 +149,7 @@ If the scythe isn't empowered when you sheath it, you take a heap of damage and 
 	if(do_after(user,  15 SECONDS * death_knell_speed_mod, target = potential_reaping))
 		playsound(get_turf(potential_reaping), 'sound/items/weapons/bladeslice.ogg', 250, TRUE)
 		reaped_head.dismember()
-		user.visible_message(span_danger(LANG("obj.b0af41f6", list(user, src, potential_reaping, head_name, src))), span_notice(LANG("obj.b8b2f030", list(potential_reaping, src))))
+		user.visible_message(span_danger("[user] swings [src] down, slicing [potential_reaping]'s [head_name] clean off! You think [src] may have grown stronger!"), span_notice("As you perform the death knell on [potential_reaping], [src] gains power! For a time..."))
 		if(potential_empowerment == SCYTHE_SATED) //We don't want actual player heads to go wandering off, but it'll be funny if a bunch of monkeyhuman heads started floating around
 			reaped_head.AddComponent(/datum/component/haunted_item, \
 				haunt_color = "#7be595", \

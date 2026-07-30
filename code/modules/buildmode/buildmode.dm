@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 #define BM_SWITCHSTATE_NONE 0
 #define BM_SWITCHSTATE_MODE 1
 #define BM_SWITCHSTATE_DIR 2
@@ -171,9 +170,7 @@
 	mode.handle_click(user.client, params, object)
 	return TRUE // no doing underlying actions
 
-/proc/togglebuildmode(mob/M as mob in GLOB.player_list)
-	set name = "切换建造模式"
-	set category = "Event"
+GAME_VERB_GLOBAL_PROC(togglebuildmode, "Toggle Build Mode", "", "Event", mob/M as mob in GLOB.player_list)
 
 	if(M.client)
 		if(istype(M.client.click_intercept,/datum/buildmode))

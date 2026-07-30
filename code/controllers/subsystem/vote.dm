@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 /// Define to mimic a span macro but for the purple font that vote specifically uses.
 #define vote_font(text) ("<font color='purple'>" + text + "</font>")
 
@@ -204,7 +203,7 @@ SUBSYSTEM_DEF(vote)
 	// No valid vote found? No vote
 	if(!istype(to_vote))
 		if(vote_initiator)
-			to_chat(vote_initiator, span_warning(LANG("datum.818b68c0", null)))
+			to_chat(vote_initiator, span_warning("Invalid voting choice."))
 		return FALSE
 
 	// Vote can't be initiated in our circumstances? No vote
@@ -259,7 +258,7 @@ SUBSYSTEM_DEF(vote)
 	// Even if it's forced we can't vote before we're set up
 	if(!MC_RUNNING(init_stage))
 		if(vote_initiator)
-			to_chat(vote_initiator, span_warning(LANG("datum.628b797e", null)))
+			to_chat(vote_initiator, span_warning("You cannot start a vote now, the server is not done initializing."))
 		return FALSE
 
 	if(forced)
@@ -268,12 +267,12 @@ SUBSYSTEM_DEF(vote)
 	var/next_allowed_time = last_vote_time + CONFIG_GET(number/vote_delay)
 	if(next_allowed_time > world.time)
 		if(vote_initiator)
-			to_chat(vote_initiator, span_warning(LANG("datum.1a8fd54d", list(DisplayTimeText(next_allowed_time - world.time)))))
+			to_chat(vote_initiator, span_warning("A vote was initiated recently. You must wait [DisplayTimeText(next_allowed_time - world.time)] before a new vote can be started!"))
 		return FALSE
 
 	if(current_vote)
 		if(vote_initiator)
-			to_chat(vote_initiator, span_warning(LANG("datum.206e6de2", null)))
+			to_chat(vote_initiator, span_warning("There is already a vote in progress! Please wait for it to finish."))
 		return FALSE
 
 	return TRUE
@@ -333,7 +332,6 @@ SUBSYSTEM_DEF(vote)
 			for(var/key in current_vote.choices)
 				choices += list(list(
 					"name" = key,
-					"displayName" = current_vote.get_choice_display_name(key), // NOVA EDIT ADDITION - i18n: 显示名（键 name 仍是 act 值）
 					"votes" = current_vote.choices[key],
 				))
 
@@ -443,12 +441,10 @@ SUBSYSTEM_DEF(vote)
 	voting -= user.client?.ckey
 
 /// Mob level verb that allows players to vote on the current vote.
-/mob/verb/vote()
-	set category = "OOC"
-	set name = "投票"
+GAME_VERB(/mob, vote, "Vote", "OOC")
 
 	if(!SSvote.initialized)
-		to_chat(usr, span_notice(LANG("mob.cb7a09b7", null)))
+		to_chat(usr, span_notice("<i>Voting is not set up yet!</i>"))
 		return
 
 	SSvote.ui_interact(usr)

@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 /obj/item/clothing/head/helmet
 	name = "helmet"
 	desc = "Standard Security gear. Protects the head from impacts."
@@ -46,45 +45,45 @@
 	. = ..()
 	AddComponent(/datum/component/seclite_attachable, light_icon_state = "flight")
 
-/obj/item/clothing/head/helmet/sec/attackby(obj/item/attacking_item, mob/user, list/modifiers, list/attack_modifiers)
-	if(issignaler(attacking_item))
-		var/obj/item/assembly/signaler/attached_signaler = attacking_item
-		// There's a flashlight in us. Remove it first, or it'll be lost forever!
-		var/obj/item/flashlight/seclite/blocking_us = locate() in src
-		if(blocking_us)
-			to_chat(user, span_warning(LANG("obj.5fc82641", list(blocking_us))))
-			return TRUE
+/obj/item/clothing/head/helmet/sec/item_interaction(mob/living/user, obj/item/tool, list/modifiers)
+	if(!issignaler(tool))
+		return ..()
 
-		if(!attached_signaler.secured)
-			to_chat(user, span_warning(LANG("obj.b73da904", list(attached_signaler))))
-			return TRUE
+	var/obj/item/assembly/signaler/attached_signaler = tool
+	// There's a flashlight in us. Remove it first, or it'll be lost forever!
+	var/obj/item/flashlight/seclite/blocking_us = locate() in src
+	if(blocking_us)
+		to_chat(user, span_warning("[blocking_us] is in the way, remove it first!"))
+		return ITEM_INTERACT_BLOCKING
 
-		to_chat(user, span_notice(LANG("obj.0c27fe26", list(attached_signaler, src))))
+	if(!attached_signaler.secured)
+		to_chat(user, span_warning("Secure [attached_signaler] first!"))
+		return ITEM_INTERACT_BLOCKING
 
-		qdel(attached_signaler)
-		var/obj/item/bot_assembly/secbot/secbot_frame = new(drop_location())
-		var/held_index = user.is_holding(src)
-		qdel(src)
-		if (held_index)
-			user.put_in_hand(secbot_frame, held_index)
-		return TRUE
+	to_chat(user, span_notice("You add [attached_signaler] to [src]."))
 
-	return ..()
+	qdel(attached_signaler)
+	var/obj/item/bot_assembly/secbot/secbot_frame = new(drop_location())
+	var/held_index = user.is_holding(src)
+	qdel(src)
+	if (held_index)
+		user.put_in_hand(secbot_frame, held_index)
+	return ITEM_INTERACT_SUCCESS
 
 /obj/item/clothing/head/helmet/sec/attack_self(mob/user)
 	. = ..()
 	if(.)
 		return
-	balloon_alert(user, LANG("obj.20ef99d4", list(flags_inv & HIDEHAIR ? "loosening" : "tightening")))
+	balloon_alert(user, "[flags_inv & HIDEHAIR ? "loosening" : "tightening"] straps...")
 	if(!do_after(user, 3 SECONDS, src))
 		return
 	flags_inv ^= HIDEHAIR
-	balloon_alert(user, LANG("obj.030db21d", list(flags_inv & HIDEHAIR ? "tightened" : "loosened")))
+	balloon_alert(user, "[flags_inv & HIDEHAIR ? "tightened" : "loosened"] straps")
 	return TRUE
 
 /obj/item/clothing/head/helmet/sec/click_alt(mob/user)
 	flipped_visor = !flipped_visor
-	balloon_alert(user, LANG("obj.7abc9479", null))
+	balloon_alert(user, "visor flipped")
 	// base_icon_state is modified for seclight attachment component
 	base_icon_state = "[initial(base_icon_state)][flipped_visor ? "-novisor" : ""]"
 	icon_state = base_icon_state
@@ -733,7 +732,7 @@
 	)
 
 /obj/item/clothing/head/helmet/durability/holymelon/proc/drain_antimagic(mob/user)
-	to_chat(user, span_warning(LANG("obj.86aa8c51", list(src))))
+	to_chat(user, span_warning("[src] looses a bit of its shimmer and glossiness..."))
 
 /obj/item/clothing/head/helmet/durability/holymelon/proc/decay()
 	take_damage(8, BRUTE, 0, 0)

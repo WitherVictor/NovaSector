@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 /**
  * Virus disk
  * Can't hold apps, instead does unique actions.
@@ -12,10 +11,10 @@
 
 /obj/item/disk/computer/virus/proc/send_virus(obj/item/modular_computer/pda/source, obj/item/modular_computer/pda/target, mob/living/user, message)
 	if(charges <= 0)
-		to_chat(user, span_notice(LANG("obj.11fdd575", null)))
+		to_chat(user, span_notice("ERROR: Out of charges."))
 		return FALSE
 	if(!target)
-		to_chat(user, span_notice(LANG("obj.21aff8f8", null)))
+		to_chat(user, span_notice("ERROR: Could not find device."))
 		return FALSE
 	return TRUE
 
@@ -77,13 +76,13 @@
 		return
 
 	var/original_host = source
-	var/fakename = sanitize_name(tgui_input_text(user, LANG("obj.9ef208cc", null), LANG("obj.cc7d4a46", null), max_length = MAX_NAME_LEN), allow_numbers = TRUE)
+	var/fakename = sanitize_name(tgui_input_text(user, "Enter a name for the rigged message.", "Forge Message", max_length = MAX_NAME_LEN), allow_numbers = TRUE)
 	if(!fakename || source != original_host || !user.can_perform_action(source))
 		return
-	var/fakejob = sanitize_name(tgui_input_text(user, LANG("obj.d1ae3c92", null), LANG("obj.cc7d4a46", null), max_length = MAX_NAME_LEN), allow_numbers = TRUE)
+	var/fakejob = sanitize_name(tgui_input_text(user, "Enter a job for the rigged message.", "Forge Message", max_length = MAX_NAME_LEN), allow_numbers = TRUE)
 	if(!fakejob || source != original_host || !user.can_perform_action(source))
 		return
-	var/attach_fake_photo = tgui_alert(user, LANG("obj.193b7fc9", null), LANG("obj.cc7d4a46", null), list("Yes", "No")) == "Yes"
+	var/attach_fake_photo = tgui_alert(user, "Attach a fake photo?", "Forge Message", list("Yes", "No")) == "Yes"
 
 	var/datum/computer_file/program/messenger/app = locate() in source.stored_files
 	var/datum/computer_file/program/messenger/target_app = locate() in target.stored_files
@@ -110,18 +109,19 @@
 	///How much progression should be shown in the uplink, set on purchase of the item.
 	var/current_progression = 0
 
-/obj/item/disk/computer/virus/frame/attackby(obj/item/attacking_item, mob/user, list/modifiers, list/attack_modifiers)
-	. = ..()
-	if(!istype(attacking_item, /obj/item/stack/telecrystal))
-		return
-	if(!charges)
-		to_chat(user, span_notice(LANG("obj.bc80c84a", list(src, attacking_item))))
-		return
-	var/obj/item/stack/telecrystal/telecrystal_stack = attacking_item
-	telecrystals += telecrystal_stack.amount
-	to_chat(user, span_notice(LANG("obj.32434fb8", list(telecrystal_stack, src))))
-	telecrystal_stack.use(telecrystal_stack.amount)
+/obj/item/disk/computer/virus/frame/item_interaction(mob/living/user, obj/item/tool, list/modifiers)
+	if(!istype(tool, /obj/item/stack/telecrystal))
+		return ..()
 
+	if(!charges)
+		to_chat(user, span_notice("[src] is out of charges, it's refusing to accept [tool]."))
+		return ITEM_INTERACT_BLOCKING
+
+	var/obj/item/stack/telecrystal/telecrystal_stack = tool
+	telecrystals += telecrystal_stack.amount
+	to_chat(user, span_notice("You slot [telecrystal_stack] into [src]. The next time it's used, it will also give telecrystals."))
+	telecrystal_stack.use(telecrystal_stack.amount)
+	return ITEM_INTERACT_SUCCESS
 
 /obj/item/disk/computer/virus/frame/send_virus(obj/item/modular_computer/pda/source, obj/item/modular_computer/pda/target, mob/living/user, message)
 	. = ..()
@@ -130,7 +130,7 @@
 
 	charges--
 	var/unlock_code = "[rand(100,999)] [pick(GLOB.phonetic_alphabet)]"
-	to_chat(user, span_notice(LANG("obj.6c1610fd", list(unlock_code))))
+	to_chat(user, span_notice("Success! The unlock code to the target is: [unlock_code]"))
 	var/datum/component/uplink/hidden_uplink = target.GetComponent(/datum/component/uplink)
 	if(!hidden_uplink)
 		var/datum/mind/target_mind

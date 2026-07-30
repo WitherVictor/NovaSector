@@ -1,4 +1,3 @@
-// NOVA EDIT - I18N CODEMOD - 玩家可见字符串已改写为 LANG()；请勿手改 key，见 modular_nova/modules/i18n/readme.md
 // POTIONS
 
 // CRUCIBLE SOUL
@@ -12,7 +11,7 @@
 	var/turf/location
 
 /datum/status_effect/crucible_soul/on_apply()
-	to_chat(owner,span_notice(LANG("datum.8a17c2eb", null)))
+	to_chat(owner,span_notice("You phase through reality, nothing is out of bounds!"))
 	owner.alpha = 180
 	owner.pass_flags |= PASSCLOSEDTURF | PASSGLASS | PASSGRILLE | PASSMACHINE | PASSSTRUCTURE | PASSTABLE | PASSMOB | PASSDOORS | PASSVEHICLE
 	location = get_turf(owner)
@@ -21,7 +20,7 @@
 	return TRUE
 
 /datum/status_effect/crucible_soul/on_remove()
-	to_chat(owner,span_notice(LANG("datum.c73803f0", null)))
+	to_chat(owner,span_notice("You regain your physicality, returning you to your original location..."))
 	owner.alpha = initial(owner.alpha)
 	owner.pass_flags &= ~(PASSCLOSEDTURF | PASSGLASS | PASSGRILLE | PASSMACHINE | PASSSTRUCTURE | PASSTABLE | PASSMOB | PASSDOORS | PASSVEHICLE)
 	owner.forceMove(location)
@@ -63,12 +62,10 @@
 
 /datum/status_effect/duskndawn/on_apply()
 	ADD_TRAIT(owner, TRAIT_XRAY_VISION, TRAIT_STATUS_EFFECT(id))
-	owner.update_sight()
 	return TRUE
 
 /datum/status_effect/duskndawn/on_remove()
 	REMOVE_TRAIT(owner, TRAIT_XRAY_VISION, TRAIT_STATUS_EFFECT(id))
-	owner.update_sight()
 
 // WOUNDED SOLDIER
 /datum/status_effect/marshal
@@ -93,7 +90,7 @@
 			found_wound.remove_wound()
 	if(length(drinker.get_missing_limbs()))
 		drinker.regenerate_limbs()
-		to_chat(drinker, span_hypnophrase(LANG("datum.b0c15ef5", null)))
+		to_chat(drinker, span_hypnophrase("The mansus has given you new limbs."))
 	playsound(drinker, 'sound/effects/chemistry/ahaha.ogg', 50, TRUE, -1, extrarange = SILENCED_SOUND_EXTRARANGE, frequency = 0.5)
 
 /datum/status_effect/marshal/tick(seconds_between_ticks)
@@ -230,6 +227,7 @@
 		return
 
 	SEND_SIGNAL(src, COMSIG_BLADE_BARRIER_TRIGGERED)
+	SEND_SIGNAL(source, COMSIG_MOB_BLADE_BARRIER_TRIGGERED, src)
 	ADD_TRAIT(source, TRAIT_BEING_BLADE_SHIELDED, TRAIT_STATUS_EFFECT(id))
 	addtimer(TRAIT_CALLBACK_REMOVE(source, TRAIT_BEING_BLADE_SHIELDED, TRAIT_STATUS_EFFECT(id)), 0.1 SECONDS)
 
@@ -237,9 +235,9 @@
 
 	playsound(get_turf(source), 'sound/items/weapons/parry.ogg', 100, TRUE)
 	source.visible_message(
-		span_warning(LANG("datum.e2a17443", list(to_remove, source, attack_text))),
-		span_warning(LANG("datum.eceba002", list(to_remove, attack_text))),
-		span_hear(LANG("datum.9d4e541d", null)),
+		span_warning("[to_remove] orbiting [source] snaps in front of [attack_text], blocking it before vanishing!"),
+		span_warning("[to_remove] orbiting you snaps in front of [attack_text], blocking it before vanishing!"),
+		span_hear("You hear a clink."),
 	)
 
 	qdel(to_remove)
@@ -299,7 +297,6 @@
 /datum/status_effect/caretaker_refuge/on_apply()
 	animate(owner, alpha = 45, time = 0.5 SECONDS)
 	owner.set_density(FALSE)
-	RegisterSignal(owner, SIGNAL_REMOVETRAIT(TRAIT_ALLOW_HERETIC_CASTING), PROC_REF(on_focus_lost))
 	RegisterSignal(owner, COMSIG_MOB_BEFORE_SPELL_CAST, PROC_REF(prevent_spell_usage))
 	RegisterSignal(owner, COMSIG_ATOM_HOLYATTACK, PROC_REF(nullrod_handler))
 	RegisterSignal(owner, COMSIG_CARBON_CUFF_ATTEMPTED, PROC_REF(prevent_cuff))
@@ -311,14 +308,13 @@
 	owner.remove_traits(caretaking_traits, TRAIT_STATUS_EFFECT(id))
 	owner.alpha = initial(owner.alpha)
 	owner.density = initial(owner.density)
-	UnregisterSignal(owner, SIGNAL_REMOVETRAIT(TRAIT_ALLOW_HERETIC_CASTING))
 	UnregisterSignal(owner, COMSIG_MOB_BEFORE_SPELL_CAST)
 	UnregisterSignal(owner, COMSIG_ATOM_HOLYATTACK)
 	UnregisterSignal(owner, COMSIG_CARBON_CUFF_ATTEMPTED)
 	UnregisterSignal(owner, COMSIG_BEING_STRIPPED)
 	owner.visible_message(
-		span_warning(LANG("datum.b9d79320", list(owner))),
-		span_notice(LANG("datum.55cc845d", null)),
+		span_warning("The haze around [owner] disappears, leaving them materialized!"),
+		span_notice("You exit the refuge."),
 	)
 
 /datum/status_effect/caretaker_refuge/get_examine_text()
@@ -327,23 +323,18 @@
 /datum/status_effect/caretaker_refuge/proc/nullrod_handler(datum/source, obj/item/weapon)
 	SIGNAL_HANDLER
 	playsound(get_turf(owner), 'sound/effects/curse/curse1.ogg', 80, TRUE)
-	owner.visible_message(span_warning(LANG("datum.ceddfd89", list(weapon, owner))))
+	owner.visible_message(span_warning("[weapon] repels the haze around [owner]!"))
 	owner.remove_status_effect(type)
-
-/datum/status_effect/caretaker_refuge/proc/on_focus_lost()
-	SIGNAL_HANDLER
-	to_chat(owner, span_danger(LANG("datum.d1b58e1c", null)))
-	qdel(src)
 
 /datum/status_effect/caretaker_refuge/proc/no_strip(atom/source, mob/user, obj/item/equipping)
 	SIGNAL_HANDLER
-	to_chat(user, span_warning(LANG("datum.bfb3b90b", list(source))))
+	to_chat(user, span_warning("You fail to put anything on [source] as they are incorporeal!"))
 	return COMPONENT_CANT_STRIP
 
 /datum/status_effect/caretaker_refuge/proc/prevent_spell_usage(datum/source, datum/spell)
 	SIGNAL_HANDLER
 	if(!istype(spell, /datum/action/cooldown/spell/caretaker))
-		owner.balloon_alert(owner, LANG("datum.e4871913", null))
+		owner.balloon_alert(owner, "may not cast spells in refuge!")
 		return SPELL_CANCEL_CAST
 
 /datum/status_effect/caretaker_refuge/proc/prevent_cuff(datum/source, mob/attemptee)
@@ -385,7 +376,7 @@
 
 /datum/status_effect/heretic_lastresort/on_apply()
 	ADD_TRAIT(owner, TRAIT_IGNORESLOWDOWN, TRAIT_STATUS_EFFECT(id))
-	to_chat(owner, span_userdanger(LANG("datum.b9757440", null)))
+	to_chat(owner, span_userdanger("You won't give up that easily!"))
 	return TRUE
 
 /datum/status_effect/heretic_lastresort/on_remove()

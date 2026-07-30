@@ -230,7 +230,7 @@
 		for(var/mob/living/inside in src)
 			return tool.interact_with_atom(inside, user, modifiers)
 
-	return NONE
+	return ..()
 
 /obj/structure/closet/body_bag/before_open(mob/living/user, force)
 	if(pinned)
@@ -361,7 +361,7 @@
 		span_notice(LANG("obj.ca864905", list(src, DisplayTimeText(breakout_time)))), \
 		span_hear(LANG("obj.e8a08630", list(src))))
 	if(do_after(user,(breakout_time), target = src))
-		if(!user || user.stat != CONSCIOUS || user.loc != src || opened || !cinched )
+		if(!user || IS_UNCONSCIOUS_OR_CRIT(user) || user.loc != src || opened || !cinched )
 			return
 		//we check after a while whether there is a point of resisting anymore and whether the user is capable of resisting
 		user.visible_message(span_danger(LANG("obj.37696909", list(user, src))),
@@ -640,7 +640,7 @@
 		user.show_message("You fail to break out of [src]!", MSG_VISUAL)
 
 /obj/structure/closet/body_bag/environmental/stasis/proc/breakout_checks(mob/living/user)
-	if(QDELETED(user) || user.stat != CONSCIOUS || user.loc != src || opened)
+	if(QDELETED(user) || IS_UNCONSCIOUS_OR_CRIT(user) || user.loc != src || opened)
 		return FALSE
 	return TRUE
 

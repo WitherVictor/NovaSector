@@ -1,24 +1,21 @@
-/mob/living/carbon/verb/army_crawl()
-	set name = "匍匐前进"
-	set category = "IC"
-
+GAME_VERB(/mob/living/carbon, army_crawl, "Army Crawl", "IC")
 	var/mob/living/carbon/crawler = src
 
 	if(HAS_TRAIT(crawler, TRAIT_PRONE))
-		visible_message(LANG("mob.af3c556f", list(crawler)))
+		visible_message("[crawler] starts to get up")
 		if(!do_after(crawler, 3 SECONDS))
 			return
 		SEND_SIGNAL(crawler, COMSIG_MOVABLE_REMOVE_PRONE_STATE)
 		return
 
 	if(!crawler.can_army_crawl())
-		balloon_alert(crawler, LANG("mob.3d044f09", null))
+		balloon_alert(crawler, "must be laying down!")
 		return
 
-	visible_message(LANG("mob.32a53d26", list(crawler)))
+	visible_message("[crawler] begins to lower themself further")
 	if(!do_after(crawler, 3 SECONDS, extra_checks = CALLBACK(crawler, PROC_REF(can_army_crawl))))
 		if(!crawler.resting)
-			balloon_alert(crawler, LANG("mob.3d044f09", null))
+			balloon_alert(crawler, "must be laying down!")
 		return
 	crawler.AddComponent(/datum/component/prone_mob, block_hands = TRUE)
 
