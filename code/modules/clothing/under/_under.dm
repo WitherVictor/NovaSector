@@ -454,9 +454,7 @@
 
 	return all_accessories
 
-/obj/item/clothing/under/verb/toggle()
-	set name = "调整制服传感器"
-	set src in usr
+GAME_VERB_SRC(/obj/item/clothing/under, toggle, usr, "调整制服传感器", null)
 	var/mob/user_mob = usr
 	if(!can_toggle_sensors(user_mob))
 		return
@@ -524,10 +522,7 @@
 		return
 	pop_accessory(user)
 
-/obj/item/clothing/under/verb/jumpsuit_adjust()
-	set name = "调整连体服样式"
-	set category = null
-	set src in usr
+GAME_VERB_SRC(/obj/item/clothing/under, jumpsuit_adjust, usr, "调整连体服样式", null)
 
 	if(!can_adjust)
 		balloon_alert(usr, LANG("obj.7c1df17e", null))

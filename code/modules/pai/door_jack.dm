@@ -111,7 +111,7 @@
 	playsound(src, 'sound/machines/airlock/airlock_alien_prying.ogg', 50, TRUE)
 	balloon_alert(src, LANG("mob.e3f1440c", null))
 	// Now begin hacking
-	if(!do_after(src, 15 SECONDS, hacking_cable.hacking_machine, timed_action_flags = NONE,	progress = TRUE))
+	if(!do_after(src, 15 SECONDS, hacking_cable.hacking_machine, timed_action_flags = NONE))
 		balloon_alert(src, LANG("mob.e3cf22b4", null))
 		QDEL_NULL(hacking_cable)
 		return FALSE

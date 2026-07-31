@@ -184,9 +184,9 @@
 		to_chat(user, span_warning(LANG("obj.6d8bf663", null)))
 		return ITEM_INTERACT_BLOCKING
 	user.visible_message(
-		span_notice("[user.name] starts contorting up a balloon animal!"),
-		span_notice("You start twisting together a balloon animal!"),
-		span_hear("You hear balloons being contorted."),
+		span_notice(LANG("obj.b068d552", list(user.name))),
+		span_notice(LANG("obj.abdd617f", null)),
+		span_hear(LANG("obj.4c62c293", null)),
 		vision_distance = 3,
 		ignored_mobs = user,
 	)
@@ -1052,7 +1052,7 @@
 /obj/item/toy/minimeteor/throw_impact(atom/hit_atom, datum/thrownthing/throwingdatum)
 	playsound(src, 'sound/effects/meteorimpact.ogg', 40, TRUE)
 	for(var/mob/M in urange(10, src))
-		if(!M.stat && !isAI(M))
+		if(!IS_UNCONSCIOUS_OR_CRIT(M) && !isAI(M))
 			shake_camera(M, 3, 1)
 	if (obj_flags & EMAGGED)
 		explosion(src, devastation_range = -1, heavy_impact_range = -1, light_impact_range = 1)
@@ -1075,7 +1075,7 @@
 		user.visible_message(span_warning(LANG("obj.92d9d38c", list(user))), span_notice(LANG("obj.465f1dc0", null)), span_hear(LANG("obj.552388d4", null)))
 		playsound(src, 'sound/effects/explosion/explosionfar.ogg', 50, FALSE)
 		for(var/mob/M in urange(10, src)) // Checks range
-			if(!M.stat && !isAI(M)) // Checks to make sure whoever's getting shaken is alive/not the AI
+			if(!IS_UNCONSCIOUS_OR_CRIT(M) && !isAI(M)) // Checks to make sure whoever's getting shaken is alive/not the AI
 				// Short delay to match up with the explosion sound
 				// Shakes player camera 2 squares for 1 second.
 				addtimer(CALLBACK(GLOBAL_PROC, GLOBAL_PROC_REF(shake_camera), M, 2, 1), 0.8 SECONDS)

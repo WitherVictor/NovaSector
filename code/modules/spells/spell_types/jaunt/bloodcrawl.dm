@@ -188,7 +188,7 @@
 
 	var/mob/living/carbon/human/victim = coming_with
 
-	if(victim.stat == CONSCIOUS)
+	if(!IS_UNCONSCIOUS_OR_CRIT(victim))
 		jaunt_turf.visible_message(
 			span_warning(LANG("datum.c264e304", list(victim, blood))),
 			blind_message = span_notice("You hear splashing and struggling."),
@@ -243,7 +243,7 @@
 	for(var/i in 1 to 3)
 		playsound(get_turf(jaunter), consume_sound, 50, TRUE)
 		if(!do_after(jaunter, 3 SECONDS, victim))
-			to_chat(jaunter, span_danger("You lose your victim!"))
+			to_chat(jaunter, span_danger(LANG("datum.9b140eaf", null)))
 			return FALSE
 		if(QDELETED(src))
 			return FALSE
@@ -337,7 +337,7 @@
 		if(!friend.revive(ADMIN_HEAL_ALL, force_grab_ghost = TRUE))
 			continue
 		friend.playsound_local(release_turf, 'sound/effects/magic/exit_blood.ogg', 50, TRUE, -1)
-		to_chat(friend, span_clown("You leave [source]'s warm embrace, and feel ready to take on the world."))
+		to_chat(friend, span_clown(LANG("datum.69177457", list(source))))
 
 
 /**
