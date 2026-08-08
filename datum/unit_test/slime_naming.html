@@ -1,0 +1,7 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><base href="../../"><link rel="stylesheet" href="dmdoc.css"><title>/datum/unit_test/slime_naming - /tg/ Station 13</title></head><body><header><a href="index.html">/tg/ Station 13</a> - <a href="index.html#modules">Modules</a> - <a href="index.html#types">Types</a></header><main><h1>slime_naming <aside>/<a href="datum.html">datum</a>/<a href="datum/unit_test.html">unit_test</a>/<a href="datum/unit_test/slime_naming.html">slime_naming</a></aside> <a href="https://github.com/WitherVictor/NovaSector/blob/66bce4d78c55483e52528f34d025f98f5b049bd9/code/modules/unit_tests/slime_naming.dm#L12"><img src="git.png" width="16" height="16" title="code/modules/unit_tests/slime_naming.dm 12"></a></h1><p>史莱姆自动命名：每种类型必须得到互不相同、且已重建过的名字。</p>
+<p>守的是一类只在运行期暴露的汉化 bug——线上表现为「全是灰色幼年史莱姆」，
+编译和 DreamChecker 都测不出来。</p>
+<p>历史：<code>update_name()</code> 原先靠正则解析<strong>显示名</strong>来判断「这是自动名可以重建」，而显示名是
+本地化过的，于是任何译文差异都会让解析失效（踩过两次：译文把 &quot;(123)&quot; 写成全角「（123）」；
+伪 locale 把整串包成 ⟦…⟧ 使末尾锚定失配）。现已改为记住上一次自动生成的名字来判断，
+与 locale 无关。本测试继续守着最终可观察的结果：名字带半角 id 后缀、且各类型互不撞名。</p></main><footer>tgstation.dme <a href="https://github.com/WitherVictor/NovaSector/tree/66bce4d78c55483e52528f34d025f98f5b049bd9">66bce4d</a> (i18n-localization) — <a href="https://github.com/SpaceManiac/SpacemanDMM/blob/master/crates/dmdoc/README.md">dmdoc 1.11.0</a></footer></body></html>
