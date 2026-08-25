@@ -30,7 +30,7 @@
     if(!mod?.wearer)
         return
 
-    if(mod.wearer.stat >= UNCONSCIOUS)
+    if(IS_UNCONSCIOUS_OR_CRIT(mod.wearer))
         to_chat(mod.wearer, span_warning("护盾结构不稳定！"))
         return FALSE
 
@@ -88,7 +88,7 @@
         . += "[DisplayTimeText(time_left, 1)] 冷却时间"
 
 /obj/item/mod/module/blue_shield/proc/on_wearer_stat_change(mob/living/carbon/human/source, new_stat, old_stat)
-    if(new_stat >= UNCONSCIOUS && active)
+    if(IS_UNCONSCIOUS_OR_CRIT(source) && active)
         to_chat(source, span_danger("护盾结构失稳！"))
         on_deactivation()
 

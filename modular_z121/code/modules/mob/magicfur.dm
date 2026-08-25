@@ -9,7 +9,6 @@
 	icon_living = "magic_fur_fox"
 	icon_dead = "magic_fur_fox_dead"
 	held_state = "magic_fur_fox"
-	can_be_held = TRUE
 	see_in_dark = 6
 	pass_flags = PASSTABLE
 	mob_size = MOB_SIZE_SMALL
@@ -36,7 +35,7 @@
 	gold_core_spawnable = FRIENDLY_SPAWN
 	attack_vis_effect = ATTACK_EFFECT_SLASH
 	obj_damage = 0
-	ai_controller = /datum/ai_controller/basic_controller/magicfur
+	//ai_controller = /datum/ai_controller/basic_controller/magicfur
 
 	var/static/list/pet_commands = list(
 		/datum/pet_command/idle,
@@ -58,11 +57,11 @@
 
 /mob/living/basic/pet/magicfur/Initialize(mapload)
 	. = ..()
-
+	AddElement(/datum/element/can_be_held)
 	AddElement(/datum/element/dextrous, can_throw = TRUE)
 	AddElement(/datum/element/pet_bonus, "merowr", /datum/mood_event/pet_animal)
 	var/static/list/food_types = list(
-		/obj/item/food/grown/holymelon,
+		/obj/item/food/grown/melonlike/holymelon,
 	)
 	AddComponent(/datum/component/tameable, food_types = food_types, tame_chance = 50, bonus_tame_chance = 50, unique = FALSE)
 	AddComponent(/datum/component/basic_inhands, y_offset = -6)
@@ -126,7 +125,7 @@
 	icon_living = "magic_fur_miku"
 	icon_dead = "magic_fur_miku_dead"
 	held_state = "magic_fur_miku"
-
+/*
 //	魔法兽AI
 /datum/ai_controller/basic_controller/magicfur
 	blackboard = list(
@@ -152,3 +151,4 @@
 	speak = list("Aw~","嗷呜~")
 	emote_hear = list("绒毛细腻的摩擦声")
 	emote_see = list("悠闲的伸懒腰","低头看向地板","打理自己毛发")
+*/
