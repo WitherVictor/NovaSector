@@ -5,10 +5,10 @@
 		/obj/item/storage/toolbox/guncase/sofap,
 		/obj/item/storage/toolbox/guncase/tac9,
 		/obj/item/storage/toolbox/guncase/bfr500,
-		/obj/item/storage/toolbox/guncase/evo,
+		/obj/item/storage/toolbox/guncase/ostrza,
 		/obj/item/storage/toolbox/guncase/europa,
 		/obj/item/storage/toolbox/guncase/aa12,
-		/obj/item/storage/toolbox/guncase/dex4,
+		/obj/item/gun/energy/photon_sniper,
 	)
 
 //	SOFAP
@@ -31,19 +31,25 @@
 /obj/item/storage/toolbox/guncase/bfr500
 	name = "BER-500 枪箱"
 	weapon_to_spawn = /obj/item/gun/ballistic/revolver/single
-	extra_to_spawn = /obj/item/ammo_box/bfr500
+	extra_to_spawn = /obj/item/ammo_box/speedloader/bfr500
 
-//	EVO-13
-/obj/item/storage/toolbox/guncase/evo
-	name = "EVO-13 枪箱"
-	weapon_to_spawn = /obj/item/gun/ballistic/automatic/evo
-	extra_to_spawn = /obj/item/ammo_box/magazine/evo_c9mm
+//	Ostrza
+/obj/item/storage/toolbox/guncase/ostrza
+	name = "Ostrza 枪箱"
+	weapon_to_spawn = /obj/item/gun/ballistic/automatic/ostrza
+	extra_to_spawn = /obj/item/ammo_box/magazine/lanca
 
 //	Europa
 /obj/item/storage/toolbox/guncase/europa
 	name = "Europa 枪箱"
 	weapon_to_spawn = /obj/item/gun/ballistic/automatic/europa
 	extra_to_spawn = /obj/item/ammo_box/magazine/europa
+
+//	Solstice
+/obj/item/storage/toolbox/guncase/solstice
+	name = "Solstice 枪箱"
+	weapon_to_spawn = /obj/item/gun/ballistic/rifle/solstice
+	extra_to_spawn = /obj/item/ammo_box/magazine/lanca
 
 //	AA12
 /obj/item/storage/toolbox/guncase/aa12
@@ -58,15 +64,3 @@
 /obj/item/ammo_box/magazine/aa12/drum/buckshot
 	ammo_type = /obj/item/ammo_casing/shotgun/buckshot
 
-//	DEX-4
-/obj/item/storage/toolbox/guncase/dex4
-	name = "DEX-4 枪箱"
-	weapon_to_spawn = /obj/item/gun/ballistic/shotgun/dex4/buckshot
-	extra_to_spawn = /obj/item/ammo_box/magazine/dex4/buckshot
-
-//	初始弹匣变为杀伤
-/obj/item/gun/ballistic/shotgun/dex4/buckshot
-	spawn_magazine_type = /obj/item/ammo_box/magazine/dex4/buckshot
-
-/obj/item/ammo_box/magazine/dex4/buckshot
-	ammo_type = /obj/item/ammo_casing/shotgun/buckshot
