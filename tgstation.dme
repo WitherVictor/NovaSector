@@ -10048,6 +10048,7 @@
 #include "modular_nova\modules\xenomorph\queen.dm"
 #include "modular_z121\code\modules\gear_disabler\gear_disabler.dm"
 #include "modular_z121\code\modules\gear_disabler\gear_disabler_recipe.dm"
+#include "modular_z121\code\modules\gun_workshop\__module.dm"
 #include "modular_z121\code\modules\guide_browser\guide_catalog.dm"
 #include "modular_z121\code\modules\guide_browser\guide_browser.dm"
 #include "modular_z121\code\modules\guide_browser\guide_catalog_admin.dm"
