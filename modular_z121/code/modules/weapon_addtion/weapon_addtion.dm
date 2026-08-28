@@ -182,7 +182,7 @@
 /obj/item/gun/ballistic/automatic/ostrza
 	name = "\improper M/SAR-6 'Ostrza' 半自动步枪"
 	desc = "一款体型较臃肿，装有下挂发射的半自动步枪，使用.310 Strilka 弹药。\
-	护木下方的下挂发射器是个口径巨大的紧凑转轮发射器，可以发射12号口径霰弹。"
+	护木下方安装的下挂发射器是个口径巨大的紧凑转轮发射器，可以发射12号口径霰弹。"
 
 	icon = 'modular_z121/icons/obj/guns/weapon_addtion/guns48x.dmi'
 	icon_state = "ostrza"
@@ -292,7 +292,7 @@
 	name = "\improper 'sztylet'左轮弹巢"
 	ammo_type = /obj/item/ammo_casing/shotgun
 	caliber = CALIBER_SHOTGUN
-	max_ammo = 3
+	max_ammo = 4
 	ammo_box_multiload = AMMO_BOX_MULTILOAD_NONE
 
 // //	EVO-13
@@ -352,6 +352,7 @@
 	righthand_file = 'modular_z121/icons/mob/guns/weapon_addtion/guns_righthand.dmi'
 	inhand_icon_state = "europa"
 
+	SET_BASE_PIXEL(-8, 0)
 	fire_sound = 'modular_z121/sound/guns/europa/europa_fire.ogg'
 
 	armor_type = /datum/armor/europa_mg
