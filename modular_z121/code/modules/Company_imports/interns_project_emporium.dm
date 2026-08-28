@@ -29,24 +29,18 @@
 	access_view = FALSE
 	express_lock = FALSE
 
+/datum/supply_pack/companies/ballistics/intern_project/primary/ostrza
+	contains = list(/obj/item/gun/ballistic/automatic/ostrza)
+	cost = PAYCHECK_COMMAND * 16
+
 /datum/supply_pack/companies/ballistics/intern_project/primary/aa12
 	contains = list(/obj/item/gun/ballistic/shotgun/aa12)
 	cost = PAYCHECK_COMMAND * 16
 	//restricted = TRUE
 
-/datum/supply_pack/companies/ballistics/intern_project/primary/evo
-	contains = list(/obj/item/gun/ballistic/automatic/evo)
-	cost = PAYCHECK_COMMAND * 10
-	//restricted = TRUE
-
 /datum/supply_pack/companies/ballistics/intern_project/primary/europa
 	contains = list(/obj/item/gun/ballistic/automatic/europa)
 	cost = PAYCHECK_COMMAND * 20
-	//restricted = TRUE
-
-/datum/supply_pack/companies/ballistics/intern_project/primary/dex4
-	contains = list(/obj/item/gun/ballistic/shotgun/dex4)
-	cost = PAYCHECK_COMMAND * 12
 	//restricted = TRUE
 
 /datum/supply_pack/companies/ballistics/intern_project/primary/solstice
@@ -81,7 +75,7 @@
 	contains = list(/obj/item/ammo_box/magazine/tac9/starts_empty)
 
 /datum/supply_pack/companies/mags_and_ammo/intern_project/bfr500
-	contains = list(/obj/item/ammo_box/bfr500)
+	contains = list(/obj/item/ammo_box/speedloader/bfr500)
 
 /datum/supply_pack/companies/mags_and_ammo/intern_project/aa12_mag
 	contains = list(/obj/item/ammo_box/magazine/aa12/starts_empty)
@@ -90,17 +84,9 @@
 	contains = list(/obj/item/ammo_box/magazine/aa12/drum/starts_empty)
 	cost = PAYCHECK_CREW * 3
 
-/datum/supply_pack/companies/mags_and_ammo/intern_project/evo_mag
-	contains = list(/obj/item/ammo_box/magazine/evo_c9mm/starts_empty)
-	cost = PAYCHECK_CREW
-
 /datum/supply_pack/companies/mags_and_ammo/intern_project/europa_mag
 	contains = list(/obj/item/ammo_box/magazine/europa/starts_empty)
 	cost = PAYCHECK_CREW * 2
-
-/datum/supply_pack/companies/mags_and_ammo/intern_project/dex4_mag
-	contains = list(/obj/item/ammo_box/magazine/dex4/starts_empty)
-	cost = PAYCHECK_CREW
 
 //	医疗用品
 /datum/supply_pack/companies/medical/intern_project
